@@ -1,0 +1,6 @@
+{
+  "$schema": "./schemas/quality-waiver.schema.json",
+  "schemaVersion": 1,
+  "waivers": []
+}
+

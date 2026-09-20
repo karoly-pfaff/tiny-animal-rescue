@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/pack.schema.json",
+  "title": "Tiny Rescue content pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "version", "contractVersion", "titleKey", "locales", "content"],
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "contractVersion": { "type": "integer", "const": 1 },
+    "titleKey": { "type": "string", "minLength": 1 },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" }
+    },
+    "dependencies": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["animals", "missions", "locations", "shelterAreas"],
+      "properties": {
+        "animals": { "$ref": "#/$defs/relativeDirectory" },
+        "missions": { "$ref": "#/$defs/relativeDirectory" },
+        "locations": { "$ref": "#/$defs/relativeDirectory" },
+        "shelterAreas": { "$ref": "#/$defs/relativeDirectory" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "relativeDirectory": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+    }
+  }
+}

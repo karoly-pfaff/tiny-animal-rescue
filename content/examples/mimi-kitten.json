@@ -1,0 +1,14 @@
+{
+  "id": "mimi-kitten",
+  "species": "kitten",
+  "nameKey": "animal.mimi-kitten.name",
+  "shelterAreaId": "indoor-room",
+  "assets": {
+    "portrait": "assets/images/animals/mimi/portrait.webp",
+    "idle": "assets/images/animals/mimi/idle.webp",
+    "happy": "assets/images/animals/mimi/happy.webp",
+    "sleeping": "assets/images/animals/mimi/sleeping.webp"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}
+

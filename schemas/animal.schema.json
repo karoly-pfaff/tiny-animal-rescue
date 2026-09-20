@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/animal.schema.json",
+  "title": "Tiny Rescue animal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "species", "nameKey", "shelterAreaId", "assets", "shelterReactions"],
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "species": { "$ref": "#/$defs/id" },
+    "nameKey": { "type": "string", "minLength": 1 },
+    "shelterAreaId": { "$ref": "#/$defs/id" },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["portrait", "idle", "happy"],
+      "properties": {
+        "portrait": { "$ref": "#/$defs/path" },
+        "idle": { "$ref": "#/$defs/path" },
+        "happy": { "$ref": "#/$defs/path" },
+        "sleeping": { "$ref": "#/$defs/path" }
+      }
+    },
+    "shelterReactions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["greet", "pet", "feed", "play"] }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+" }
+  }
+}
+

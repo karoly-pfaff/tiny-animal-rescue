@@ -1,0 +1,14 @@
+{
+  "id": "base",
+  "version": "0.0.0",
+  "contractVersion": 1,
+  "titleKey": "pack.base.title",
+  "locales": ["hu", "en"],
+  "dependencies": [],
+  "content": {
+    "animals": "animals",
+    "missions": "missions",
+    "locations": "locations",
+    "shelterAreas": "shelter-areas"
+  }
+}

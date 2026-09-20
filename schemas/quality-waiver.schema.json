@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/quality-waiver.schema.json",
+  "title": "Tiny Rescue quality waiver registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "waivers"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "waivers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/waiver" }
+    }
+  },
+  "$defs": {
+    "waiver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tool",
+        "ruleId",
+        "exactScope",
+        "findingFingerprint",
+        "rationale",
+        "risk",
+        "compensatingEvidence",
+        "owner",
+        "backlogItem",
+        "approvedBy",
+        "createdOn",
+        "expiresOn",
+        "removalMilestone",
+        "removalCondition"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^QW-[0-9]{4}-[0-9]{3}$" },
+        "tool": {
+          "type": "string",
+          "enum": ["eslint", "jscpd", "knip", "coverage", "dependency", "license", "artifact"]
+        },
+        "ruleId": { "type": "string", "minLength": 1 },
+        "exactScope": { "type": "string", "minLength": 1 },
+        "findingFingerprint": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "risk": { "type": "string", "minLength": 1 },
+        "compensatingEvidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "owner": { "type": "string", "minLength": 1 },
+        "backlogItem": { "type": "string", "minLength": 1 },
+        "approvedBy": { "type": "string", "minLength": 1 },
+        "createdOn": { "type": "string", "format": "date" },
+        "expiresOn": { "type": "string", "format": "date" },
+        "removalMilestone": {
+          "type": "string",
+          "enum": ["M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9"]
+        },
+        "removalCondition": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

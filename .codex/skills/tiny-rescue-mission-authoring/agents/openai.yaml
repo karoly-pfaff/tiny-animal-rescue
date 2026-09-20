@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tiny Rescue Mission Authoring"
+  short_description: "Create contract-safe missions and residents"
+  default_prompt: "Use $tiny-rescue-mission-authoring to add a new contract-safe rescue mission."

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "categories": {
+    "music": {
+      "music.global.start-screen": {
+        "path": "assets/audio/shared/music/global/start-screen.ogg",
+        "loop": true
+      },
+      "music.global.rescue-map": {
+        "path": "assets/audio/shared/music/global/rescue-map.ogg",
+        "loop": true
+      },
+      "music.location.garden.ambient": {
+        "path": "assets/audio/shared/music/locations/garden-ambient.ogg",
+        "loop": true
+      }
+    },
+    "effects": {
+      "effects.ui.confirm": {
+        "variants": [
+          "assets/audio/shared/effects/ui/confirm-01.ogg",
+          "assets/audio/shared/effects/ui/confirm-02.ogg",
+          "assets/audio/shared/effects/ui/confirm-03.ogg"
+        ],
+        "loop": false,
+        "maxConcurrency": 2
+      },
+      "effects.interaction.drag-snap": {
+        "variants": [
+          "assets/audio/shared/effects/interactions/drag-snap-01.ogg",
+          "assets/audio/shared/effects/interactions/drag-snap-02.ogg"
+        ],
+        "loop": false,
+        "maxConcurrency": 2
+      },
+      "effects.ambience.pond": {
+        "path": "assets/audio/shared/effects/ambience/pond.ogg",
+        "loop": true,
+        "maxConcurrency": 1
+      },
+      "effects.animal.mimi-kitten.greet": {
+        "variants": [
+          "assets/audio/shared/effects/animals/mimi-kitten-greet-01.ogg",
+          "assets/audio/shared/effects/animals/mimi-kitten-greet-02.ogg",
+          "assets/audio/shared/effects/animals/mimi-kitten-greet-03.ogg"
+        ],
+        "loop": false,
+        "maxConcurrency": 1
+      }
+    }
+  }
+}

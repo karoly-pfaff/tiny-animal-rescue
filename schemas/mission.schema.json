@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/mission.schema.json",
+  "title": "Tiny Rescue mission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "locationId", "prerequisites", "scene", "steps", "reward", "localization"],
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "type": { "enum": ["rescue", "help", "world"] },
+    "locationId": { "$ref": "#/$defs/id" },
+    "subjectAnimalId": { "$ref": "#/$defs/id" },
+    "prerequisites": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["completedMissionId"],
+        "properties": { "completedMissionId": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["background", "designWidth", "designHeight"],
+      "properties": {
+        "background": { "$ref": "#/$defs/path" },
+        "designWidth": { "type": "integer", "const": 1024 },
+        "designHeight": { "type": "integer", "const": 768 }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "reward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["completeMission"],
+      "properties": {
+        "completeMission": { "const": true },
+        "unlockResidentId": { "$ref": "#/$defs/id" },
+        "worldFlags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["titleKey", "introKey", "successKey"],
+      "properties": {
+        "titleKey": { "type": "string", "minLength": 1 },
+        "introKey": { "type": "string", "minLength": 1 },
+        "successKey": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+" },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "baseStep": {
+      "type": "object",
+      "required": ["id", "type", "promptKey"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["tap", "drag", "wipe", "match", "trace"] },
+        "promptKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "step": {
+      "oneOf": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseStep" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "promptKey", "targetIds"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "type": { "const": "tap" },
+                "promptKey": { "type": "string" },
+                "targetIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseStep" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "promptKey", "sourceId", "targetId", "snapTolerance"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "type": { "const": "drag" },
+                "promptKey": { "type": "string" },
+                "sourceId": { "$ref": "#/$defs/id" },
+                "targetId": { "$ref": "#/$defs/id" },
+                "snapTolerance": { "type": "number", "minimum": 0.1, "maximum": 1 }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseStep" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "promptKey", "maskId", "completionRatio"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "type": { "const": "wipe" },
+                "promptKey": { "type": "string" },
+                "maskId": { "$ref": "#/$defs/id" },
+                "completionRatio": { "type": "number", "minimum": 0.5, "maximum": 0.85 }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseStep" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "promptKey", "pairs"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "type": { "const": "match" },
+                "promptKey": { "type": "string" },
+                "pairs": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 3,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["sourceId", "targetId"],
+                    "properties": {
+                      "sourceId": { "$ref": "#/$defs/id" },
+                      "targetId": { "$ref": "#/$defs/id" }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseStep" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "promptKey", "pathId", "corridorWidth"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "type": { "const": "trace" },
+                "promptKey": { "type": "string" },
+                "pathId": { "$ref": "#/$defs/id" },
+                "corridorWidth": { "type": "number", "minimum": 0.05, "maximum": 0.4 }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
