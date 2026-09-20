@@ -58,14 +58,14 @@ prompt is assembled from:
 
 Choose the template that matches the deliverable:
 
-| Asset | Template |
-|---|---|
-| Pitch/UI concept | `images/screen-concept.template.md` |
-| Mission scene | `images/mission-scene.template.md` |
-| Shelter area | `images/shelter-area.template.md` |
-| Resident character/pose | `images/resident-character.template.md` |
-| Interactive prop | `images/interactive-prop.template.md` |
-| Translate an existing mockup | `images/localization-edit.template.md` |
+| Asset                        | Template                                |
+| ---------------------------- | --------------------------------------- |
+| Pitch/UI concept             | `images/screen-concept.template.md`     |
+| Mission scene                | `images/mission-scene.template.md`      |
+| Shelter area                 | `images/shelter-area.template.md`       |
+| Resident character/pose      | `images/resident-character.template.md` |
+| Interactive prop             | `images/interactive-prop.template.md`   |
+| Translate an existing mockup | `images/localization-edit.template.md`  |
 
 Production art contains no baked UI, words, letters, numbers, or pseudo-writing. Presentation
 mockups may contain exact runtime-copy examples but are never used as production backgrounds.

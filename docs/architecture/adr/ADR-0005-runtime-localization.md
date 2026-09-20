@@ -27,4 +27,3 @@ This keeps HU and EN equivalent, allows layout testing, supports later locales, 
 - **Separate localized background images:** multiplies assets and creates drift.
 - **English text baked into art with translated subtitles:** breaks child-facing coherence and accessibility.
 - **System fonts only:** reduces asset weight but does not achieve the intended warm visual identity consistently.
-

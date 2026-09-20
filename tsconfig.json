@@ -26,5 +26,5 @@
     "verbatimModuleSyntax": true,
     "types": ["vite/client"]
   },
-  "include": ["sources", "tests", "vite.config.ts"]
+  "include": ["sources", "tests", "vite.config.ts", "vitest.config.ts"]
 }

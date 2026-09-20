@@ -95,4 +95,3 @@ Create one subtle trace checkpoint cue: a tiny warm rounded droplet-like mallet 
 ```text
 Create one calm path-complete cue: three very soft organic tones flowing upward into a warm settled note, 0.75–1.20 seconds, mono. Encouraging and fluid, smaller than the mission celebration. No arpeggio flourish, magic wand, fanfare, applause, voice, or long cinematic tail.
 ```
-

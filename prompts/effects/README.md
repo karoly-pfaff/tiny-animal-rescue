@@ -25,4 +25,3 @@ The player should learn meaning from timbre:
 ## Runtime category
 
 Every file in this section belongs to the `effects` category and effects mix channel. Environmental loops remain effects rather than music.
-

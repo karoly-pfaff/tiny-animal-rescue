@@ -26,4 +26,3 @@ A finite behavior vocabulary is auditable, deterministic, secure, and easy for C
 - **Sandboxed scripts:** still adds security and debugging complexity with no v1 need.
 - **JSON expressions:** creates a programming language without admitting it.
 - **Per-pack React components:** destroys engine/content separation.
-

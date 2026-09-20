@@ -1,4 +1,4 @@
 interface:
-  display_name: "Tiny Rescue Validation"
-  short_description: "Validate Tiny Rescue stories and releases"
-  default_prompt: "Use $tiny-rescue-validation to validate the current Tiny Rescue change."
+  display_name: 'Tiny Rescue Validation'
+  short_description: 'Validate Tiny Rescue stories and releases'
+  default_prompt: 'Use $tiny-rescue-validation to validate the current Tiny Rescue change.'

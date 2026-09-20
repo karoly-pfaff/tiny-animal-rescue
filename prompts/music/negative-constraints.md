@@ -11,4 +11,3 @@ hit, brass blast, ticking clock, alarm, siren, distorted bass, piercing bells, o
 sharp high-frequency percussion. Avoid busy solos, constant melody, comic circus
 music, and stereotypical nursery-rhyme phrasing. No abrupt intro, breakdown, or ending.
 ```
-

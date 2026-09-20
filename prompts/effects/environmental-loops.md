@@ -37,4 +37,3 @@ Create a peaceful small pond ambience: gentle shoreline water laps, soft reeds i
 ```text
 Create a very quiet cozy animal-shelter room ambience: soft open-window garden air, faint fabric settling, rare tiny basket or wooden-room creak, distant birds outside. Stereo but intimate, low density, 30–45 seconds, seamless-loop source. No clock, HVAC hum, people, footsteps, door, close animal vocalization, music, speech, mechanical noise, or repetitive creak.
 ```
-

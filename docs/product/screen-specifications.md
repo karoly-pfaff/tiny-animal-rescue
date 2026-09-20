@@ -108,11 +108,11 @@ painted text, counters, controls, residents, or progress shown in a concept.
 
 ### Area identity
 
-| Area | Mood | Residents |
-|---|---|---|
-| Indoor Room | cozy rugs, cushions, baskets, window light | Mimi, Morzsi/Biscuit, Pipi, Csipi/Peep |
-| Garden | grass, flowers, low shrubs, shade | Süni/Prickle, Makk/Acorn, Pamacs/Floss, Rozi/Rosie |
-| Pondside | shallow water edge, reeds, warm stones | Totó/Toto, Kiki, Breki/Hoppy, Habi/Bubbles |
+| Area        | Mood                                       | Residents                                          |
+| ----------- | ------------------------------------------ | -------------------------------------------------- |
+| Indoor Room | cozy rugs, cushions, baskets, window light | Mimi, Morzsi/Biscuit, Pipi, Csipi/Peep             |
+| Garden      | grass, flowers, low shrubs, shade          | Süni/Prickle, Makk/Acorn, Pamacs/Floss, Rozi/Rosie |
+| Pondside    | shallow water edge, reeds, warm stones     | Totó/Toto, Kiki, Breki/Hoppy, Habi/Bubbles         |
 
 Resident interaction opens no modal menu. A tap can speak the name and begin the most suitable short reaction; additional allowed actions may appear as large contextual icons only if the scene remains clear.
 

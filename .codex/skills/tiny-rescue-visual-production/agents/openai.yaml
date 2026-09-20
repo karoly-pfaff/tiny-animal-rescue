@@ -1,4 +1,4 @@
 interface:
-  display_name: "Tiny Rescue Visual Production"
-  short_description: "Create consistent game art and image prompts"
-  default_prompt: "Use $tiny-rescue-visual-production to prepare a production-ready image prompt."
+  display_name: 'Tiny Rescue Visual Production'
+  short_description: 'Create consistent game art and image prompts'
+  default_prompt: 'Use $tiny-rescue-visual-production to prepare a production-ready image prompt.'

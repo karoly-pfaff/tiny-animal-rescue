@@ -12,4 +12,3 @@ Gentle instrumental welcome theme for a premium preschool animal-rescue game, wa
 ```
 
 Selection note: the first five seconds should feel welcoming without a loud logo sting.
-

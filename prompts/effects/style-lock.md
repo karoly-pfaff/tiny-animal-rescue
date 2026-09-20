@@ -19,4 +19,3 @@ no crowd, no unrelated background event, no watermark, and no long cinematic rev
 ## Repetition safety
 
 Repeated effects should tolerate rapid playback without becoming shrill. Avoid narrow piercing frequencies, hard clicks, excessive stereo width, and long overlapping tails.
-

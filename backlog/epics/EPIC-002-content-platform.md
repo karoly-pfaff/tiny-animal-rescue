@@ -23,7 +23,7 @@ Replace vertical-slice-specific declarations with a versioned, validated content
 
 - [ ] Build tooling discovers declared pack manifests deterministically.
 - [ ] Content-directory declarations reject empty, absolute POSIX/Windows, URL, traversal, dot-segment,
-  backslash, and malformed paths before filesystem discovery.
+      backslash, and malformed paths before filesystem discovery.
 - [ ] Dependency order is resolved and cycles fail clearly.
 - [ ] Duplicate global IDs fail validation.
 - [ ] Base pack cannot depend on an expansion pack.

@@ -19,15 +19,15 @@ is a separate post-M9 procedure.
 - [ ] Clean install and production build are reproducible.
 - [ ] Relative asset paths and static preview work offline after initial load where configured.
 - [ ] The public bundle contains no source maps, embedded source/debug metadata, development-only
-  routes, endpoints, overlays, or test assets; `test:artifact` enforces the
-  [artifact policy](../../docs/delivery/quality-gates.md#dependency-and-artifact-gates).
+      routes, endpoints, overlays, or test assets; `test:artifact` enforces the
+      [artifact policy](../../docs/delivery/quality-gates.md#dependency-and-artifact-gates).
 - [ ] Bundle and asset size reports are captured and unexpected regressions resolved.
 
 ### E009-S02 — Full validation pipeline
 
 - [ ] `validate:release` composes `validate:full` with release-content, asset/provenance, license,
-  static-security, artifact, full-viewport E2E, and visual gates in the stable order defined by the
-  [quality-gate contract](../../docs/delivery/quality-gates.md#aggregate-gates).
+      static-security, artifact, full-viewport E2E, and visual gates in the stable order defined by the
+      [quality-gate contract](../../docs/delivery/quality-gates.md#required-commands).
 - [ ] Failures retain useful reports/screenshots.
 - [ ] Release validation forbids placeholders and requires the exact catalog.
 - [ ] CI and local commands use the same underlying scripts.
@@ -47,7 +47,7 @@ is a separate post-M9 procedure.
 - [ ] Content author guide can add a conforming sample mission without engine edits.
 - [ ] Save compatibility and reset behavior are documented for maintainers.
 - [ ] Product, base-pack, content-contract, save-schema, and specification versions are distinguished
-  and release/tag mechanics match `docs/delivery/versioning.md`.
+      and release/tag mechanics match `docs/delivery/versioning.md`.
 
 ### E009-S05 — Final playthrough and sign-off
 
@@ -55,9 +55,9 @@ is a separate post-M9 procedure.
 - [ ] Clean-save EN playthrough completes all progression.
 - [ ] Seeded all-complete shelter and replay flow pass.
 - [ ] Every non-waivable release-checklist item passes; an eligible mechanical finding may be
-  filtered only by an active exact entry in `quality-waivers.json` that passes `validate:waivers`.
+      filtered only by an active exact entry in `quality-waivers.json` that passes `validate:waivers`.
 - [ ] EPIC-009 records product/base-pack `0.10.0`, immutable `v0.10.0` release evidence, and release
-  notes summarizing player-visible content and known limitations.
+      notes summarizing player-visible content and known limitations.
 
 ### E009-S06 — Package expansion seam evidence
 

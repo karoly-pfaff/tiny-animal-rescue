@@ -1,7 +1,6 @@
-import type { RouteId } from '../app/routes';
-
 export type Locale = 'hu' | 'en';
-export type ScreenTitleKey = `screen.${RouteId}.title`;
+export type ScreenId = 'start' | 'map' | 'mission' | 'celebration' | 'shelter' | 'parent-settings';
+export type ScreenTitleKey = `screen.${ScreenId}.title`;
 
 type TemporaryStrings = Readonly<{
   appTitle: string;

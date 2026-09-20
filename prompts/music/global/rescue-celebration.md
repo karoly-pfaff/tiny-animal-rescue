@@ -12,4 +12,3 @@ Short warm instrumental celebration for successfully rescuing a friendly animal 
 ```
 
 Selection note: the cue must remain pleasant after many mission completions.
-

@@ -12,4 +12,3 @@ Light instrumental exploration ambience for a colorful preschool animal-rescue m
 ```
 
 Selection note: motion is welcome, but the track must never pressure the child to choose quickly.
-

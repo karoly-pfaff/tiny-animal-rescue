@@ -27,4 +27,3 @@ Codex can reliably create new records against explicit contracts. Build-time val
 - **Hard-coded mission components:** initially fast, but every content addition changes engine code and duplicates behavior.
 - **Database/CMS in v1:** unnecessary infrastructure and network/privacy surface.
 - **Loose JSON with runtime defaults only:** errors become late, ambiguous, and difficult to test.
-

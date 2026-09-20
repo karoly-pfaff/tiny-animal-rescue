@@ -21,4 +21,3 @@ Generated songs often contain an obvious opening, development, and ending. For g
 ## Location continuity
 
 All tracks share the project music style lock, while each place gets one identifying instrument or texture. Reuse a small three- or four-note rescue-center motif subtly across Start, Map, Shelter, and Celebration so the game feels like one world.
-

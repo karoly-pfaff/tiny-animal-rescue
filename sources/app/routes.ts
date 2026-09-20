@@ -1,19 +1,14 @@
-const routeIds = [
-  'start',
-  'map',
-  'mission',
-  'celebration',
-  'shelter',
-  'parent-settings',
-] as const;
+import type { ScreenId, ScreenTitleKey } from '../i18n/temporary-localization';
 
-export type RouteId = (typeof routeIds)[number];
+type RouteId = ScreenId;
 
-export type RouteDefinition = Readonly<{
-  id: RouteId;
-  path: `/${string}`;
-  titleKey: `screen.${RouteId}.title`;
-}>;
+export type RouteDefinition = {
+  [Id in RouteId]: Readonly<{
+    id: Id;
+    path: `/${string}`;
+    titleKey: `screen.${Id}.title` & ScreenTitleKey;
+  }>;
+}[RouteId];
 
 const routes = [
   { id: 'start', path: '/', titleKey: 'screen.start.title' },

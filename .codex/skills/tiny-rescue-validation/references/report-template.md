@@ -7,8 +7,8 @@ Result: PASS | FAIL | BLOCKED
 
 ## Acceptance criteria
 
-| Criterion | Status | Evidence |
-|---|---|---|
+| Criterion   | Status                | Evidence                             |
+| ----------- | --------------------- | ------------------------------------ |
 | <criterion> | Pass/Fail/Blocked/N/A | <file, behavior, output, screenshot> |
 
 ## Checks run

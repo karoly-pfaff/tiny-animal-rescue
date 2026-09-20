@@ -76,28 +76,23 @@ An animal does not define mission logic or arbitrary animation callbacks.
 
 ```ts
 type Mission = {
-  id: string
-  type: 'rescue' | 'help' | 'world'
-  locationId: string
-  subjectAnimalId?: string
-  prerequisites: MissionPrerequisite[]
-  scene: SceneDefinition
-  steps: MissionStep[]
-  reward: MissionReward
-  localization: MissionLocalizationKeys
-  assets: MissionAssets
-}
+  id: string;
+  type: 'rescue' | 'help' | 'world';
+  locationId: string;
+  subjectAnimalId?: string;
+  prerequisites: MissionPrerequisite[];
+  scene: SceneDefinition;
+  steps: MissionStep[];
+  reward: MissionReward;
+  localization: MissionLocalizationKeys;
+  assets: MissionAssets;
+};
 ```
 
 The accepted step union is:
 
 ```ts
-type MissionStep =
-  | TapStep
-  | DragStep
-  | WipeStep
-  | MatchStep
-  | TraceStep
+type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
 ```
 
 Every step has a stable step ID, prompt key, visual targets, success cue, and hint strategy. Per-type settings are constrained and defaulted during normalization.
@@ -106,10 +101,10 @@ Every step has a stable step ID, prompt key, visual targets, success cue, and hi
 
 ```ts
 type MissionReward = {
-  completeMission: true
-  unlockResidentId?: string
-  worldFlags?: string[]
-}
+  completeMission: true;
+  unlockResidentId?: string;
+  worldFlags?: string[];
+};
 ```
 
 - Rescue must unlock exactly the subject resident.

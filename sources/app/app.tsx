@@ -20,9 +20,13 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const updatePath = () => setPath(getHashPath());
+    const updatePath = () => {
+      setPath(getHashPath());
+    };
     window.addEventListener('hashchange', updatePath);
-    return () => window.removeEventListener('hashchange', updatePath);
+    return () => {
+      window.removeEventListener('hashchange', updatePath);
+    };
   }, []);
 
   return <FoundationScreen locale={foundationLocale} route={resolveRoute(path)} />;

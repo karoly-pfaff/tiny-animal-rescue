@@ -54,11 +54,11 @@ A typical session is 5–15 minutes:
 
 ## Mission categories
 
-| Category | Purpose | Unlocks a resident? | v1 count |
-|---|---|---:|---:|
-| Rescue | Introduce and save a named animal | Yes, exactly one | 12 |
-| Help | Revisit an existing resident in a new small problem | No | 2 |
-| World | Improve or repair the environment | No | 2 |
+| Category | Purpose                                             | Unlocks a resident? | v1 count |
+| -------- | --------------------------------------------------- | ------------------: | -------: |
+| Rescue   | Introduce and save a named animal                   |    Yes, exactly one |       12 |
+| Help     | Revisit an existing resident in a new small problem |                  No |        2 |
+| World    | Improve or repair the environment                   |                  No |        2 |
 
 ## Interaction primitives
 
@@ -131,4 +131,3 @@ There is no failure state. If the child performs an irrelevant action:
 ## Parent boundary
 
 Settings, reset progress, credits, and external links are parent-facing. Entry uses a simple adult gate that does not collect personal information. External links do not appear in the child flow.
-

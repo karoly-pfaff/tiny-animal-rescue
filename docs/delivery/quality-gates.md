@@ -46,14 +46,14 @@ not hide production errors through a weaker project configuration.
 
 ## Static quality gates
 
-| Gate | Tool and required behavior | Failure condition |
-|---|---|---|
-| Format | Prettier in check mode over authored TS/TSX/JS/JSON/CSS/Markdown/YAML | Any file would change |
-| Typed lint | ESLint flat config with typescript-eslint type-aware strict rules and React Hooks rules | Any error or warning; run with `--max-warnings=0` |
-| Duplication | Repository wrapper around jscpd strict mode over authored production/tool source, `minLines: 8`, `minTokens: 100`, `threshold: 0` | Any qualifying clone; wrapper also fails unless its machine report proves at least one eligible authored file/token set was scanned |
-| Dead code | Knip over production, tests, scripts, Vite, Vitest, and Playwright entry points | Any unused file, export, type, dependency, unresolved import, cycle, config hint, or tag hint |
-| Type safety | `tsc --noEmit` using the repository project graph | Any diagnostic |
-| Documentation | Markdown lint plus local link, anchor, referenced-file, and image-path validation | Any malformed document or broken local reference |
+| Gate          | Tool and required behavior                                                                                                        | Failure condition                                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Format        | Prettier in check mode over authored TS/TSX/JS/JSON/CSS/Markdown/YAML                                                             | Any file would change                                                                                                               |
+| Typed lint    | ESLint flat config with typescript-eslint type-aware strict rules and React Hooks rules                                           | Any error or warning; run with `--max-warnings=0`                                                                                   |
+| Duplication   | Repository wrapper around jscpd strict mode over authored production/tool source, `minLines: 8`, `minTokens: 100`, `threshold: 0` | Any qualifying clone; wrapper also fails unless its machine report proves at least one eligible authored file/token set was scanned |
+| Dead code     | Knip over production, tests, scripts, Vite, Vitest, and Playwright entry points                                                   | Any unused file, export, type, dependency, unresolved import, cycle, config hint, or tag hint                                       |
+| Type safety   | `tsc --noEmit` using the repository project graph                                                                                 | Any diagnostic                                                                                                                      |
+| Documentation | Markdown lint plus local link, anchor, referenced-file, and image-path validation                                                 | Any malformed document or broken local reference                                                                                    |
 
 Generated files, `build/`, coverage, browser reports, third-party code, and binary assets are excluded
 by precise paths. Tests may be excluded from duplicate detection, but not from formatting, lint,
@@ -71,14 +71,14 @@ a behavioral change.
 
 Production TS/TSX starts with these hard maximums:
 
-| Rule | Maximum |
-|---|---:|
-| Cyclomatic complexity | 5 |
-| Statements per function | 10 |
-| Nesting depth | 4 |
-| Parameters | 3 |
-| Lines per function | 120, excluding blank/comment lines |
-| Lines per file | 250, excluding blank/comment lines |
+| Rule                    |                            Maximum |
+| ----------------------- | ---------------------------------: |
+| Cyclomatic complexity   |                                  5 |
+| Statements per function |                                 10 |
+| Nesting depth           |                                  4 |
+| Parameters              |                                  3 |
+| Lines per function      | 120, excluding blank/comment lines |
+| Lines per file          | 250, excluding blank/comment lines |
 
 The numbers are extraction signals, not targets. Tests may disable statement, file, function-length,
 and complexity limits for readable arrange-act-assert scenarios; correctness, parameter-count, typed
@@ -224,15 +224,15 @@ network-backed PR uniqueness is not pretended to be an offline local check.
 Every pull request, merge queue candidate if enabled, and push to `main` runs required, non-skippable
 checks with stable names:
 
-| Required check | Contents |
-|---|---|
-| `quality` | format, ESLint, jscpd, Knip, typecheck |
-| `history` | story/epic commit shape, Conventional Commits, PR story map, watermark/signature rejection |
-| `tests` | unit, integration, coverage, content/asset contracts, automated accessibility |
-| `browser` | production build, preview smoke, E2E viewport/input matrix |
-| `visual` | deterministic screenshot comparison with retained diffs |
-| `supply-chain` | frozen install, dependency advisory, shipped-license/SBOM and provenance checks |
-| `security` | repository secret/static scans plus provider-hosted CodeQL SARIF |
+| Required check | Contents                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| `quality`      | format, ESLint, jscpd, Knip, typecheck                                                     |
+| `history`      | story/epic commit shape, Conventional Commits, PR story map, watermark/signature rejection |
+| `tests`        | unit, integration, coverage, content/asset contracts, automated accessibility              |
+| `browser`      | production build, preview smoke, E2E viewport/input matrix                                 |
+| `visual`       | deterministic screenshot comparison with retained diffs                                    |
+| `supply-chain` | frozen install, dependency advisory, shipped-license/SBOM and provenance checks            |
+| `security`     | repository secret/static scans plus provider-hosted CodeQL SARIF                           |
 
 `main` is protected: no direct push, no force push, no merge with a missing/stale/failing required
 check, and no administrator bypass except a documented emergency. Required workflows cannot use path

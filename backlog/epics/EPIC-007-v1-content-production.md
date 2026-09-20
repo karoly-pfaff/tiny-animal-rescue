@@ -23,15 +23,15 @@ Individual mission work may add content, art, audio, composition data, and tests
 - [ ] Audio brief defines narrator delivery, loudness targets, effect style, music loops, and language inventory.
 - [ ] Asset provenance and license records are mandatory.
 - [ ] The root asset prompt pack, repo-local visual-production skill, and `prompts/images/` templates
-  implement the approved visual style lock, production/presentation split, negative constraints, and
-  asset routing.
+      implement the approved visual style lock, production/presentation split, negative constraints, and
+      asset routing.
 - [ ] The same asset prompt pack, its music/effects style locks, catalog, and integration guide define
-  semantic audio IDs, generation constraints, edit/loop/export workflow, and mix intent.
+      semantic audio IDs, generation constraints, edit/loop/export workflow, and mix intent.
 - [ ] Every approved asset records its final prompt, tool/date when known, references, dimensions,
-  transparency, production-safe classification, full-size QA, known defects, and provenance/license.
+      transparency, production-safe classification, full-size QA, known defects, and provenance/license.
 - [ ] Every approved music/effect asset records its runtime ID, final source prompt, tool/date when
-  known, edit/mastering history, duration/format, repeat/overlap QA, exported path, and
-  provenance/license.
+      known, edit/mastering history, duration/format, repeat/overlap QA, exported path, and
+      provenance/license.
 - [ ] Concepts in `screens/` remain presentation-only and cannot resolve as production assets.
 
 ### E007-S02 — Garden content set

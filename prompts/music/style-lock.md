@@ -12,4 +12,3 @@ Compose gentle instrumental ambient music for a premium preschool animal-rescue 
 - no lead melody that competes with spoken prompts;
 - natural phrase boundaries suitable for extracting a seamless-feeling loop;
 - calm ending is acceptable, but the usable middle must remain steady.
-
