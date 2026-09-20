@@ -31,3 +31,13 @@ finding; the disposition remains reviewable with the story history.
 - Disposition: the remaining Medium is declined for E000-S03 because deterministic visual rendering
   is an explicit E000-S04 acceptance criterion. E000-S04 owns a bundled font or an equally reproducible
   renderer policy and may not close while this concern remains.
+
+## E000-S04 — Establish visual and responsive shell
+
+- Round 1 found that the initial bundled font choice did not meet the Baloo 2 child-label contract and
+  that the first localization-boundary test could miss indirect text and TypeScript browser sinks.
+- Both font families are now self-hosted and pinned; Baloo 2 ExtraBold-equivalent weight is verified
+  for Hungarian glyphs and used for titles/actions. The localization validator scans production
+  TypeScript and TSX, runs inside `lint:code`, and has negative fixtures for all reported bypasses.
+- Round 2 verified both fixes and found no new High issue.
+- Disposition: passed with no unresolved High or Medium finding.

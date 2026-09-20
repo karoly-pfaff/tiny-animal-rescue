@@ -51,10 +51,10 @@ Acceptance criteria:
 
 ### E000-S04 — Establish visual and responsive shell
 
-- [ ] A 1024×768 design surface scales without distortion.
-- [ ] Safe-area handling exists for landscape and portrait.
-- [ ] Reference viewport screenshots are generated deterministically.
-- [ ] No player-facing string is hard-coded outside the temporary localization adapter.
+- [x] A 1024×768 design surface scales without distortion.
+- [x] Safe-area handling exists for landscape and portrait.
+- [x] Reference viewport screenshots are generated deterministically.
+- [x] No player-facing string is hard-coded outside the temporary localization adapter.
 
 ### E000-S05 — Add repository guidance
 

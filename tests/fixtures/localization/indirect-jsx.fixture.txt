@@ -1,0 +1,2 @@
+const label = 'Play';
+export const View = () => <button>{label}</button>;

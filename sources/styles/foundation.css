@@ -1,7 +1,12 @@
 :root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
   color: #392f25;
   background: #f4dfac;
-  font-family: Nunito, system-ui, sans-serif;
+  font-family: 'Nunito Variable', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -96,8 +101,8 @@ button {
 
 .screen-heading {
   position: absolute;
-  top: max(8%, env(safe-area-inset-top));
-  left: max(8%, env(safe-area-inset-left));
+  top: max(8%, var(--safe-area-top));
+  left: max(8%, var(--safe-area-left));
   z-index: 1;
   max-width: 58%;
   padding: clamp(1rem, 3vw, 2rem);
@@ -113,7 +118,9 @@ button {
 }
 
 .screen-heading h1 {
+  font-family: 'Baloo 2 Variable', sans-serif;
   font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -133,7 +140,7 @@ button {
 
 .primary-action {
   position: absolute;
-  bottom: max(10%, env(safe-area-inset-bottom));
+  bottom: max(10%, var(--safe-area-bottom));
   left: 50%;
   z-index: 1;
   min-width: 30%;
@@ -144,8 +151,9 @@ button {
   color: #fff;
   background: #df7d4f;
   box-shadow: 0 10px 0 #a94d38;
+  font-family: 'Baloo 2 Variable', sans-serif;
   font-size: clamp(1.5rem, 4vw, 3rem);
-  font-weight: 900;
+  font-weight: 800;
   opacity: 1;
 }
 
@@ -157,9 +165,9 @@ button {
   }
 
   .screen-heading {
-    top: max(10%, env(safe-area-inset-top));
-    right: max(7%, env(safe-area-inset-right));
-    left: max(7%, env(safe-area-inset-left));
+    top: max(10%, var(--safe-area-top));
+    right: max(7%, var(--safe-area-right));
+    left: max(7%, var(--safe-area-left));
     max-width: none;
     text-align: center;
   }
