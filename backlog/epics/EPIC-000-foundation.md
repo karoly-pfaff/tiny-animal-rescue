@@ -39,14 +39,14 @@ Acceptance criteria:
 
 ### E000-S03 — Establish test harnesses
 
-- [ ] Vitest runs a representative unit and DOM component test.
-- [ ] Playwright runs a start-screen smoke test against production preview.
-- [ ] Browser/preview ports are configurable and cleaned up after tests.
-- [ ] Pointer-event helpers exist for mouse and touch-emulated tests.
-- [ ] Coverage thresholds start at 90% statements/lines/functions and 85% branches; a deliberate
+- [x] Vitest runs a representative unit and DOM component test.
+- [x] Playwright runs a start-screen smoke test against production preview.
+- [x] Browser/preview ports are configurable and cleaned up after tests.
+- [x] Pointer-event helpers exist for mouse and touch-emulated tests.
+- [x] Coverage thresholds start at 90% statements/lines/functions and 85% branches; a deliberate
       critical pure-policy fixture demonstrates the 100% branch override.
-- [ ] Empty test/content/browser collection fails instead of reporting a vacuous pass.
-- [ ] Required test lanes retain machine-readable coverage, trace, screenshot, and visual-diff
+- [x] Empty test/content/browser collection fails instead of reporting a vacuous pass.
+- [x] Required test lanes retain machine-readable coverage, trace, screenshot, and visual-diff
       artifacts on failure.
 
 ### E000-S04 — Establish visual and responsive shell
@@ -103,6 +103,9 @@ npm run validate:full
 Inspect the required CI check set, retained reports, production-preview screenshots at the supported
 viewports, and the independent-audit disposition. No EPIC-000 gate may be marked not applicable at
 exit.
+
+Independent review evidence and dispositions are recorded in the
+[EPIC-000 audit log](../../docs/delivery/audits/EPIC-000.md).
 
 ## Primary risks
 

@@ -1,0 +1,33 @@
+# EPIC-000 independent audit log
+
+This log records the fresh-context review required by `AGENTS.md`. A later passing gate never erases a
+finding; the disposition remains reviewable with the story history.
+
+## E000-S01 — Bootstrap application
+
+- Round 1 found an inline document title outside localization and unused route constants. Both were
+  fixed in the story commit.
+- Round 2 verified both fixes and found no new High issue.
+- Disposition: passed with no unresolved High or Medium finding.
+
+## E000-S02 — Establish code quality commands
+
+- Round 1 found incomplete Knip issue coverage, incomplete jscpd scope/evidence, weak documentation
+  link edge cases, excluded bootstrap coverage, and architecture-boundary gaps. All were fixed.
+- Round 2 found that Knip namespace export/type checks remained disabled. The stable command now
+  includes `nsExports` and `nsTypes`; debug output confirmed that every issue type is enabled as an
+  error.
+- Disposition: passed with no unresolved High or Medium finding after the bounded second round.
+
+## E000-S03 — Establish test harnesses
+
+- Round 1 found browser production code exposed to Node globals, swallowed Vite preview diagnostics,
+  and platform-coupled visual baselines. Node globals were removed from the root type environment;
+  preview warning/error diagnostics now fail teardown and have focused tests; snapshot paths no longer
+  encode the host platform.
+- Round 2 verified the first two fixes and found no new High issue. It retained one Medium concern:
+  exact-pixel output can still vary because the temporary visual shell falls back to the host system
+  font.
+- Disposition: the remaining Medium is declined for E000-S03 because deterministic visual rendering
+  is an explicit E000-S04 acceptance criterion. E000-S04 owns a bundled font or an equally reproducible
+  renderer policy and may not close while this concern remains.

@@ -8,6 +8,8 @@ export default defineConfig({
     globals: false,
     setupFiles: ['./tests/setup-tests.ts'],
     include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['tests/e2e/**'],
+    passWithNoTests: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],
@@ -18,6 +20,12 @@ export default defineConfig({
         functions: 90,
         lines: 90,
         statements: 90,
+        'sources/app/routes.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
       },
     },
   },
