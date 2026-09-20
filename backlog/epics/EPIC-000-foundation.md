@@ -18,11 +18,11 @@ As a developer, I want a minimal application that starts, builds, and previews s
 
 Acceptance criteria:
 
-- [ ] React, TypeScript, and Vite are configured.
-- [ ] Strict TypeScript options are enabled.
-- [ ] Authored code lives under `sources/`; build output goes to `build/`.
-- [ ] Start, Map, Mission, Celebration, Shelter, and Parent Settings routes/screens have typed route definitions and simple placeholders.
-- [ ] The application works with a relative production base path.
+- [x] React, TypeScript, and Vite are configured.
+- [x] Strict TypeScript options are enabled.
+- [x] Authored code lives under `sources/`; build output goes to `build/`.
+- [x] Start, Map, Mission, Celebration, Shelter, and Parent Settings routes/screens have typed route definitions and simple placeholders.
+- [x] The application works with a relative production base path.
 
 ### E000-S02 — Establish code quality commands
 
