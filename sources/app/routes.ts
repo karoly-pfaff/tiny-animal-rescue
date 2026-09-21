@@ -1,4 +1,4 @@
-import type { ScreenId, ScreenTitleKey } from '../i18n/temporary-localization';
+import type { ScreenId, ScreenTitleKey } from '../i18n/localization';
 
 type RouteId = ScreenId;
 

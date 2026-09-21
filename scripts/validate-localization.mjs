@@ -3,8 +3,11 @@ import { relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 const structuralAttributes = new Set([
+  'aria-describedby',
   'aria-hidden',
   'aria-labelledby',
+  'aria-live',
+  'aria-modal',
   'className',
   'htmlFor',
   'id',
@@ -61,11 +64,19 @@ function isModuleSpecifier(node) {
 }
 
 function isStructuralAttribute(node) {
-  const parent = node.parent;
-  if (!ts.isJsxAttribute(parent) || parent.initializer !== node || !ts.isIdentifier(parent.name)) {
+  let parent = node.parent;
+  while (parent !== undefined && !ts.isJsxAttribute(parent)) {
+    if (ts.isJsxElement(parent) || ts.isJsxSelfClosingElement(parent)) return false;
+    parent = parent.parent;
+  }
+  if (parent === undefined || !ts.isIdentifier(parent.name)) {
     return false;
   }
   return structuralAttributes.has(parent.name.text) || parent.name.text.startsWith('data-');
+}
+
+function isElementAccessKey(node) {
+  return ts.isElementAccessExpression(node.parent) && node.parent.argumentExpression === node;
 }
 
 function isTechnicalPropertyValue(node) {
@@ -101,13 +112,32 @@ function isDeveloperError(node) {
   );
 }
 
-function isLocaleSelection(node) {
+function isConstrainedTechnicalLiteral(node) {
   const parent = node.parent;
   return (
     ts.isSatisfiesExpression(parent) &&
     ts.isTypeReferenceNode(parent.type) &&
     ts.isIdentifier(parent.type.typeName) &&
-    parent.type.typeName.text === 'Locale'
+    [
+      'DragPhase',
+      'BrowserCapability',
+      'FirstRescueAssetRole',
+      'FirstRescueMissionId',
+      'FirstRescueNarrationCue',
+      'FirstRescueProgressLoadStatus',
+      'FirstRescueResidentId',
+      'FirstRescueWorldFlag',
+      'IDBTransactionMode',
+      'LanguageTag',
+      'Locale',
+      'MissionPhase',
+      'NarrationCue',
+      'NarrationFilename',
+      'NarrationObjectKey',
+      'PersistenceKey',
+      'ProgressBootstrapStatus',
+      'SaveGameLoadStatus',
+    ].includes(parent.type.typeName.text)
   );
 }
 
@@ -133,11 +163,12 @@ function isAllowedLiteral(node) {
   }
   return (
     isStructuralAttribute(node) ||
+    isElementAccessKey(node) ||
     isTechnicalPropertyValue(node) ||
     isComparisonValue(node) ||
     isTechnicalCallArgument(node) ||
     isDeveloperError(node) ||
-    isLocaleSelection(node)
+    isConstrainedTechnicalLiteral(node)
   );
 }
 

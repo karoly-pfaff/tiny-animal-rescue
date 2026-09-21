@@ -1,25 +1,35 @@
-import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import { validateBasePackRelease } from './lib/content-release-policy.mjs';
 import { listRepositoryFiles, readJson, repositoryPath } from './lib/repository-files.mjs';
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 
 const contracts = [
-  ['pack.json', 'schemas/pack.schema.json'],
-  ['mimi-kitten.json', 'schemas/animal.schema.json'],
-  ['garden-kitten-tree.json', 'schemas/mission.schema.json'],
+  ['content/examples/pack.json', 'schemas/pack.schema.json'],
+  ['content/examples/mimi-kitten.json', 'schemas/animal.schema.json'],
+  ['content/examples/garden-kitten-tree.json', 'schemas/mission.schema.json'],
+  ['content/base/pack.json', 'schemas/pack.schema.json'],
 ];
 const findings = [];
+const validators = new Map();
 
-for (const [exampleName, schemaName] of contracts) {
-  const validate = ajv.compile(await readJson(schemaName));
-  const value = await readJson(path.join('content', 'examples', exampleName));
+for (const [documentName, schemaName] of contracts) {
+  let validate = validators.get(schemaName);
+  if (validate === undefined) {
+    validate = ajv.compile(await readJson(schemaName));
+    validators.set(schemaName, validate);
+  }
+  const value = await readJson(documentName);
   if (!validate(value)) {
-    findings.push(`${exampleName}: ${ajv.errorsText(validate.errors, { separator: '; ' })}`);
+    findings.push(`${documentName}: ${ajv.errorsText(validate.errors, { separator: '; ' })}`);
   }
 }
+
+const basePack = await readJson('content/base/pack.json');
+const packageManifest = await readJson('package.json');
+findings.push(...validateBasePackRelease(basePack, packageManifest));
 
 const mission = await readJson('content/examples/garden-kitten-tree.json');
 if (mission.steps.length < 2 || mission.steps.length > 4) {
@@ -45,5 +55,5 @@ if (findings.length > 0) {
 }
 
 console.log(
-  `Validated ${contracts.length} schema example(s) and ${contentFiles.length} content file(s).`,
+  `Validated ${contracts.length} schema document(s) and ${contentFiles.length} content file(s).`,
 );

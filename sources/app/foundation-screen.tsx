@@ -1,6 +1,6 @@
 import type { RouteDefinition } from './routes';
-import type { Locale, ScreenTitleKey } from '../i18n/temporary-localization';
-import { getTemporaryStrings } from '../i18n/temporary-localization';
+import type { Locale, ScreenTitleKey } from '../i18n/localization';
+import { getStrings } from '../i18n/localization';
 
 type FoundationScreenProps = Readonly<{
   locale: Locale;
@@ -8,11 +8,11 @@ type FoundationScreenProps = Readonly<{
 }>;
 
 function getScreenTitle(locale: Locale, titleKey: ScreenTitleKey): string {
-  return getTemporaryStrings(locale).screenTitles[titleKey];
+  return getStrings(locale).screenTitles[titleKey];
 }
 
 export function FoundationScreen({ locale, route }: FoundationScreenProps) {
-  const strings = getTemporaryStrings(locale);
+  const strings = getStrings(locale);
   const isStart = route.id === 'start';
 
   return (
@@ -28,11 +28,11 @@ export function FoundationScreen({ locale, route }: FoundationScreenProps) {
         <header className="screen-heading">
           <p className="eyebrow">{strings.appTitle}</p>
           <h1 id="screen-title">{getScreenTitle(locale, route.titleKey)}</h1>
-          <p>{strings.routeHint}</p>
+          <p>{strings.mapHint}</p>
         </header>
         {isStart ? (
           <button className="primary-action" type="button" disabled>
-            {strings.primaryAction}
+            {strings.play}
           </button>
         ) : null}
       </section>

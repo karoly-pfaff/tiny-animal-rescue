@@ -13,6 +13,7 @@ ADRs are binding unless superseded. Implementation tasks must cite relevant ADRs
 | [ADR-0007](ADR-0007-no-executable-content.md)                | No executable pack code                                  | Accepted |
 | [ADR-0008](ADR-0008-complete-base-game-extensible-engine.md) | Complete v1 with optional expansion seam                 | Accepted |
 | [ADR-0009](ADR-0009-enforced-quality-and-versioned-epics.md) | Enforced quality gates and one-version-per-epic delivery | Accepted |
+| [ADR-0010](ADR-0010-external-production-media.md)            | External R2 delivery for production media                | Accepted |
 
 ## ADR format
 

@@ -5,10 +5,10 @@ import { FoundationScreen } from '../../sources/app/foundation-screen';
 import { resolveRoute } from '../../sources/app/routes';
 
 describe('FoundationScreen', () => {
-  it('renders the localized start surface and disabled future action', () => {
+  it('renders the localized foundation fallback and disabled future action', () => {
     render(<FoundationScreen locale="hu" route={resolveRoute('/')} />);
 
-    expect(screen.getByRole('heading', { name: 'Kezdőképernyő' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Kis Állatmentők' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Játék' })).toBeDisabled();
   });
 

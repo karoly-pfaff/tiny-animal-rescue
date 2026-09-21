@@ -83,8 +83,8 @@ Implement one end-to-end vertical slice before generalizing. The first slice is 
 ## Status
 
 - Specification baseline: **v0.1.0** (document revision, not a shipped product version)
-- Current product version: **v0.1.0** (EPIC-000 / M0 candidate)
-- Next milestone release: **v0.2.0** (EPIC-001 / M1)
+- Current product version: **v0.2.0** (EPIC-001 / M1 candidate)
+- Next milestone release: **v0.3.0** (EPIC-002 / M2)
 - Target product release: **v1.0.0**
 
 Each epic is one milestone and one `0.x.0` product minor. EPIC-009 produces `v0.10.0`; the

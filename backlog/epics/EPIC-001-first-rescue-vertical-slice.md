@@ -1,10 +1,10 @@
 # EPIC-001: First rescue vertical slice
 
-- Status: Planned
+- Status: Done
 - Milestone: M1
 - Target version: `0.2.0`
 - Dependencies: EPIC-000
-- ADRs: ADR-0001, ADR-0005, ADR-0006
+- ADRs: ADR-0001, ADR-0005, ADR-0006, ADR-0010
 
 ## Outcome
 
@@ -14,46 +14,59 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S01 — Child-facing start and first-run flow
 
-- [ ] One dominant Play action enters the first mission path.
-- [ ] First-run HU/EN selection is accessible without requiring reading from the child after caregiver setup.
-- [ ] Settings entry is visually secondary and parent-oriented.
-- [ ] Start art contains no baked text.
+- [x] One dominant Play action enters the first mission path.
+- [x] First-run HU/EN selection is accessible without requiring reading from the child after caregiver setup.
+- [x] Settings entry is visually secondary and parent-oriented.
+- [x] Start art contains no baked text.
 
 ### E001-S02 — Minimal Garden map entry
 
-- [ ] The map shows the shelter and Garden mission marker.
-- [ ] Selecting the marker opens the correct mission.
-- [ ] Other v1 locations are not yet shown as broken/locked promises.
-- [ ] Back navigation is safe from accidental single taps during play.
+- [x] The map shows the shelter and Garden mission marker.
+- [x] Selecting the marker opens the correct mission.
+- [x] Other v1 locations are not yet shown as broken/locked promises.
+- [x] Back navigation is safe from accidental single taps during play.
 
 ### E001-S03 — Ladder drag step
 
-- [ ] The ladder follows pointer/touch with a visible offset.
-- [ ] A valid drop snaps to the tree and completes once.
-- [ ] An invalid drop returns gently without negative feedback.
-- [ ] Idle guidance pulses and demonstrates the drag under a fake clock.
-- [ ] Responsive coordinate mapping is covered by tests.
+- [x] The ladder follows pointer/touch with a visible offset.
+- [x] A valid drop snaps to the tree and completes once.
+- [x] An invalid drop returns gently without negative feedback.
+- [x] Idle guidance pulses and demonstrates the drag under a fake clock.
+- [x] Responsive coordinate mapping is covered by tests.
 
 ### E001-S04 — Mimi tap and rescue completion
 
-- [ ] Mimi becomes actionable only after the ladder step.
-- [ ] A tap triggers the descent/happy state and completes the mission once.
-- [ ] Reward writes before celebration begins.
-- [ ] Celebration narrates Mimi's localized name and offers Map/Shelter navigation.
+- [x] Mimi becomes actionable only after the ladder step.
+- [x] A tap triggers the descent/happy state and completes the mission once.
+- [x] Reward writes before celebration begins.
+- [x] Celebration narrates Mimi's localized name and offers Map/Shelter navigation.
 
 ### E001-S05 — Minimal persistence and shelter proof
 
-- [ ] Completion and Mimi's resident unlock survive reload.
-- [ ] Re-entering the mission replays it without duplicating rewards.
-- [ ] The minimal Indoor Room shows Mimi and supports one tap reaction.
-- [ ] Corrupt local test data follows a safe recovery path.
+- [x] Completion and Mimi's resident unlock survive reload.
+- [x] Re-entering the mission replays it without duplicating rewards.
+- [x] The minimal Indoor Room shows Mimi and supports one tap reaction.
+- [x] Corrupt local test data follows a safe recovery path.
 
 ### E001-S06 — Vertical-slice E2E proof
 
-- [ ] HU and EN happy paths pass.
-- [ ] Reload after completion shows Mimi in shelter.
-- [ ] Reference screenshots cover Start, Map, both mission steps, Celebration, and Shelter.
-- [ ] No console error or unhandled rejection occurs.
+- [x] HU and EN happy paths pass.
+- [x] Reload after completion shows Mimi in shelter.
+- [x] Reference screenshots cover Start, Map, both mission steps, Celebration, and Shelter.
+- [x] No console error or unhandled rejection occurs.
+
+### E001-S07 — Voice prompt and runtime contract
+
+- [x] The complete 115-line HU and EN voice inventories match the canonical ID contract and pass
+      schema, count, group, ID-order, delivery-energy, spoken-output, and R2-key uniqueness validation.
+- [x] Both required first-rescue steps and the success state resolve exact localized text and R2
+      object keys from one metadata-only runtime manifest.
+- [x] Narrator, pronunciation, generation, localization, clean-output, and release rules explicitly
+      forbid audible watermarks and generator/service branding.
+- [x] Voice media remains outside Git with `r2-pending` delivery and honest ownership, duration,
+      license, provenance, and pre-production audio QA metadata.
+- [x] The voice gate runs in `validate:quick`, and negative fixtures prove parity, mapping, text, and
+      clean-output defects are rejected.
 
 ## Exit criteria
 

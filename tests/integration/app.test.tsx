@@ -1,21 +1,189 @@
-import { act, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../sources/app/app';
+import { createSessionFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
+import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence/locale-bootstrap-repository';
 
 describe('App', () => {
-  it('sets document metadata and follows hash routes', () => {
-    render(<App />);
+  it('requires first-run locale choice, then follows the child path', async () => {
+    const repository = createMemoryLocaleBootstrapRepository();
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
 
+    expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
     expect(document.documentElement.lang).toBe('hu');
     expect(document.title).toBe('Kis Állatmentők');
-    expect(screen.getByRole('heading', { name: 'Kezdőképernyő' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Játék' })).toBeDisabled();
 
-    act(() => {
-      window.location.hash = '/map';
+    fireEvent.click(screen.getByRole('button', { name: 'Magyar' }));
+    await screen.findByRole('button', { name: 'Játék' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Játék' }));
+    await act(() => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
+      return Promise.resolve();
     });
 
     expect(screen.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+    expect(await repository.readLocale()).toBe('hu');
+  });
+
+  it('restores English and opens the parent-oriented settings route', async () => {
+    const repository = createMemoryLocaleBootstrapRepository('en');
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Tiny Rescue' })).toBeVisible();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Parent settings' }));
+    await act(() => {
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      return Promise.resolve();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Parent settings' })).toBeVisible();
+    expect(document.documentElement.lang).toBe('en');
+  });
+
+  it('does not let a deep link bypass first-run locale selection', async () => {
+    window.location.hash = '/map';
+    const repository = createMemoryLocaleBootstrapRepository();
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Mentési térkép' })).not.toBeInTheDocument();
+  });
+
+  it('keeps setup blocking and allows retry when locale persistence fails', async () => {
+    const writeLocale = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('write failed'))
+      .mockResolvedValueOnce();
+    const repository = { readLocale: () => Promise.resolve(null), writeLocale };
+    render(<App localeRepository={repository} />);
+
+    await screen.findByRole('dialog', { name: 'Válassz nyelvet' });
+    fireEvent.click(screen.getByRole('button', { name: 'English' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A beállítás nem menthető');
+    expect(screen.getByRole('dialog')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Játék' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'English' }));
+
+    expect(await screen.findByRole('heading', { name: 'Tiny Rescue' })).toBeVisible();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(writeLocale).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows only the first Garden call and opens the correct mission', async () => {
+    window.location.hash = '/map';
+    const repository = createMemoryLocaleBootstrapRepository('en');
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Shelter' })).toBeVisible();
+    expect(screen.queryByText(/Forest|Farm|Pond/u)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    expect(screen.getByRole('heading', { name: 'Mimi in the tree' })).toBeVisible();
+    expect(screen.getByRole('main')).toHaveAttribute('data-mission-id', 'garden-kitten-tree');
+  });
+
+  it('commits the rescue reward before opening the localized celebration', async () => {
+    window.location.hash = '/map';
+    const repository = createMemoryLocaleBootstrapRepository('en');
+    const progressStore = createSessionFirstRescueProgressStore();
+    const narrationService = { speak: vi.fn(), stop: vi.fn() };
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={repository}
+        narrationService={narrationService}
+      />,
+    );
+
+    await screen.findByRole('button', { name: 'Garden rescue: Mimi' });
+    fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+      detail: 0,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+
+    expect(progressStore.read()).toEqual({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    expect(screen.queryByRole('heading', { name: 'Mimi is rescued!' })).not.toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Mimi is rescued!' });
+    await act(() => {
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      return Promise.resolve();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Mimi is rescued!' })).toBeVisible();
+    expect(narrationService.speak).toHaveBeenCalledWith({
+      cue: 'voice.mission.garden-kitten-tree.success',
+      locale: 'en',
+      text: 'Mimi is safe!',
+    });
+  });
+
+  it('guards the celebration route until the rescue reward exists', async () => {
+    window.location.hash = '/celebration';
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('hu')}
+        narrationService={{ speak: vi.fn(), stop: vi.fn() }}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Mimi megmenekült!' })).not.toBeInTheDocument();
+  });
+
+  it('blocks play and retries after a transient save load failure', async () => {
+    window.location.hash = '/map';
+    const sessionStore = createSessionFirstRescueProgressStore();
+    const load = vi
+      .fn<() => Promise<'ready'>>()
+      .mockRejectedValueOnce(new Error('read failed'))
+      .mockResolvedValueOnce('ready');
+    const progressStore = { ...sessionStore, load };
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Saving is resting' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Garden rescue: Mimi' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });

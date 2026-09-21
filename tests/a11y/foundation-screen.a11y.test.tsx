@@ -7,7 +7,7 @@ import { resolveRoute } from '../../sources/app/routes';
 
 describe('foundation screen accessibility', () => {
   it('has no automatically detectable accessibility violations', async () => {
-    const { container } = render(<FoundationScreen locale="hu" route={resolveRoute('/')} />);
+    const { container } = render(<FoundationScreen locale="hu" route={resolveRoute('/map')} />);
     const results = await axe.run(container, {
       rules: { 'color-contrast': { enabled: false } },
     });

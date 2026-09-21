@@ -25,16 +25,16 @@ content/<pack-id>/assets/audio/
       progress/
       ambience/
       animals/
-  hu/
-    voice/
-  en/
-    voice/
+  voice/
+    hu/
+    en/
 ```
 
 Music and effects are language-neutral and belong under `assets/audio/shared/`. Localized narration
-belongs under the matching `assets/audio/hu/` or `assets/audio/en/` tree and must never be stored in
-`shared/`. Content records and manifests use pack-relative logical paths beginning with
-`assets/audio/`; they never use a repository-relative `content/<pack-id>/` prefix.
+belongs under the matching `assets/audio/voice/hu/` or `assets/audio/voice/en/` tree and must never be
+stored in `shared/`. An authored candidate's pack-relative source path begins with `assets/audio/`.
+The R2 object key stored in a runtime manifest is the path relative to `content/<pack-id>/assets/`, so
+it begins with `audio/`; neither form includes a repository-relative `content/<pack-id>/` prefix.
 
 ## IDs
 
@@ -57,8 +57,9 @@ assets/audio/shared/music/locations/garden-mission.ogg
 assets/audio/shared/effects/ui/confirm-01.ogg
 assets/audio/shared/effects/interactions/wipe-stroke-02.ogg
 assets/audio/shared/effects/animals/mimi-kitten-greet-01.ogg
-assets/audio/hu/voice/mission-garden-kitten-tree-intro.ogg
-assets/audio/en/voice/mission-garden-kitten-tree-intro.ogg
+assets/audio/voice/hu/missions/garden-kitten-tree/intro.ogg
+assets/audio/voice/en/missions/garden-kitten-tree/intro.ogg
+audio/voice/hu/missions/garden-kitten-tree/intro.ogg  # R2 object key
 ```
 
 ## Master and runtime formats

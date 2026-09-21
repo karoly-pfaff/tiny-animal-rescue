@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "category": "voice",
+  "format": "ogg",
+  "delivery": "r2-pending",
+  "locales": ["hu", "en"],
+  "runtime": {
+    "maxConcurrentVoices": 1,
+    "replaceCurrentOnNewLine": true
+  },
+  "assets": [
+    {
+      "cue": "voice.mission.garden-kitten-tree.step.place-ladder",
+      "role": "required-instruction",
+      "ownership": "base",
+      "narratorRole": "primary",
+      "durationBoundsSeconds": { "min": 0.4, "max": 2.5 },
+      "objectKeys": {
+        "hu": "audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg",
+        "en": "audio/voice/en/missions/garden-kitten-tree/step-place-ladder.ogg"
+      },
+      "fallbackText": {
+        "hu": "Húzd a létrát a fához!",
+        "en": "Drag the ladder to the tree!"
+      },
+      "promptInventories": {
+        "hu": "prompts/voice/scripts/voice-lines.hu.json",
+        "en": "prompts/voice/scripts/voice-lines.en.json"
+      },
+      "promptQaStatus": "approved",
+      "audioQaStatus": "not-produced",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production"
+    },
+    {
+      "cue": "voice.mission.garden-kitten-tree.step.help-mimi-down",
+      "role": "required-instruction",
+      "ownership": "base",
+      "narratorRole": "primary",
+      "durationBoundsSeconds": { "min": 0.4, "max": 2.5 },
+      "objectKeys": {
+        "hu": "audio/voice/hu/missions/garden-kitten-tree/step-help-mimi-down.ogg",
+        "en": "audio/voice/en/missions/garden-kitten-tree/step-help-mimi-down.ogg"
+      },
+      "fallbackText": {
+        "hu": "Koppints Mimire!",
+        "en": "Tap Mimi!"
+      },
+      "promptInventories": {
+        "hu": "prompts/voice/scripts/voice-lines.hu.json",
+        "en": "prompts/voice/scripts/voice-lines.en.json"
+      },
+      "promptQaStatus": "approved",
+      "audioQaStatus": "not-produced",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production"
+    },
+    {
+      "cue": "voice.mission.garden-kitten-tree.success",
+      "role": "mission-success",
+      "ownership": "base",
+      "narratorRole": "primary",
+      "durationBoundsSeconds": { "min": 0.4, "max": 2.5 },
+      "objectKeys": {
+        "hu": "audio/voice/hu/missions/garden-kitten-tree/success.ogg",
+        "en": "audio/voice/en/missions/garden-kitten-tree/success.ogg"
+      },
+      "fallbackText": {
+        "hu": "Mimi biztonságban van!",
+        "en": "Mimi is safe!"
+      },
+      "promptInventories": {
+        "hu": "prompts/voice/scripts/voice-lines.hu.json",
+        "en": "prompts/voice/scripts/voice-lines.en.json"
+      },
+      "promptQaStatus": "approved",
+      "audioQaStatus": "not-produced",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production"
+    }
+  ]
+}

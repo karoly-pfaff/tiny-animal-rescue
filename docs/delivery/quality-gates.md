@@ -121,6 +121,15 @@ semantic runtime ID, final source prompt, generator/date when known, edit/master
 duration/format/loop or overlap QA, channel/category, and provenance/license status. Files under
 `screens/` are presentation references and must never resolve through a production content record.
 
+`test:voice-prompts` validates the complete 115-line-per-locale HU/EN prompt inventories against their
+schema and external canonical ID contract, exact semantic ID order, group counts, delivery-energy
+parity, every derived R2 object key and its per-locale uniqueness, and the first-rescue runtime
+manifest's ownership, narrator, duration, license, provenance, QA, and delivery metadata. It enforces
+the audible-watermark and generator/service branding prohibition in both policy documents and exact
+spoken text. Its negative fixtures must demonstrate that coherent ID drift, key collision, parity,
+mapping, metadata, fallback-text, and clean-output defects fail the gate. Voice binaries are external
+R2 deliverables and never Git inputs.
+
 ### Browser and visual
 
 - Playwright runs against a production build and static preview, not only the Vite development server.
@@ -183,6 +192,7 @@ npm run test:integration
 npm run test:content
 npm run test:content:release
 npm run test:assets
+npm run test:voice-prompts
 npm run test:a11y
 npm run test:governance
 npm run test:e2e
@@ -207,8 +217,8 @@ npm run validate:release
 duplication, and dead-code checks.
 
 `validate:quick` is the story-development gate: format check, all lint/documentation gates, typecheck,
-unit and integration tests with coverage, content/asset/accessibility validation, secret scan, and
-production build.
+unit and integration tests with coverage, content/asset/voice-prompt/accessibility validation, secret
+and watermark scans, and production build.
 
 `validate:full` is the merge and ordinary epic gate: `validate:quick`, Conventional Commit/history
 and watermark validation, waiver validation, dependency and shipped-license audit, local static
@@ -235,7 +245,7 @@ checks with stable names:
 | -------------- | ------------------------------------------------------------------------------------------ |
 | `quality`      | format, ESLint, jscpd, Knip, typecheck                                                     |
 | `history`      | story/epic commit shape, Conventional Commits, PR story map, watermark/signature rejection |
-| `tests`        | unit, integration, coverage, content/asset contracts, automated accessibility              |
+| `tests`        | unit, integration, coverage, content/asset/voice contracts, automated accessibility        |
 | `browser`      | production build, preview smoke, E2E viewport/input matrix                                 |
 | `visual`       | deterministic screenshot comparison with retained diffs                                    |
 | `supply-chain` | frozen install, dependency advisory, shipped-license/SBOM and provenance checks            |

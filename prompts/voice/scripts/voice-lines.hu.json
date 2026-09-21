@@ -1,0 +1,607 @@
+{
+  "version": 1,
+  "locale": "hu",
+  "narrator": "primary",
+  "lines": [
+    {
+      "id": "voice.global.welcome",
+      "group": "global",
+      "text": "Üdv a Kis Állatmentőknél!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.first-play",
+      "group": "global",
+      "text": "Segítsünk az állatoknak!",
+      "energy": 3
+    },
+    { "id": "voice.global.play", "group": "global", "text": "Játék", "energy": 2 },
+    { "id": "voice.global.map", "group": "global", "text": "Térkép", "energy": 2 },
+    { "id": "voice.global.shelter", "group": "global", "text": "Menhely", "energy": 2 },
+    {
+      "id": "voice.global.choose-location",
+      "group": "global",
+      "text": "Válassz egy helyszínt!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.mission-available",
+      "group": "global",
+      "text": "Valakinek segítségre van szüksége!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.mission-complete",
+      "group": "global",
+      "text": "Sikerült a mentés!",
+      "energy": 4
+    },
+    {
+      "id": "voice.global.resident-unlocked",
+      "group": "global",
+      "text": "Új barát érkezett a menhelyre!",
+      "energy": 4
+    },
+    {
+      "id": "voice.global.all-residents-safe",
+      "group": "global",
+      "text": "Minden állat biztonságban van!",
+      "energy": 4
+    },
+    {
+      "id": "voice.global.repeat-prompt",
+      "group": "global",
+      "text": "Hallgasd meg újra!",
+      "energy": 2
+    },
+    { "id": "voice.global.lets-go", "group": "global", "text": "Induljunk!", "energy": 3 },
+
+    { "id": "voice.location.garden.name", "group": "location", "text": "Kert", "energy": 2 },
+    { "id": "voice.location.forest.name", "group": "location", "text": "Erdő", "energy": 2 },
+    { "id": "voice.location.farm.name", "group": "location", "text": "Farm", "energy": 2 },
+    { "id": "voice.location.pond.name", "group": "location", "text": "Tó", "energy": 2 },
+    {
+      "id": "voice.shelter.indoor-room.name",
+      "group": "location",
+      "text": "Belső szoba",
+      "energy": 2
+    },
+    { "id": "voice.shelter.garden.name", "group": "location", "text": "Menhelykert", "energy": 2 },
+    { "id": "voice.shelter.pondside.name", "group": "location", "text": "Tópart", "energy": 2 },
+
+    {
+      "id": "voice.hint.tap.primary",
+      "group": "hint",
+      "text": "Koppints a világító dologra!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.tap.stronger",
+      "group": "hint",
+      "text": "Itt vár rád. Koppints rá!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.drag.primary",
+      "group": "hint",
+      "text": "Fogd meg, és húzd a helyére!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.drag.stronger",
+      "group": "hint",
+      "text": "Húzd a világító helyre!",
+      "energy": 3
+    },
+    { "id": "voice.hint.wipe.primary", "group": "hint", "text": "Finoman töröld át!", "energy": 2 },
+    {
+      "id": "voice.hint.wipe.stronger",
+      "group": "hint",
+      "text": "Mozgasd rajta az ujjadat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.match.primary",
+      "group": "hint",
+      "text": "Keresd meg, hová tartozik!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.match.stronger",
+      "group": "hint",
+      "text": "Tedd a hozzá illő helyre!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.trace.primary",
+      "group": "hint",
+      "text": "Kövesd az utat az ujjaddal!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.trace.stronger",
+      "group": "hint",
+      "text": "Indulj innen, és kövesd a világító utat!",
+      "energy": 3
+    },
+
+    { "id": "voice.resident.mimi-kitten.name", "group": "resident", "text": "Mimi", "energy": 2 },
+    {
+      "id": "voice.resident.morzsi-puppy.name",
+      "group": "resident",
+      "text": "Morzsi",
+      "energy": 2
+    },
+    { "id": "voice.resident.pipi-chick.name", "group": "resident", "text": "Pipi", "energy": 2 },
+    { "id": "voice.resident.csipi-bird.name", "group": "resident", "text": "Csipi", "energy": 2 },
+    { "id": "voice.resident.suni-hedgehog.name", "group": "resident", "text": "Süni", "energy": 2 },
+    { "id": "voice.resident.makk-squirrel.name", "group": "resident", "text": "Makk", "energy": 2 },
+    { "id": "voice.resident.pamacs-lamb.name", "group": "resident", "text": "Pamacs", "energy": 2 },
+    { "id": "voice.resident.rozi-fawn.name", "group": "resident", "text": "Rozi", "energy": 2 },
+    { "id": "voice.resident.toto-turtle.name", "group": "resident", "text": "Totó", "energy": 2 },
+    { "id": "voice.resident.kiki-duckling.name", "group": "resident", "text": "Kiki", "energy": 2 },
+    { "id": "voice.resident.breki-frog.name", "group": "resident", "text": "Breki", "energy": 2 },
+    { "id": "voice.resident.habi-fish.name", "group": "resident", "text": "Habi", "energy": 2 },
+
+    {
+      "id": "voice.parent.settings-opened",
+      "group": "parent",
+      "text": "Szülői beállítások",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.locale-changed",
+      "group": "parent",
+      "text": "A nyelv magyarra változott.",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.reset-confirm",
+      "group": "parent",
+      "text": "Biztosan törlöd az eddigi haladást?",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.progress-reset",
+      "group": "parent",
+      "text": "A haladás törölve.",
+      "energy": 1
+    },
+
+    {
+      "id": "voice.mission.garden-kitten-tree.intro",
+      "group": "mission-intro",
+      "text": "Mimi fent maradt a fán. Segítsünk neki!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.step.place-ladder",
+      "group": "mission-step",
+      "text": "Húzd a létrát a fához!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.step.help-mimi-down",
+      "group": "mission-step",
+      "text": "Koppints Mimire!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.success",
+      "group": "mission-success",
+      "text": "Mimi biztonságban van!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-hedgehog-branches.intro",
+      "group": "mission-intro",
+      "text": "Süni beszorult az ágak közé. Szabadítsuk ki!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-left-branch",
+      "group": "mission-step",
+      "text": "Koppints a bal oldali ágra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-right-branch",
+      "group": "mission-step",
+      "text": "Most koppints a jobb oldali ágra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-last-branch",
+      "group": "mission-step",
+      "text": "Vedd el az utolsó ágat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.success",
+      "group": "mission-success",
+      "text": "Süni újra szabad!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-chick-find-mother.intro",
+      "group": "mission-intro",
+      "text": "Pipi nem találja az anyukáját. Segítsünk neki!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.step.find-hen",
+      "group": "mission-step",
+      "text": "Keresd meg Pipi anyukáját!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.step.guide-pipi",
+      "group": "mission-step",
+      "text": "Húzd Pipit a tyúkanyóhoz!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.success",
+      "group": "mission-success",
+      "text": "Pipi megtalálta az anyukáját!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.intro",
+      "group": "mission-intro",
+      "text": "A póráz Morzsi köré tekeredett. Segítsünk neki!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.loosen-first-loop",
+      "group": "mission-step",
+      "text": "Koppints az első hurokra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.loosen-second-loop",
+      "group": "mission-step",
+      "text": "Koppints a második hurokra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.pull-leash-free",
+      "group": "mission-step",
+      "text": "Húzd el a pórázt Morzsitól!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.success",
+      "group": "mission-success",
+      "text": "Morzsi újra szabad!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-bird-nest.intro",
+      "group": "mission-intro",
+      "text": "Csipi fészke megsérült. Javítsuk meg!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.step.rebuild-nest",
+      "group": "mission-step",
+      "text": "Húzd a gallyakat a fészekhez!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.step.return-csipi",
+      "group": "mission-step",
+      "text": "Húzd Csipit a fészekbe!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.success",
+      "group": "mission-success",
+      "text": "Csipi újra a fészkében van!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-turtle-find-water.intro",
+      "group": "mission-intro",
+      "text": "Totó nem találja a tavat. Mutassuk meg az utat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-turtle-find-water.step.follow-path",
+      "group": "mission-step",
+      "text": "Kövesd az utat Totó mellől a tóhoz!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-turtle-find-water.success",
+      "group": "mission-success",
+      "text": "Totó megtalálta a vizet!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-lamb-fence.intro",
+      "group": "mission-intro",
+      "text": "Pamacs a kerítés mögött maradt. Nyissuk ki az utat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.remove-loose-board",
+      "group": "mission-step",
+      "text": "Vedd le a meglazult deszkát!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.open-gate",
+      "group": "mission-step",
+      "text": "Húzd ki a kaput!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.help-pamacs-through",
+      "group": "mission-step",
+      "text": "Koppints Pamacsra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.success",
+      "group": "mission-success",
+      "text": "Pamacs biztonságban van!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-frog-too-dry.intro",
+      "group": "mission-intro",
+      "text": "Breki túl száraz helyre került. Hűsítsük le!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.step.add-shade",
+      "group": "mission-step",
+      "text": "Húzd a levelet Breki fölé!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.step.add-water",
+      "group": "mission-step",
+      "text": "Húzd a vízcseppeket Brekihez!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.success",
+      "group": "mission-success",
+      "text": "Breki már hűvös és vidám!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.intro",
+      "group": "mission-intro",
+      "text": "Makk szétszórta a makkjait. Gyűjtsük össze őket!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-first-acorn",
+      "group": "mission-step",
+      "text": "Tedd az első makkot a kosárba!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-second-acorn",
+      "group": "mission-step",
+      "text": "Tedd a következő makkot a kosárba!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-last-acorn",
+      "group": "mission-step",
+      "text": "Tedd az utolsó makkot is a kosárba!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.success",
+      "group": "mission-success",
+      "text": "Makk minden makkot megtalált!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-duckling-reeds.intro",
+      "group": "mission-intro",
+      "text": "Kiki elakadt a nádasban. Tisztítsuk meg az utat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.remove-first-reed",
+      "group": "mission-step",
+      "text": "Koppints erre a nádra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.remove-last-reed",
+      "group": "mission-step",
+      "text": "Vedd el a másik nádat is!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.follow-family",
+      "group": "mission-step",
+      "text": "Vezesd Kikit a családjához!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.success",
+      "group": "mission-success",
+      "text": "Kiki újra a családjával van!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.intro",
+      "group": "mission-intro",
+      "text": "Rozi lábára egy gally akadt. Segítsünk neki!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.step.remove-twig",
+      "group": "mission-step",
+      "text": "Koppints a gallyra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.step.wipe-leaves",
+      "group": "mission-step",
+      "text": "Töröld le a leveleket Roziról!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.success",
+      "group": "mission-success",
+      "text": "Rozi újra szabadon lépkedhet!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-fish-small-puddle.intro",
+      "group": "mission-intro",
+      "text": "Habi egy kis pocsolyában maradt. Vezessük vissza a tóhoz!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.step.trace-water-channel",
+      "group": "mission-step",
+      "text": "Kövesd az utat, hogy odafolyjon a víz!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.step.move-habi-to-pond",
+      "group": "mission-step",
+      "text": "Húzd Habit a tóba!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.success",
+      "group": "mission-success",
+      "text": "Habi újra a tóban úszik!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.intro",
+      "group": "mission-intro",
+      "text": "A kismalac csupa sár. Mossuk le!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.step.fill-wash-basin",
+      "group": "mission-step",
+      "text": "Húzd a vizet a mosdótálba!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.step.wash-piglet",
+      "group": "mission-step",
+      "text": "Töröld le róla a sarat!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.success",
+      "group": "mission-success",
+      "text": "A kismalac újra tiszta!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-clear-litter.intro",
+      "group": "mission-intro",
+      "text": "Néhány dolog a tóparton maradt. Tegyük rendbe!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-paper",
+      "group": "mission-step",
+      "text": "Húzd a papírt a kukába!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-cup",
+      "group": "mission-step",
+      "text": "Tedd a poharat is a kukába!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-bag",
+      "group": "mission-step",
+      "text": "Húzd a zacskót a kukába!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.success",
+      "group": "mission-success",
+      "text": "A tópart újra tiszta!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-mimi-find-ball.intro",
+      "group": "mission-intro",
+      "text": "Mimi nem találja a labdáját. Keressük meg!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.step.reveal-ball",
+      "group": "mission-step",
+      "text": "Koppints a levelekre!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.step.return-ball",
+      "group": "mission-step",
+      "text": "Húzd a labdát Mimihez!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.success",
+      "group": "mission-success",
+      "text": "Mimi megtalálta a labdáját!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-suni-picnic.intro",
+      "group": "mission-intro",
+      "text": "Süni piknikezni szeretne. Készítsük elő a helyét!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-blanket",
+      "group": "mission-step",
+      "text": "Húzd a takarót a fűre!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-cup",
+      "group": "mission-step",
+      "text": "Tedd a poharat a takaróra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-apple",
+      "group": "mission-step",
+      "text": "Tedd az almát is a takaróra!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.success",
+      "group": "mission-success",
+      "text": "Süni piknikje elkészült!",
+      "energy": 4
+    }
+  ]
+}

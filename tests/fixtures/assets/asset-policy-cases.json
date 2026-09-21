@@ -1,0 +1,48 @@
+[
+  {
+    "name": "valid R2-pending production asset",
+    "record": {
+      "id": "start-background",
+      "objectKey": "images/start/welcome-garden.png",
+      "width": 1448,
+      "height": 1086,
+      "classification": "production-safe",
+      "delivery": "r2-pending",
+      "licenseStatus": "approved",
+      "ownership": "base",
+      "qaStatus": "approved"
+    },
+    "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": { "width": 1448, "height": 1086 },
+    "valid": true
+  },
+  {
+    "name": "rejects path traversal and missing provenance",
+    "record": {
+      "id": "bad_asset",
+      "objectKey": "../outside.png",
+      "width": 100,
+      "height": 100
+    },
+    "promptText": "",
+    "dimensions": null,
+    "valid": false
+  },
+  {
+    "name": "rejects incorrect dimensions",
+    "record": {
+      "id": "start-background",
+      "objectKey": "images/start/welcome-garden.png",
+      "width": 1448,
+      "height": 1086,
+      "classification": "production-safe",
+      "delivery": "r2-pending",
+      "licenseStatus": "approved",
+      "ownership": "base",
+      "qaStatus": "approved"
+    },
+    "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": { "width": 1024, "height": 768 },
+    "valid": false
+  }
+]

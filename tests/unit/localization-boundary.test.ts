@@ -20,7 +20,15 @@ describe('localization boundary', () => {
     expect(result.status).toBe(0);
   });
 
-  it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink'])(
+  it('accepts standard ARIA attributes without treating their values as copy', () => {
+    const fixture = resolve(cwd(), 'sources', 'app', 'language-gate.tsx');
+    const result = runValidator(fixture);
+
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
+  it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink', 'aria-label', 'style-copy'])(
     'rejects the %s negative fixture',
     (fixtureName) => {
       const fixture = resolve(

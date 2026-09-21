@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/voice-lines.schema.json",
+  "title": "Tiny Rescue localized voice inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "locale", "narrator", "lines"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "locale": { "enum": ["hu", "en"] },
+    "narrator": { "type": "string", "const": "primary" },
+    "lines": {
+      "type": "array",
+      "minItems": 115,
+      "maxItems": 115,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "group", "text", "energy"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^voice\\.[a-z0-9]+(?:[.-][a-z0-9]+)*$" },
+          "group": {
+            "enum": [
+              "global",
+              "location",
+              "hint",
+              "resident",
+              "parent",
+              "mission-intro",
+              "mission-step",
+              "mission-success"
+            ]
+          },
+          "text": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "energy": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "note": { "type": "string", "minLength": 1, "maxLength": 200 }
+        }
+      }
+    }
+  }
+}

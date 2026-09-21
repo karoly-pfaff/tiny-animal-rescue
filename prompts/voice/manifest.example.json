@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "category": "voice",
+  "defaultNarrator": "primary",
+  "locales": {
+    "hu": {
+      "inventory": "scripts/voice-lines.hu.json",
+      "assetRoot": "audio/voice/hu",
+      "narrator": "primary"
+    },
+    "en": {
+      "inventory": "scripts/voice-lines.en.json",
+      "assetRoot": "audio/voice/en",
+      "narrator": "primary"
+    }
+  },
+  "pathRules": {
+    "voice.global.*": "global/<event>.ogg",
+    "voice.location.*.name": "locations/<location-id>-name.ogg",
+    "voice.shelter.*.name": "shelter/<area-id>-name.ogg",
+    "voice.hint.*.*": "hints/<interaction>-<level>.ogg",
+    "voice.resident.*.name": "residents/<animal-id>-name.ogg",
+    "voice.parent.*": "parent/<event>.ogg",
+    "voice.mission.*.intro": "missions/<mission-id>/intro.ogg",
+    "voice.mission.*.step.*": "missions/<mission-id>/step-<step-id>.ogg",
+    "voice.mission.*.success": "missions/<mission-id>/success.ogg"
+  },
+  "runtime": {
+    "maxConcurrentVoices": 1,
+    "replaceCurrentOnNewLine": true
+  },
+  "examples": {
+    "voice.global.welcome": {
+      "hu": "audio/voice/hu/global/welcome.ogg",
+      "en": "audio/voice/en/global/welcome.ogg"
+    },
+    "voice.mission.garden-kitten-tree.step.place-ladder": {
+      "hu": "audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg",
+      "en": "audio/voice/en/missions/garden-kitten-tree/step-place-ladder.ogg"
+    },
+    "voice.resident.mimi-kitten.name": {
+      "hu": "audio/voice/hu/residents/mimi-kitten-name.ogg",
+      "en": "audio/voice/en/residents/mimi-kitten-name.ogg"
+    }
+  }
+}

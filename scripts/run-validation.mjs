@@ -9,6 +9,7 @@ const groups = {
     'test',
     'test:content',
     'test:assets',
+    'test:voice-prompts',
     'test:a11y',
     'scan:secrets',
     'scan:watermarks',
