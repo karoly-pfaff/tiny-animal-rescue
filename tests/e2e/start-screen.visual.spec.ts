@@ -125,3 +125,24 @@ test('@visual matches the reviewed English protected-exit state', async ({ page 
   await expect(page).toHaveScreenshot('mission-protected-exit-en.png', { fullPage: true });
   expect(browserErrors).toEqual([]);
 });
+
+test('@visual matches the reviewed Mimi celebration', async ({ page }, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await settleVisual(page);
+
+  await expect(page).toHaveScreenshot('celebration-mimi.png', { fullPage: true });
+  expect(browserErrors).toEqual([]);
+});

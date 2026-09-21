@@ -36,10 +36,10 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S04 — Mimi tap and rescue completion
 
-- [ ] Mimi becomes actionable only after the ladder step.
-- [ ] A tap triggers the descent/happy state and completes the mission once.
-- [ ] Reward writes before celebration begins.
-- [ ] Celebration narrates Mimi's localized name and offers Map/Shelter navigation.
+- [x] Mimi becomes actionable only after the ladder step.
+- [x] A tap triggers the descent/happy state and completes the mission once.
+- [x] Reward writes before celebration begins.
+- [x] Celebration narrates Mimi's localized name and offers Map/Shelter navigation.
 
 ### E001-S05 — Minimal persistence and shelter proof
 

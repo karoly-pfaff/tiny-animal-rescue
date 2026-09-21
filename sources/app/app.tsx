@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 
+import { createBrowserNarrationService, type NarrationService } from '../audio/narration-service';
 import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
 } from '../persistence/locale-bootstrap-repository';
 import { getStrings, type Locale } from '../i18n/localization';
+import { CelebrationScreen } from './celebration-screen';
+import {
+  createSessionFirstRescueProgressStore,
+  type FirstRescueProgressStore,
+  hasFirstRescueReward,
+} from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
 import { FirstMissionScreen } from './first-mission-screen';
 import { MapScreen } from './map-screen';
@@ -13,6 +20,8 @@ import { StartScreen } from './start-screen';
 
 const foundationLocale = 'hu' satisfies Locale;
 const browserLocaleRepository = createIndexedDbLocaleBootstrapRepository(window.indexedDB);
+const browserNarrationService = createBrowserNarrationService();
+const browserProgressStore = createSessionFirstRescueProgressStore();
 
 function getHashPath(): string {
   const path = window.location.hash.slice(1);
@@ -83,14 +92,25 @@ function navigate(nextPath: string): void {
   window.location.hash = nextPath;
 }
 
-type AppProps = Readonly<{ localeRepository?: LocaleBootstrapRepository }>;
+type AppProps = Readonly<{
+  firstRescueProgressStore?: FirstRescueProgressStore;
+  localeRepository?: LocaleBootstrapRepository;
+  narrationService?: NarrationService;
+}>;
 
 type PlayerRouteProps = Readonly<{
+  firstRescueProgressStore: FirstRescueProgressStore;
   locale: Locale;
+  narrationService: NarrationService;
   route: ReturnType<typeof resolveRoute>;
 }>;
 
-function PlayerRoute({ locale, route }: PlayerRouteProps) {
+function PlayerRoute({
+  firstRescueProgressStore,
+  locale,
+  narrationService,
+  route,
+}: PlayerRouteProps) {
   if (route.id === 'map') {
     return (
       <MapScreen
@@ -105,8 +125,39 @@ function PlayerRoute({ locale, route }: PlayerRouteProps) {
     return (
       <FirstMissionScreen
         locale={locale}
+        onCelebrate={() => {
+          navigate('/celebration');
+        }}
+        onCommitReward={async () => {
+          await firstRescueProgressStore.commitReward();
+        }}
         onExit={() => {
           navigate('/map');
+        }}
+        narrationService={narrationService}
+      />
+    );
+  }
+  if (route.id === 'celebration') {
+    if (!hasFirstRescueReward(firstRescueProgressStore.read())) {
+      return (
+        <MapScreen
+          locale={locale}
+          onOpenGardenMission={() => {
+            navigate('/mission');
+          }}
+        />
+      );
+    }
+    return (
+      <CelebrationScreen
+        locale={locale}
+        narrationService={narrationService}
+        onMap={() => {
+          navigate('/map');
+        }}
+        onShelter={() => {
+          navigate('/shelter');
         }}
       />
     );
@@ -118,7 +169,21 @@ function shouldShowStart(locale: Locale | null | undefined, routeId: string): bo
   return locale === undefined || locale === null || routeId === 'start';
 }
 
-export function App({ localeRepository = browserLocaleRepository }: AppProps) {
+export function App(props: AppProps) {
+  return (
+    <AppWithDependencies
+      firstRescueProgressStore={props.firstRescueProgressStore ?? browserProgressStore}
+      localeRepository={props.localeRepository ?? browserLocaleRepository}
+      narrationService={props.narrationService ?? browserNarrationService}
+    />
+  );
+}
+
+function AppWithDependencies({
+  firstRescueProgressStore,
+  localeRepository,
+  narrationService,
+}: Required<AppProps>) {
   const path = useHashPath();
   const { locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
@@ -149,5 +214,12 @@ export function App({ localeRepository = browserLocaleRepository }: AppProps) {
     );
   }
 
-  return <PlayerRoute locale={activeLocale} route={route} />;
+  return (
+    <PlayerRoute
+      firstRescueProgressStore={firstRescueProgressStore}
+      locale={activeLocale}
+      narrationService={narrationService}
+      route={route}
+    />
+  );
 }

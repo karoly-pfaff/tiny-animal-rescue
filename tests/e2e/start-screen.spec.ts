@@ -215,3 +215,31 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   await expect(ladder).toHaveAttribute('data-phase', 'placed');
   expect(browserErrors).toEqual([]);
 });
+
+test('@preview completes Mimi rescue once and offers Map and Shelter', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await expect(page.getByRole('button', { name: 'Segíts Miminek lejönni' })).not.toBeVisible();
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+
+  const mimi = page.getByRole('button', { name: 'Segíts Miminek lejönni' });
+  await expect(mimi).toBeVisible();
+  await activateWithPrimaryPointer(mimi, Boolean(testInfo.project.use.hasTouch));
+  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Térkép' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
+  await page.getByRole('button', { name: 'Menhely' }).click();
+  await expect(page.getByRole('heading', { name: 'Menhely' })).toBeVisible();
+  expect(browserErrors).toEqual([]);
+});

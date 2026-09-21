@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 
+import { helpMimiNarrationCue, type NarrationService } from '../audio/narration-service';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 import { DragToTarget } from '../interactions/drag-to-target';
@@ -25,14 +26,37 @@ const ladderTarget = {
 
 type FirstMissionScreenProps = Readonly<{
   locale: Locale;
+  onCelebrate: () => void;
+  onCommitReward: () => Promise<void>;
   onExit: () => void;
+  narrationService: NarrationService;
 }>;
 
-export function FirstMissionScreen({ locale, onExit }: FirstMissionScreenProps) {
+type MissionPhase = 'ladder' | 'mimi' | 'saving';
+
+const ladderPhase = 'ladder' satisfies MissionPhase;
+const mimiPhase = 'mimi' satisfies MissionPhase;
+const rescueMotionDurationMs = 650;
+const savingPhase = 'saving' satisfies MissionPhase;
+
+export function FirstMissionScreen({
+  locale,
+  onCelebrate,
+  onCommitReward,
+  onExit,
+  narrationService,
+}: FirstMissionScreenProps) {
   const [holdingExit, setHoldingExit] = useState(false);
   const activePointerId = useRef<number | null>(null);
   const exitTimer = useRef<number | null>(null);
-  const strings = getStrings(locale);
+  const strings = getStrings(locale),
+    rescue = useRescueCompletion({
+      helpMimiText: strings.helpMimiNarration,
+      locale,
+      narrationService,
+      onCelebrate,
+      onCommitReward,
+    });
 
   function cancelExit(): void {
     if (exitTimer.current !== null) {
@@ -78,10 +102,25 @@ export function FirstMissionScreen({ locale, onExit }: FirstMissionScreenProps) 
   return (
     <main className="game-shell" data-route="mission" data-mission-id="garden-kitten-tree">
       <section className="game-surface first-mission" aria-labelledby="mission-title">
-        <div className="mission-tree" aria-hidden="true">
-          <span className="mission-tree-crown" />
-          <span className="mission-tree-trunk" />
-          <span className="mission-kitten" />
+        <div className="mission-tree">
+          <span className="mission-tree-crown" aria-hidden="true" />
+          <span className="mission-tree-trunk" aria-hidden="true" />
+          {rescue.phase === ladderPhase ? (
+            <span className="mission-kitten" aria-hidden="true" />
+          ) : (
+            <button
+              aria-label={strings.helpMimi}
+              className={`mission-kitten mission-kitten-action${rescue.phase === savingPhase ? ' is-rescuing' : ''}`}
+              disabled={rescue.phase === savingPhase}
+              onClick={rescue.finish}
+              onPointerUp={(event) => {
+                if (event.isPrimary && event.pointerType === 'touch') {
+                  rescue.finish();
+                }
+              }}
+              type="button"
+            />
+          )}
         </div>
         <header className="mission-title-plaque">
           <h1 id="mission-title">{strings.firstMissionTitle}</h1>
@@ -89,12 +128,13 @@ export function FirstMissionScreen({ locale, onExit }: FirstMissionScreenProps) 
         <DragToTarget
           accessibleLabel={strings.ladderLabel}
           completionAnnouncement={strings.ladderPlaced}
-          onComplete={() => undefined}
+          onComplete={rescue.unlockMimi}
           start={ladderStart}
           target={ladderTarget}
         />
         <button
           className={`mission-back${holdingExit ? ' is-holding' : ''}`}
+          disabled={rescue.phase === savingPhase}
           type="button"
           onClick={activateAccessibleExit}
           onContextMenu={(event) => {
@@ -108,9 +148,101 @@ export function FirstMissionScreen({ locale, onExit }: FirstMissionScreenProps) 
           <span className="mission-back-icon" aria-hidden="true" />
           <span>{strings.holdToMap}</span>
         </button>
+        {rescue.saveFailed ? (
+          <p className="mission-save-error" role="alert">
+            {strings.rewardSaveError}
+          </p>
+        ) : null}
       </section>
     </main>
   );
+}
+
+type RescueCompletionOptions = Readonly<{
+  helpMimiText: string;
+  locale: Locale;
+  narrationService: NarrationService;
+  onCelebrate: () => void;
+  onCommitReward: () => Promise<void>;
+}>;
+
+function useRescueCompletion({
+  helpMimiText,
+  locale,
+  narrationService,
+  onCelebrate,
+  onCommitReward,
+}: RescueCompletionOptions) {
+  const [phase, setPhase] = useState<MissionPhase>(ladderPhase);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const completionStarted = useRef(false);
+  const lifecycle = useRef<RescueLifecycle>({
+    active: true,
+    cancelMotion: null,
+  });
+
+  useEffect(() => {
+    const currentLifecycle = lifecycle.current;
+    currentLifecycle.active = true;
+    return () => {
+      currentLifecycle.active = false;
+      currentLifecycle.cancelMotion?.();
+    };
+  }, []);
+
+  async function finishRescue(): Promise<void> {
+    try {
+      await Promise.all([onCommitReward(), waitForRescueMotion(lifecycle.current)]);
+      if (lifecycle.current.active) {
+        onCelebrate();
+      }
+    } catch {
+      if (lifecycle.current.active) {
+        completionStarted.current = false;
+        setPhase(mimiPhase);
+        setSaveFailed(true);
+      }
+    }
+  }
+
+  function finish(): void {
+    if (phase !== mimiPhase || completionStarted.current) {
+      return;
+    }
+    completionStarted.current = true;
+    setSaveFailed(false);
+    setPhase(savingPhase);
+    void finishRescue();
+  }
+
+  return {
+    finish,
+    phase,
+    saveFailed,
+    unlockMimi: () => {
+      setPhase(mimiPhase);
+      narrationService.speak({ cue: helpMimiNarrationCue, locale, text: helpMimiText });
+    },
+  } as const;
+}
+
+interface RescueLifecycle {
+  active: boolean;
+  cancelMotion: (() => void) | null;
+}
+
+function waitForRescueMotion(lifecycle: RescueLifecycle): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => {
+      lifecycle.cancelMotion = null;
+      resolve();
+    }, rescueMotionDurationMs);
+    lifecycle.cancelMotion = () => {
+      window.clearTimeout(timer);
+      lifecycle.cancelMotion = null;
+      resolve();
+    };
+  });
 }
 
 function canBeginExit(

@@ -208,6 +208,214 @@
   right: -8%;
 }
 
+.mission-kitten-action {
+  z-index: 3;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 0 0 0.45rem rgb(255 240 151 / 72%);
+  animation: mimi-ready 1.35s ease-in-out infinite;
+}
+
+.mission-kitten-action:focus-visible {
+  outline: 0.4rem solid #235d84;
+  outline-offset: 0.45rem;
+}
+
+.mission-kitten-action:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.mission-kitten-action.is-rescuing {
+  animation: mimi-rescued 650ms ease-in forwards;
+}
+
+.mission-save-error {
+  position: absolute;
+  right: max(3%, var(--safe-area-right));
+  bottom: max(3%, var(--safe-area-bottom));
+  z-index: 5;
+  max-width: min(26rem, 55%);
+  margin: 0;
+  padding: 0.8rem 1.15rem;
+  border: 0.25rem solid #fff2cf;
+  border-radius: 1rem;
+  color: #fff;
+  background: #7b342c;
+  box-shadow: 0 0.35rem 0 rgb(64 31 28 / 48%);
+  font-weight: 800;
+}
+
+.celebration-screen {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgb(255 250 192 / 96%) 0 17%, transparent 38%),
+    linear-gradient(#8edcf0 0 58%, #b5dc7f 58% 72%, #65ac56 72% 100%);
+}
+
+.celebration-rays {
+  position: absolute;
+  top: 43%;
+  left: 50%;
+  width: min(66vw, 39rem);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#fff0 0 10deg, rgb(255 239 112 / 48%) 10deg 20deg);
+  animation: celebration-shine 14s linear infinite;
+}
+
+.celebration-mimi {
+  position: absolute;
+  top: 37%;
+  left: 50%;
+  width: clamp(9rem, 19vw, 14rem);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 0.7rem solid #fff1d1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 43%, #3c2b24 0 4%, transparent 4.7%),
+    radial-gradient(circle at 66% 43%, #3c2b24 0 4%, transparent 4.7%),
+    radial-gradient(ellipse at 50% 65%, #3c2b24 0 5%, transparent 5.7%), #dd8750;
+  box-shadow: 0 0.8rem 0 rgb(100 59 35 / 28%);
+  animation: mimi-celebrate 1.5s ease-in-out infinite;
+}
+
+.celebration-mimi::before,
+.celebration-mimi::after {
+  position: absolute;
+  top: -26%;
+  z-index: -1;
+  width: 57%;
+  height: 57%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: #dd8750;
+  content: '';
+}
+
+.celebration-mimi::before {
+  left: -5%;
+}
+
+.celebration-mimi::after {
+  right: -5%;
+}
+
+.celebration-mimi-tail {
+  position: absolute;
+  right: -38%;
+  bottom: -6%;
+  width: 56%;
+  height: 72%;
+  rotate: 24deg;
+  border: 1.2rem solid #dd8750;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0 999px 0 0;
+}
+
+.celebration-title-plaque {
+  position: absolute;
+  top: max(5%, var(--safe-area-top));
+  left: 50%;
+  z-index: 2;
+  width: min(84%, 42rem);
+  translate: -50%;
+  padding: 0.55rem 1.5rem;
+  border: 0.35rem solid #fff1ce;
+  border-radius: 2rem;
+  color: #fff9df;
+  background: linear-gradient(#ad6236, #78401f);
+  box-shadow: 0 0.5rem 0 #542d1c;
+  text-align: center;
+}
+
+.celebration-title-plaque h1,
+.celebration-title-plaque p {
+  margin: 0;
+}
+
+.celebration-title-plaque h1 {
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1;
+}
+
+.celebration-title-plaque p {
+  margin-top: 0.2rem;
+  font-weight: 800;
+}
+
+.celebration-actions {
+  position: absolute;
+  right: max(6%, var(--safe-area-right));
+  bottom: max(7%, var(--safe-area-bottom));
+  left: max(6%, var(--safe-area-left));
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: clamp(1rem, 5vw, 4rem);
+}
+
+.celebration-action {
+  display: grid;
+  min-width: clamp(9rem, 20vw, 14rem);
+  min-height: 7rem;
+  place-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 1.3rem;
+  border: 0.35rem solid #fff6d7;
+  border-radius: 1.5rem;
+  color: #fff;
+  box-shadow: 0 0.55rem 0 rgb(72 45 25 / 55%);
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 800;
+}
+
+.celebration-action:focus-visible {
+  outline: 0.4rem solid #235d84;
+  outline-offset: 0.4rem;
+}
+
+.map-action {
+  background: #235d84;
+}
+
+.shelter-action {
+  background: #a64e32;
+}
+
+.celebration-map-icon,
+.celebration-shelter-icon {
+  display: block;
+  width: 3.6rem;
+  height: 2.8rem;
+}
+
+.celebration-map-icon {
+  border: 0.3rem solid #fff;
+  background: linear-gradient(100deg, #7bc46b 0 33%, #ffe497 33% 66%, #7bc46b 66%);
+  clip-path: polygon(0 12%, 33% 0, 66% 12%, 100% 0, 100% 88%, 66% 100%, 33% 88%, 0 100%);
+}
+
+.celebration-shelter-icon {
+  position: relative;
+  margin-top: 1rem;
+  border-radius: 0.35rem;
+  background: #ffe3a3;
+}
+
+.celebration-shelter-icon::before {
+  position: absolute;
+  inset: -1.8rem -0.45rem auto;
+  border-right: 2.25rem solid transparent;
+  border-bottom: 2rem solid #fff;
+  border-left: 2.25rem solid transparent;
+  content: '';
+}
+
 .drag-interaction {
   position: absolute;
   z-index: 2;
@@ -406,6 +614,39 @@
   }
 }
 
+@keyframes mimi-ready {
+  50% {
+    scale: 1.09;
+    box-shadow: 0 0 0 0.8rem rgb(255 240 151 / 42%);
+  }
+}
+
+@keyframes mimi-rescued {
+  45% {
+    translate: 0 -12%;
+    rotate: -8deg;
+    scale: 1.12;
+  }
+
+  100% {
+    translate: 0 245%;
+    rotate: 6deg;
+  }
+}
+
+@keyframes celebration-shine {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes mimi-celebrate {
+  50% {
+    translate: -50% calc(-50% - 0.65rem);
+    rotate: 2deg;
+  }
+}
+
 @media (orientation: portrait) {
   .map-title-plaque,
   .mission-title-plaque {
@@ -438,6 +679,31 @@
     top: auto;
     bottom: max(3%, var(--safe-area-bottom));
   }
+
+  .mission-save-error {
+    right: max(3%, var(--safe-area-right));
+    bottom: calc(max(3%, var(--safe-area-bottom)) + 6rem);
+    max-width: 70%;
+  }
+
+  .celebration-rays {
+    top: 44%;
+    width: 90vw;
+  }
+
+  .celebration-mimi {
+    top: 43%;
+    width: clamp(9rem, 32vw, 13rem);
+  }
+
+  .celebration-actions {
+    bottom: max(5%, var(--safe-area-bottom));
+  }
+
+  .celebration-action {
+    min-width: min(40vw, 12rem);
+    min-height: 7.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -454,5 +720,11 @@
 
   .mission-ladder {
     transition-duration: 1ms;
+  }
+
+  .mission-kitten-action,
+  .celebration-rays,
+  .celebration-mimi {
+    animation: none;
   }
 }

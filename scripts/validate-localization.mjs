@@ -120,9 +120,19 @@ function isConstrainedTechnicalLiteral(node) {
     ts.isIdentifier(parent.type.typeName) &&
     [
       'DragPhase',
+      'BrowserCapability',
       'FirstRescueAssetRole',
+      'FirstRescueMissionId',
+      'FirstRescueNarrationCue',
+      'FirstRescueResidentId',
+      'FirstRescueWorldFlag',
       'IDBTransactionMode',
+      'LanguageTag',
       'Locale',
+      'MissionPhase',
+      'NarrationCue',
+      'NarrationFilename',
+      'NarrationObjectKey',
       'PersistenceKey',
     ].includes(parent.type.typeName.text)
   );

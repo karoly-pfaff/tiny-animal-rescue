@@ -9,6 +9,8 @@ export const supportedLocales = {
 
 type Strings = Readonly<{
   appTitle: string;
+  celebrationChoices: string;
+  celebrationTitle: string;
   chooseLanguageTitle: string;
   chooseLanguageHint: string;
   chooseLanguageSaveError: string;
@@ -18,13 +20,18 @@ type Strings = Readonly<{
   garden: string;
   gardenMissionLabel: string;
   holdToMap: string;
+  helpMimi: string;
+  helpMimiNarration: string;
   hungarian: string;
   hungarianCode: string;
-  mapHint: string;
   ladderLabel: string;
   ladderPlaced: string;
+  map: string;
+  mapHint: string;
+  mimiCelebrationNarration: string;
   parentSettings: string;
   play: string;
+  rewardSaveError: string;
   shelter: string;
   screenTitles: Readonly<Record<ScreenTitleKey, string>>;
 }>;
@@ -32,6 +39,8 @@ type Strings = Readonly<{
 const stringsByLocale: Readonly<Record<Locale, Strings>> = {
   hu: {
     appTitle: 'Kis Állatmentők',
+    celebrationChoices: 'Hová menjünk tovább?',
+    celebrationTitle: 'Mimi megmenekült!',
     chooseLanguageTitle: 'Válassz nyelvet',
     chooseLanguageHint: 'Ezt később a szülői beállításokban is megváltoztathatod.',
     chooseLanguageSaveError: 'A beállítás nem menthető. Próbáld újra.',
@@ -41,13 +50,18 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     garden: 'Kert',
     gardenMissionLabel: 'Kerti mentés: Mimi',
     holdToMap: 'Tartsd nyomva a térképhez',
+    helpMimi: 'Segíts Miminek lejönni',
+    helpMimiNarration: 'Koppints Mimire!',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
-    mapHint: 'Az első mentés a Kertben vár.',
     ladderLabel: 'Tedd a létrát a fához',
     ladderPlaced: 'A létra a helyére került.',
+    map: 'Térkép',
+    mapHint: 'Az első mentés a Kertben vár.',
+    mimiCelebrationNarration: 'Mimi biztonságban van!',
     parentSettings: 'Szülői beállítások',
     play: 'Játék',
+    rewardSaveError: 'A mentés most nem sikerült. Érintsd meg újra Mimit.',
     shelter: 'Menhely',
     screenTitles: {
       'screen.start.title': 'Kis Állatmentők',
@@ -60,6 +74,8 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
   },
   en: {
     appTitle: 'Tiny Rescue',
+    celebrationChoices: 'Where should we go next?',
+    celebrationTitle: 'Mimi is rescued!',
     chooseLanguageTitle: 'Choose a language',
     chooseLanguageHint: 'You can change this later in Parent Settings.',
     chooseLanguageSaveError: 'The setting could not be saved. Please try again.',
@@ -69,13 +85,18 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     garden: 'Garden',
     gardenMissionLabel: 'Garden rescue: Mimi',
     holdToMap: 'Hold to return to the map',
+    helpMimi: 'Help Mimi come down',
+    helpMimiNarration: 'Tap Mimi!',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
-    mapHint: 'The first rescue is waiting in the Garden.',
     ladderLabel: 'Move the ladder to the tree',
     ladderPlaced: 'The ladder is in place.',
+    map: 'Map',
+    mapHint: 'The first rescue is waiting in the Garden.',
+    mimiCelebrationNarration: 'Mimi is safe!',
     parentSettings: 'Parent settings',
     play: 'Play',
+    rewardSaveError: 'The rescue could not be saved yet. Tap Mimi again.',
     shelter: 'Shelter',
     screenTitles: {
       'screen.start.title': 'Tiny Rescue',

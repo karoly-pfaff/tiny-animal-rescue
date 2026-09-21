@@ -78,3 +78,32 @@ by `AGENTS.md`.
   repository, type, content, asset, accessibility, secret, watermark, and build gates.
 - Round 2 verified every Round-1 correction and found no High regression.
 - Disposition: every finding is fixed; no finding is declined or unresolved.
+
+## E001-S04 — Mimi tap and rescue completion
+
+- Round 1 found three High and two Medium issues: the second step lacked audio-first guidance; the
+  celebration used the wrong semantic cue and had no R2 narration path; Mimi-specific content IDs
+  lived inside the engine layer; the completion lifecycle could navigate after unmount; and the
+  auditor treated the user's untracked future voice-pack files as story scope.
+- The fixes narrate the localized `help-mimi-down` instruction as soon as the ladder unlocks Mimi,
+  use the mission-success cue for celebration, and resolve both cues to locale-specific R2 object
+  keys. Browser speech remains an explicit development fallback while the externally delivered
+  voice assets are pending; no production media binary enters Git.
+- Mimi-specific reward composition now lives at the application boundary instead of the reusable
+  engine layer. Mission completion cancels its motion lifecycle on unmount and ignores late reward
+  success or failure, with a regression test proving that stale navigation cannot occur.
+- The voice-pack scope finding is declined: `prompts/voice/**` is user-authored, untracked work that
+  predates and remains outside this story's staged diff. It is preserved unchanged for a later
+  dedicated integration story.
+- Round 2 found one High issue: React StrictMode's setup-cleanup-setup probe left the completion
+  lifecycle inactive, so successful development-mode rescues could omit celebration. Effect setup
+  now reactivates the lifecycle, and a StrictMode-wrapped regression proves completion still calls
+  celebration exactly once. The two-round audit limit is exhausted; the post-audit fix passes the
+  affected lint, type, and unit gates.
+- Final story-gate evidence: `npm test` passed 69 tests with 95.28% statement and 89.41% branch
+  coverage; `npm run test:e2e` passed 32/32; `npm run test:visual` passed 36/36;
+  and `npm run validate:quick` passed formatting, lint, duplication, dead-code, documentation,
+  repository, type, content, asset, accessibility, secret, watermark, and build gates. The bounded
+  post-audit StrictMode fix additionally passes 7/7 focused mission unit tests.
+- Disposition: every in-scope Round-1 finding and the Round-2 High are fixed. The only declined item
+  concerns preserved user-owned files outside the story diff; no production media is tracked.
