@@ -21,6 +21,8 @@ type Strings = Readonly<{
   hungarian: string;
   hungarianCode: string;
   mapHint: string;
+  ladderLabel: string;
+  ladderPlaced: string;
   parentSettings: string;
   play: string;
   shelter: string;
@@ -42,6 +44,8 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     mapHint: 'Az első mentés a Kertben vár.',
+    ladderLabel: 'Tedd a létrát a fához',
+    ladderPlaced: 'A létra a helyére került.',
     parentSettings: 'Szülői beállítások',
     play: 'Játék',
     shelter: 'Menhely',
@@ -68,6 +72,8 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     mapHint: 'The first rescue is waiting in the Garden.',
+    ladderLabel: 'Move the ladder to the tree',
+    ladderPlaced: 'The ladder is in place.',
     parentSettings: 'Parent settings',
     play: 'Play',
     shelter: 'Shelter',

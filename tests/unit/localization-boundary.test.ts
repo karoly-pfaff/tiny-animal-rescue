@@ -28,7 +28,7 @@ describe('localization boundary', () => {
     expect(result.status).toBe(0);
   });
 
-  it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink', 'aria-label'])(
+  it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink', 'aria-label', 'style-copy'])(
     'rejects the %s negative fixture',
     (fixtureName) => {
       const fixture = resolve(

@@ -28,11 +28,11 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S03 — Ladder drag step
 
-- [ ] The ladder follows pointer/touch with a visible offset.
-- [ ] A valid drop snaps to the tree and completes once.
-- [ ] An invalid drop returns gently without negative feedback.
-- [ ] Idle guidance pulses and demonstrates the drag under a fake clock.
-- [ ] Responsive coordinate mapping is covered by tests.
+- [x] The ladder follows pointer/touch with a visible offset.
+- [x] A valid drop snaps to the tree and completes once.
+- [x] An invalid drop returns gently without negative feedback.
+- [x] Idle guidance pulses and demonstrates the drag under a fake clock.
+- [x] Responsive coordinate mapping is covered by tests.
 
 ### E001-S04 — Mimi tap and rescue completion
 

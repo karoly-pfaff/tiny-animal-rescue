@@ -6,6 +6,7 @@ const structuralAttributes = new Set([
   'aria-describedby',
   'aria-hidden',
   'aria-labelledby',
+  'aria-live',
   'aria-modal',
   'className',
   'htmlFor',
@@ -117,9 +118,13 @@ function isConstrainedTechnicalLiteral(node) {
     ts.isSatisfiesExpression(parent) &&
     ts.isTypeReferenceNode(parent.type) &&
     ts.isIdentifier(parent.type.typeName) &&
-    ['FirstRescueAssetRole', 'IDBTransactionMode', 'Locale', 'PersistenceKey'].includes(
-      parent.type.typeName.text,
-    )
+    [
+      'DragPhase',
+      'FirstRescueAssetRole',
+      'IDBTransactionMode',
+      'Locale',
+      'PersistenceKey',
+    ].includes(parent.type.typeName.text)
   );
 }
 

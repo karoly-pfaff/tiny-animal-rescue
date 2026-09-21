@@ -208,6 +208,120 @@
   right: -8%;
 }
 
+.drag-interaction {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  touch-action: none;
+}
+
+.ladder-target {
+  position: absolute;
+  translate: -50% -50%;
+  border: 0.45rem dashed rgb(255 243 176 / 82%);
+  border-radius: 48%;
+  background: rgb(255 240 148 / 13%);
+  scale: 0.78;
+}
+
+.drag-interaction[data-guidance='true'] .ladder-target {
+  animation: target-breathe 1.8s ease-in-out infinite;
+}
+
+.mission-ladder {
+  position: absolute;
+  width: clamp(4.8rem, 9%, 7rem);
+  height: clamp(12rem, 35%, 20rem);
+  translate: -50% -50%;
+  rotate: -7deg;
+  border: 0;
+  background: transparent;
+  filter: drop-shadow(0.35rem 0.5rem 0 rgb(72 45 25 / 28%));
+  touch-action: none;
+  transition:
+    left 420ms ease-out,
+    top 420ms ease-out,
+    rotate 420ms ease-out;
+}
+
+.mission-ladder[data-phase='dragging'] {
+  z-index: 3;
+  cursor: grabbing;
+  rotate: -2deg;
+  transition: none;
+}
+
+.mission-ladder[data-phase='placed'] {
+  rotate: 9deg;
+}
+
+.ladder-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 21%;
+  border: 0.2rem solid #fff0b3;
+  border-radius: 999px;
+  background: #d57a3f;
+}
+
+.ladder-rail-left {
+  left: 4%;
+}
+
+.ladder-rail-right {
+  right: 4%;
+}
+
+.ladder-rungs {
+  position: absolute;
+  inset: 7% 13%;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 11%,
+    #b95d35 11% 17%,
+    transparent 17% 25%
+  );
+}
+
+.drag-ghost-hand {
+  position: absolute;
+  z-index: 4;
+  left: var(--hint-start-x);
+  top: var(--hint-start-y);
+  width: 3.2rem;
+  aspect-ratio: 1;
+  translate: -10% 10%;
+  border: 0.25rem solid #fff;
+  border-radius: 50% 50% 45% 45%;
+  background: rgb(53 104 170 / 78%);
+  box-shadow: 0 0.35rem 0 rgb(31 67 113 / 45%);
+  pointer-events: none;
+  animation: demonstrate-drag 2.2s ease-in-out infinite;
+}
+
+.drag-ghost-hand::after {
+  position: absolute;
+  top: -45%;
+  left: 35%;
+  width: 28%;
+  height: 70%;
+  border: inherit;
+  border-radius: 999px;
+  background: inherit;
+  content: '';
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .mission-back {
   position: absolute;
   top: max(4%, var(--safe-area-top));
@@ -256,6 +370,42 @@
   }
 }
 
+@keyframes target-breathe {
+  50% {
+    scale: 0.84;
+    background: rgb(255 240 148 / 24%);
+  }
+}
+
+@keyframes demonstrate-drag {
+  0%,
+  18% {
+    left: var(--hint-start-x);
+    top: var(--hint-start-y);
+    opacity: 0;
+  }
+
+  28%,
+  38% {
+    left: var(--hint-start-x);
+    top: var(--hint-start-y);
+    opacity: 1;
+  }
+
+  78%,
+  88% {
+    left: var(--hint-end-x);
+    top: var(--hint-end-y);
+    opacity: 1;
+  }
+
+  100% {
+    left: var(--hint-end-x);
+    top: var(--hint-end-y);
+    opacity: 0;
+  }
+}
+
 @media (orientation: portrait) {
   .map-title-plaque,
   .mission-title-plaque {
@@ -280,6 +430,10 @@
     height: 66%;
   }
 
+  .mission-kitten {
+    top: 43%;
+  }
+
   .mission-back {
     top: auto;
     bottom: max(3%, var(--safe-area-bottom));
@@ -287,7 +441,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .garden-mission-marker {
+  .garden-mission-marker,
+  .ladder-target {
     animation: none;
+  }
+
+  .drag-ghost-hand {
+    left: calc((var(--hint-start-x) + var(--hint-end-x)) / 2);
+    top: calc((var(--hint-start-y) + var(--hint-end-y)) / 2);
+    animation: none;
+  }
+
+  .mission-ladder {
+    transition-duration: 1ms;
   }
 }

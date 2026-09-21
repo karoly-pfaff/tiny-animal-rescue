@@ -1,8 +1,20 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
+import { dragLadder } from './support/ladder-drag';
 import { activateWithPrimaryPointer } from './support/pointer';
+
+async function setAnimationTime(element: Locator, milliseconds: number): Promise<void> {
+  await element.evaluate((animatedElement, nextTime) => {
+    const animation = animatedElement.getAnimations()[0];
+    if (animation === undefined) {
+      throw new Error('Expected guidance animation is missing.');
+    }
+    animation.pause();
+    animation.currentTime = nextTime;
+  }, milliseconds);
+}
 
 test('@preview renders the localized start screen from production preview', async ({
   page,
@@ -144,4 +156,62 @@ test('@preview opens only the first Garden mission and protects mission exit', a
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+});
+
+test('@preview returns an invalid ladder drop and snaps a valid drop exactly once', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
+
+  await dragLadder({ destination: 'invalid', ladder, page, pointerType });
+  await expect(ladder).toHaveAttribute('data-phase', 'idle');
+  await dragLadder({ destination: 'target', ladder, page, pointerType });
+  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await ladder.press('Enter');
+  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview demonstrates idle guidance under a normal-motion fake clock', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  const target = page.locator('.ladder-target');
+  await expect(target).toHaveCSS('animation-name', 'none');
+  await page.clock.fastForward(4_000);
+
+  const ghost = page.locator('.drag-ghost-hand');
+  await expect(ghost).toBeVisible();
+  await expect(ghost).toHaveCSS('pointer-events', 'none');
+  await expect(target).toHaveCSS('animation-name', 'target-breathe');
+  await setAnimationTime(ghost, 700);
+  const startBox = await ghost.boundingBox();
+  await setAnimationTime(ghost, 1_800);
+  const endBox = await ghost.boundingBox();
+  if (startBox === null || endBox === null) {
+    throw new Error('Guidance animation geometry is unavailable.');
+  }
+  expect(endBox.x).toBeGreaterThan(startBox.x + 20);
+
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  expect(browserErrors).toEqual([]);
 });

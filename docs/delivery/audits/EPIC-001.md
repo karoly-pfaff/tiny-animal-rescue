@@ -55,3 +55,26 @@ by `AGENTS.md`.
   content, asset, accessibility, secret, watermark, and build checks.
 - Round 2 verified all five corrections and found no High or Medium regression.
 - Disposition: every finding is fixed; no finding is declined or unresolved.
+
+## E001-S03 — Ladder drag step
+
+- Round 1 found four Medium issues: the decorative ghost hand could intercept pointer input; target
+  pulsing began before the idle guidance state and normal-motion movement lacked browser evidence;
+  pointer cancellation, lost capture, and active multi-pointer branches lacked regressions; and the
+  localization validator's temporary `style` exemption was too broad.
+- The fixes made the ghost hand pointer-transparent and proved drag completion while guidance is
+  active. Target pulsing is now gated by the four-second guidance state. A normal-motion Playwright
+  flow uses the fake clock for the idle threshold and deterministic Web Animations timeline samples
+  to prove start-to-target motion, while the reduced-motion visual matrix remains in place.
+- Unit regressions now cover pointer cancel, lost pointer capture, release, and rejection of a second
+  pointer while the primary pointer remains authoritative. The localization gate no longer exempts
+  `style`; a failing `style-copy` fixture proves CSS-generated player copy is rejected.
+- The generic drag primitive uses normalized coordinates, a visible 48-pixel finger offset, pointer
+  capture, a large target, one-shot completion, and a transition back to its start point without
+  negative feedback. The code-native ladder and guidance visuals require no production media binary.
+- Final gate evidence: `npm test` passes 54/54 with 96.32% statement and 92.5% branch coverage;
+  `npm run test:e2e` passes 28/28 across mouse and touch projects; `npm run test:visual` passes 32/32;
+  and `npm run validate:quick` passes all formatting, lint, duplicate/dead-code, documentation,
+  repository, type, content, asset, accessibility, secret, watermark, and build gates.
+- Round 2 verified every Round-1 correction and found no High regression.
+- Disposition: every finding is fixed; no finding is declined or unresolved.

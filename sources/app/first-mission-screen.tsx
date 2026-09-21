@@ -8,8 +8,20 @@ import {
 
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
+import { DragToTarget } from '../interactions/drag-to-target';
+import {
+  capturePointer,
+  isPrimaryActivationPointer,
+  releasePointer,
+} from '../interactions/pointer-capture';
 
 const exitHoldDurationMs = 650;
+const ladderStart = { x: 0.2, y: 0.72 } as const;
+const ladderTarget = {
+  center: { x: 0.65, y: 0.68 },
+  height: 0.42,
+  width: 0.24,
+} as const;
 
 type FirstMissionScreenProps = Readonly<{
   locale: Locale;
@@ -74,6 +86,13 @@ export function FirstMissionScreen({ locale, onExit }: FirstMissionScreenProps) 
         <header className="mission-title-plaque">
           <h1 id="mission-title">{strings.firstMissionTitle}</h1>
         </header>
+        <DragToTarget
+          accessibleLabel={strings.ladderLabel}
+          completionAnnouncement={strings.ladderPlaced}
+          onComplete={() => undefined}
+          start={ladderStart}
+          target={ladderTarget}
+        />
         <button
           className={`mission-back${holdingExit ? ' is-holding' : ''}`}
           type="button"
@@ -98,22 +117,5 @@ function canBeginExit(
   event: ReactPointerEvent<HTMLButtonElement>,
   activePointer: number | null,
 ): boolean {
-  const isSecondaryMouse = event.pointerType === 'mouse' && event.button !== 0;
-  return event.isPrimary && !isSecondaryMouse && activePointer === null;
-}
-
-type PointerCaptureTarget = Partial<
-  Pick<Element, 'hasPointerCapture' | 'releasePointerCapture' | 'setPointerCapture'>
->;
-
-function capturePointer(target: EventTarget, pointerId: number): void {
-  const captureTarget = target as PointerCaptureTarget;
-  captureTarget.setPointerCapture?.(pointerId);
-}
-
-function releasePointer(target: EventTarget, pointerId: number): void {
-  const captureTarget = target as PointerCaptureTarget;
-  if (captureTarget.hasPointerCapture?.(pointerId)) {
-    captureTarget.releasePointerCapture?.(pointerId);
-  }
+  return isPrimaryActivationPointer(event) && activePointer === null;
 }

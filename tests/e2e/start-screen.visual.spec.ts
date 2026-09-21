@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
+import { dragLadder } from './support/ladder-drag';
 
 async function settleVisual(page: Page) {
   await page.evaluate(async () => document.fonts.ready);
@@ -61,6 +62,41 @@ test('@visual matches the reviewed first-mission baseline', async ({ page }) => 
   await settleVisual(page);
 
   await expect(page).toHaveScreenshot('mission-first-step.png', { fullPage: true });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@visual shows the deterministic ladder guidance', async ({ page }) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.clock.install();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await page.clock.fastForward(4_000);
+  await expect(page.locator('.drag-ghost-hand')).toBeVisible();
+  await settleVisual(page);
+
+  await expect(page).toHaveScreenshot('mission-ladder-hint.png', { fullPage: true });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await settleVisual(page);
+
+  await expect(page).toHaveScreenshot('mission-ladder-placed.png', { fullPage: true });
   expect(browserErrors).toEqual([]);
 });
 
