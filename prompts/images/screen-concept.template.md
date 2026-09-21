@@ -6,6 +6,7 @@ Use for presentation/pitch mockups. If text or UI is rendered into the image, cl
 Use case: ui-mockup
 Asset type: Tiny Rescue <START | MAP | SHELTER | MISSION | CELEBRATION> screen concept
 Classification: presentation-only
+Target locale: <HU | EN>
 
 Primary request:
 Create a polished landscape tablet-game mockup showing <SCREEN PURPOSE>.
@@ -20,8 +21,8 @@ Runtime UI represented in the mockup:
 <CONTROL, ICON, POSITION, PRIORITY>
 
 Text (verbatim):
-- "<EXACT ENGLISH COPY>"
-- "<EXACT ENGLISH COPY>"
+- "<EXACT TARGET-LOCALE COPY>"
+- "<EXACT TARGET-LOCALE COPY>"
 
 Style:
 Apply the Tiny Rescue visual style lock.

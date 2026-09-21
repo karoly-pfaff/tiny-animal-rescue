@@ -10,6 +10,11 @@ Generated output is source material, not automatically a production asset. A can
 shippable only after the required editing, full-size or repeated-playback QA, ownership and runtime
 registration, and provenance/license review.
 
+Templates, concrete source prompts, reference selections, edit instructions, QA dispositions, and
+provenance records are version-controlled authored inputs. Preserve the exact approved prompt that
+produced a candidate; later template improvements do not rewrite that asset's history. Generated
+media never substitutes for its authored record.
+
 ## Contents
 
 ```text
@@ -68,7 +73,8 @@ Choose the template that matches the deliverable:
 | Translate an existing mockup | `images/localization-edit.template.md`  |
 
 Production art contains no baked UI, words, letters, numbers, or pseudo-writing. Presentation
-mockups may contain exact runtime-copy examples but are never used as production backgrounds.
+mockups may contain exact HU or EN runtime-copy examples but are never production candidates,
+localization sources, or production backgrounds.
 Localization edits preserve a presentation mockup and change only the enumerated copy. Every saved
 prompt states which role applies.
 
@@ -141,3 +147,8 @@ Music, effects, and voice are separate runtime categories and mix channels. Do n
 Every approved generated or edited asset records the evidence required by its section above. The
 repository validators treat a missing record, unresolved license, placeholder, wrong pack-relative
 path, or presentation-only visual referenced by production content as a release failure.
+
+No visual, music, effect, voice, video, metadata, or exported derivative may contain a watermark,
+signature, generator tag, promotional logo, audible branding, or automated-authorship credit.
+Required legal notices and internal provenance stay in their designated non-player-facing records;
+they are never embedded into media as promotion.

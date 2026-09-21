@@ -41,3 +41,16 @@ finding; the disposition remains reviewable with the story history.
   TypeScript and TSX, runs inside `lint:code`, and has negative fixtures for all reported bypasses.
 - Round 2 verified both fixes and found no new High issue.
 - Disposition: passed with no unresolved High or Medium finding.
+
+## E000-S05 — Add repository guidance
+
+- Round 1 found missing aggregate-gate evidence, ambiguity in ADR-0005's treatment of
+  presentation-only mockups, a target-locale/template mismatch, and a validation matrix that could be
+  read as replacing baseline story evidence with domain-only checks.
+- `validate:quick` passed. ADR-0005 now explicitly separates text-free production candidates from
+  non-authoritative HU/EN presentation references; the prompt template and visual skill use that same
+  boundary. The validation matrix makes its story baseline cumulative with every domain row.
+- The skill-creator validator passed all three repo-local skills; link, asset-prompt, presentation
+  reference, and documentation gates passed.
+- Round 2 verified all four fixes and found no new High issue.
+- Disposition: passed with no unresolved High or Medium finding.

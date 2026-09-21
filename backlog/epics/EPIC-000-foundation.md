@@ -1,6 +1,6 @@
 # EPIC-000: Repository and engineering foundation
 
-- Status: Planned
+- Status: In progress
 - Milestone: M0
 - Target version: `0.1.0`
 - Dependencies: none
@@ -58,12 +58,12 @@ Acceptance criteria:
 
 ### E000-S05 — Add repository guidance
 
-- [ ] `AGENTS.md`, ADR index, document map, and backlog links are correct.
-- [ ] A contributor can locate scope, contracts, and quality gates from the root README.
-- [ ] Dependency/license policy is documented before production assets are added.
-- [ ] The repo-local mission-authoring, validation, and visual-production skills point to the same
+- [x] `AGENTS.md`, ADR index, document map, and backlog links are correct.
+- [x] A contributor can locate scope, contracts, and quality gates from the root README.
+- [x] Dependency/license policy is documented before production assets are added.
+- [x] The repo-local mission-authoring, validation, and visual-production skills point to the same
       normative contracts rather than restating incompatible rules.
-- [ ] Prompt templates, approved prompts, visual QA, and provenance records are versioned authored
+- [x] Prompt templates, approved prompts, visual QA, and provenance records are versioned authored
       inputs; example screens are explicitly classified as presentation-only references.
 
 ### E000-S06 — Establish continuous integration and review governance

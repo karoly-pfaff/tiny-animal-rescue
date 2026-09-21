@@ -17,6 +17,7 @@ Locate the Tiny Rescue project root, then read:
 4. `docs/architecture/content-contracts.md`
 5. `docs/architecture/content-authoring-guide.md`
 6. ADR-0002, ADR-0003, ADR-0004, ADR-0007, and ADR-0008
+7. `docs/delivery/quality-gates.md`
 
 For an active backlog item, also read that story and its dependency epic. Treat accepted ADRs and the v1 scope as binding.
 

@@ -1,16 +1,20 @@
 # Validation matrix
 
+Every non-trivial change first requires acceptance-criteria inspection, focused checks,
+`validate:quick`, and the independent-audit disposition required by `AGENTS.md`. The domain rows below
+add evidence; they never replace that baseline.
+
 | Target                 | Required evidence                                                                                                                                                                            |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ordinary code story    | acceptance-criteria inspection, typecheck, lint, focused unit/integration tests                                                                                                              |
+| Ordinary code story    | behavior and boundary evidence specific to the changed code                                                                                                                                  |
 | Mission/content change | schema, semantic references, progression, rewards, capacity, localization, ownership, assets, focused integration test                                                                       |
 | Interaction primitive  | geometry/state unit tests, touch/mouse input, cancellation, wrong action, guidance, viewport visual check                                                                                    |
 | Persistence change     | repository tests, transaction/idempotency, reload, migration, corrupt/future version behavior                                                                                                |
 | Localization/audio     | HU/EN parity, glyph/overflow screenshots, narration inventory, channel/replay/pause integration tests                                                                                        |
 | Visual asset           | full-size visual inspection against art direction, dimensions/transparency, safe zones, text-free or exact-copy policy                                                                       |
 | Music/effect asset     | semantic runtime ID, pack-relative shared path, source prompt/references, edit/mastering history, duration/format, category/channel, loop/repetition/overlap QA, defects, provenance/license |
-| Epic M0–M6             | every story criterion plus the epic exit criteria and `validate:full`                                                                                                                        |
-| Epic M7–M9             | every story criterion plus the epic exit criteria and `validate:release`                                                                                                                     |
+| Epic M0–M6             | every story criterion, audit disposition, epic exit criteria, clean install, and `validate:full`                                                                                             |
+| Epic M7–M9             | every story criterion, audit disposition, epic exit criteria, clean install, and `validate:release`                                                                                          |
 | GA promotion           | qualified M9 candidate, allowed-diff proof, complete release checklist, `validate:release`, clean HU/EN playthrough evidence, artifact identity, licenses/provenance                         |
 
 ## Default command progression

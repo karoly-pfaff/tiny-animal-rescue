@@ -4,7 +4,9 @@
 
 Hungarian working title: **Kis Állatmentők**.
 
-This repository currently contains the product, architecture, content, and delivery specification intended to guide implementation with Codex. It deliberately defines a complete v1.0 while keeping later content packs possible without turning the core game into an open-ended platform project.
+This repository contains the product, architecture, content, and delivery specification plus the
+incremental application implementation. It deliberately defines a complete v1.0 while keeping later
+content packs possible without turning the core game into an open-ended platform project.
 
 ## Product in one sentence
 
@@ -35,31 +37,43 @@ See [v1 scope](docs/product/v1-scope.md) and the [content catalog](docs/product/
 
 ## Document map
 
-| Need                                                  | Start here                                                                      |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Understand the product                                | [Product intent](docs/intent.md)                                                |
-| Understand the player experience                      | [Game design](docs/product/game-design.md)                                      |
-| Build the screens consistently                        | [Screen specifications](docs/product/screen-specifications.md)                  |
-| Use presentation screen references safely             | [Screen reference classification](screens/README.md)                            |
-| Produce visual, music, and effect assets consistently | [Asset prompt pack](prompts/README.md)                                          |
-| Know what is and is not in v1.0                       | [v1 scope](docs/product/v1-scope.md)                                            |
-| See every resident and mission                        | [Content catalog](docs/product/content-catalog.md)                              |
-| Understand the technical shape                        | [Architecture overview](docs/architecture/overview.md)                          |
-| Add content safely                                    | [Content contracts](docs/architecture/content-contracts.md)                     |
-| Author a mission or animal                            | [Content authoring guide](docs/architecture/content-authoring-guide.md)         |
-| Follow the mission authoring workflow                 | [Mission authoring skill](.codex/skills/tiny-rescue-mission-authoring/SKILL.md) |
-| Validate a story, epic, or release                    | [Validation skill](.codex/skills/tiny-rescue-validation/SKILL.md)               |
-| Understand binding decisions                          | [ADR index](docs/architecture/adr/README.md)                                    |
-| Follow the code-quality contract                      | [Code quality](docs/delivery/code-quality.md)                                   |
-| Run the required automated gates                      | [Quality gates](docs/delivery/quality-gates.md)                                 |
-| Inspect temporary exceptions                          | [Quality waiver registry](docs/delivery/quality-waivers.md)                     |
-| Contribute and merge changes                          | [Git workflow](docs/delivery/git-workflow.md)                                   |
-| Keep one commit per story and one squash per epic     | [Story commit workflow](docs/delivery/story-commit-workflow.md)                 |
-| Understand milestones and releases                    | [Versioning](docs/delivery/versioning.md)                                       |
-| Promote the qualified candidate to 1.0                | [GA promotion](docs/delivery/ga-promotion.md)                                   |
-| Execute with Codex                                    | [AGENTS.md](AGENTS.md)                                                          |
-| See delivery order                                    | [Roadmap](backlog/roadmap.md)                                                   |
-| Pick up implementation work                           | [Backlog](backlog/README.md)                                                    |
+| Need                                                  | Start here                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Understand the product                                | [Product intent](docs/intent.md)                                                                  |
+| Understand the player experience                      | [Game design](docs/product/game-design.md)                                                        |
+| Build the screens consistently                        | [Screen specifications](docs/product/screen-specifications.md)                                    |
+| Preserve localization and child accessibility         | [Localization and accessibility](docs/product/localization-accessibility.md)                      |
+| Use presentation screen references safely             | [Screen reference classification](screens/README.md)                                              |
+| Produce visual, music, and effect assets consistently | [Asset prompt pack](prompts/README.md)                                                            |
+| Follow the visual asset workflow                      | [Visual production skill](.codex/skills/tiny-rescue-visual-production/SKILL.md)                   |
+| Know what is and is not in v1.0                       | [v1 scope](docs/product/v1-scope.md)                                                              |
+| See every resident and mission                        | [Content catalog](docs/product/content-catalog.md)                                                |
+| Understand the technical shape                        | [Architecture overview](docs/architecture/overview.md)                                            |
+| Select the correct test layer                         | [Testing strategy](docs/architecture/testing-strategy.md)                                         |
+| Add content safely                                    | [Content contracts](docs/architecture/content-contracts.md)                                       |
+| Author a mission or animal                            | [Content authoring guide](docs/architecture/content-authoring-guide.md)                           |
+| Follow the mission authoring workflow                 | [Mission authoring skill](.codex/skills/tiny-rescue-mission-authoring/SKILL.md)                   |
+| Validate a story, epic, or release                    | [Validation skill](.codex/skills/tiny-rescue-validation/SKILL.md)                                 |
+| Understand binding decisions                          | [ADR index](docs/architecture/adr/README.md)                                                      |
+| Follow the code-quality contract                      | [Code quality](docs/delivery/code-quality.md)                                                     |
+| Run the required automated gates                      | [Quality gates](docs/delivery/quality-gates.md)                                                   |
+| Review dependency and license policy                  | [Dependency and supply-chain rules](docs/delivery/quality-gates.md#dependency-and-artifact-gates) |
+| Inspect temporary exceptions                          | [Quality waiver registry](docs/delivery/quality-waivers.md)                                       |
+| Contribute and merge changes                          | [Git workflow](docs/delivery/git-workflow.md)                                                     |
+| Keep one commit per story and one squash per epic     | [Story commit workflow](docs/delivery/story-commit-workflow.md)                                   |
+| Understand milestones and releases                    | [Versioning](docs/delivery/versioning.md)                                                         |
+| Promote the qualified candidate to 1.0                | [GA promotion](docs/delivery/ga-promotion.md)                                                     |
+| Execute with Codex                                    | [AGENTS.md](AGENTS.md)                                                                            |
+| See delivery order                                    | [Roadmap](backlog/roadmap.md)                                                                     |
+| Pick up implementation work                           | [Backlog](backlog/README.md)                                                                      |
+
+## Contributor start
+
+Use the exact Node and npm versions declared by `.node-version` and `package.json`. From a clean
+checkout, install with `npm ci`, then run `npm run validate:quick` before completing a story. The
+complete command contract, clean-install expectations, and epic/release aggregates live in
+[quality gates](docs/delivery/quality-gates.md); acceptance criteria and delivery order live in the
+[backlog](backlog/README.md). Do not infer scope from placeholders or presentation screenshots.
 
 ## Delivery principle
 
