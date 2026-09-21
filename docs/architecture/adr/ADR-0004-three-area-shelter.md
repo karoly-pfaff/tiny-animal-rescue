@@ -27,4 +27,3 @@ Three visually distinct rooms create a larger-feeling persistent space while kee
 - **All residents on one screen:** poor readability and hit-target density.
 - **Infinite paginated generic rooms:** scalable but visually repetitive and removes scope pressure.
 - **Only one resident at a time:** loses the satisfying collection and living-shelter effect.
-

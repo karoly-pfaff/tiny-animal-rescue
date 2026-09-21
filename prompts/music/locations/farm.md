@@ -21,4 +21,3 @@ Friendly instrumental farm ambience for a premium preschool animal-rescue game. 
 ```text
 Calm instrumental teamwork music for a preschool rescue mission on a bright friendly farm. Muted acoustic guitar pattern, soft marimba, pizzicato strings, warm clarinet, and minimal brushed percussion around 82 BPM. Gentle forward motion for opening a gate, guiding a chick, cleaning mud, or moving a safe obstacle. Encouraging and practical, never rushed. Sparse motif, consonant harmony, rounded transients, narration space, and a steady loopable center without climax. No vocals, ticking, slapstick, frantic banjo, fiddle lead, marching beat, danger, harsh percussion, or triumphant finale.
 ```
-

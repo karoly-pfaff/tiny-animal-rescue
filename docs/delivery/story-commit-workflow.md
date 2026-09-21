@@ -147,9 +147,9 @@ Open one draft pull request from the epic branch to protected `main` when the fi
 commit is ready. Reopen that same pull request if necessary; do not replace it with a second PR for
 the same epic. Keep its description current with:
 
-| Story | Canonical commit | Acceptance evidence | Verification |
-|---|---|---|---|
-| `E001-S01` | `<full SHA>` | `<backlog/doc links>` | `<commands/evidence>` |
+| Story      | Canonical commit | Acceptance evidence   | Verification          |
+| ---------- | ---------------- | --------------------- | --------------------- |
+| `E001-S01` | `<full SHA>`     | `<backlog/doc links>` | `<commands/evidence>` |
 
 The table is evidence, not permanent Git ancestry. A squash merge creates a new commit and the story
 commits do not become ancestors of `main`. Update recorded SHAs after any autosquash.

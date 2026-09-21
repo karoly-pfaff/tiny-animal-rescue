@@ -17,4 +17,3 @@ Acceptance:
 ```
 
 Do not ask a generator for an entire sound pack in one prompt. Separate files are easier to select, edit, name, mix, and regenerate.
-

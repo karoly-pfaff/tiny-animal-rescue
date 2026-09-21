@@ -63,4 +63,3 @@ The product succeeds when:
 - user-generated content
 - educational assessment or performance grading
 - a general-purpose visual content editor in v1.0
-

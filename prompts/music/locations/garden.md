@@ -21,4 +21,3 @@ Warm instrumental garden ambience for a premium preschool animal-rescue game. Ny
 ```text
 Focused but calm instrumental problem-solving music for a preschool rescue mission in a sunny garden. Soft marimba pulse, muted nylon guitar, pizzicato strings, gentle flute fragments, and minimal brushed percussion around 80 BPM. Caring concentration with no urgency: the child is moving a ladder, finding a toy, or helping a small animal. Sparse melody, rounded transients, stable harmony, and room for spoken prompts and touch effects. Loop-friendly middle with no climax. No vocals, ticking, sneaking music, suspense, danger, slapstick, heavy drums, bright staccato overload, or triumphant ending.
 ```
-

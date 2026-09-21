@@ -49,4 +49,3 @@ Create one quiet neutral invalid-action cue for a preschool game: a soft felt-co
 ```text
 Create one restrained parent-area opening cue: a soft wooden latch movement and warm muted tone, 0.45–0.70 seconds, mono, clean and calm. Slightly more conventional than child controls but still part of the same tactile world. No lock click suggesting security failure, no digital beep, speech, jingle, or reverb.
 ```
-

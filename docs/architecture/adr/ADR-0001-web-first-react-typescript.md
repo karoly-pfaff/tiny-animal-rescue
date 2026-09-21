@@ -27,4 +27,3 @@ This stack matches the project's interaction complexity, makes state and content
 - **Phaser for the whole application:** adds a second UI paradigm and makes ordinary screens/localization harder without enough benefit.
 - **Pure DOM including wipe:** per-pixel mask behavior becomes awkward and less performant.
 - **Native-first framework:** increases setup and platform complexity before the game loop is proven.
-

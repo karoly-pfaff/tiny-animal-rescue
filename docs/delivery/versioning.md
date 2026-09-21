@@ -6,13 +6,13 @@ exit criterion passed, never because a date arrived or a branch was merged.
 
 ## Independent version lines
 
-| Version line | Format | Authority |
-|---|---|---|
-| Product | SemVer `MAJOR.MINOR.PATCH` in the root `package.json` | Player-visible application and bundled base game |
-| Content pack | SemVer in `pack.json` | Pack declarations and assets; the bundled `base` pack matches the product release |
-| Content contract | Sequential positive integer in `contractVersion` | Breaking schema/normalization compatibility accepted by the engine |
-| Save schema | Sequential positive integer | Forward-only pure migrations under ADR-0006 |
-| Specification baseline | SemVer-like document revision in the root README | Planning document set; not a shipped product claim |
+| Version line           | Format                                                | Authority                                                                         |
+| ---------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Product                | SemVer `MAJOR.MINOR.PATCH` in the root `package.json` | Player-visible application and bundled base game                                  |
+| Content pack           | SemVer in `pack.json`                                 | Pack declarations and assets; the bundled `base` pack matches the product release |
+| Content contract       | Sequential positive integer in `contractVersion`      | Breaking schema/normalization compatibility accepted by the engine                |
+| Save schema            | Sequential positive integer                           | Forward-only pure migrations under ADR-0006                                       |
+| Specification baseline | SemVer-like document revision in the root README      | Planning document set; not a shipped product claim                                |
 
 Do not couple independent lines accidentally. A product patch need not bump the save schema; a save
 migration always requires a product release; a content-contract change bumps the base pack only when
@@ -27,18 +27,18 @@ engine compatibility. Remote resolution or dependency ranges would require a lat
 Before EPIC-000 exits, the unimplemented product line is `0.0.0`. Every epic is exactly one backlog
 milestone and earns exactly one `0.x.0` minor when all of its acceptance and exit criteria pass.
 
-| Milestone | Epic | Product version | Evidence claim |
-|---|---|---:|---|
-| M0 | EPIC-000 | `0.1.0` | Reproducible repository and enforced quality baseline |
-| M1 | EPIC-001 | `0.2.0` | First complete persisted rescue |
-| M2 | EPIC-002 | `0.3.0` | Validated declarative content platform |
-| M3 | EPIC-003 | `0.4.0` | Five production interaction primitives and guidance |
-| M4 | EPIC-004 | `0.5.0` | Complete map, progression, and replay |
-| M5 | EPIC-005 | `0.6.0` | Three-area shelter and robust persistence |
-| M6 | EPIC-006 | `0.7.0` | Feature-equivalent HU/EN audio-first experience and settings |
-| M7 | EPIC-007 | `0.8.0` | Complete normative v1 content catalog |
-| M8 | EPIC-008 | `0.9.0` | Child-ready, accessible, responsive release candidate |
-| M9 | EPIC-009 | `0.10.0` | Reproducible, audited v1 release candidate |
+| Milestone | Epic     | Product version | Evidence claim                                               |
+| --------- | -------- | --------------: | ------------------------------------------------------------ |
+| M0        | EPIC-000 |         `0.1.0` | Reproducible repository and enforced quality baseline        |
+| M1        | EPIC-001 |         `0.2.0` | First complete persisted rescue                              |
+| M2        | EPIC-002 |         `0.3.0` | Validated declarative content platform                       |
+| M3        | EPIC-003 |         `0.4.0` | Five production interaction primitives and guidance          |
+| M4        | EPIC-004 |         `0.5.0` | Complete map, progression, and replay                        |
+| M5        | EPIC-005 |         `0.6.0` | Three-area shelter and robust persistence                    |
+| M6        | EPIC-006 |         `0.7.0` | Feature-equivalent HU/EN audio-first experience and settings |
+| M7        | EPIC-007 |         `0.8.0` | Complete normative v1 content catalog                        |
+| M8        | EPIC-008 |         `0.9.0` | Child-ready, accessible, responsive release candidate        |
+| M9        | EPIC-009 |        `0.10.0` | Reproducible, audited v1 release candidate                   |
 
 Work on later epics may proceed in parallel when dependencies allow, but versions and milestone claims
 are recorded in order. A partially complete epic does not publish its target minor.

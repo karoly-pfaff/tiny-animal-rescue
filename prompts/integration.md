@@ -73,14 +73,14 @@ assets/audio/en/voice/mission-garden-kitten-tree-intro.ogg
 
 ## Duration targets
 
-| Asset | Target |
-|---|---:|
-| button/tap confirmation | 0.10–0.45 s |
-| object movement/placement | 0.20–0.90 s |
-| interaction completion | 0.50–1.50 s |
-| rescue/unlock cue | 1.50–4.00 s |
-| environmental ambience loop | 20–60 s |
-| final music loop | 45–120 s |
+| Asset                       |      Target |
+| --------------------------- | ----------: |
+| button/tap confirmation     | 0.10–0.45 s |
+| object movement/placement   | 0.20–0.90 s |
+| interaction completion      | 0.50–1.50 s |
+| rescue/unlock cue           | 1.50–4.00 s |
+| environmental ambience loop |     20–60 s |
+| final music loop            |    45–120 s |
 
 ## Variants
 

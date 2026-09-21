@@ -33,9 +33,9 @@ and tested independently of these images.
 
 ## Files
 
-| File | Intended reference |
-|---|---|
-| `01-start-screen-en.png` | welcome mood, hero hierarchy, tactile controls |
-| `02-map-screen-en.png` | distinct location silhouettes and central shelter composition |
-| `03-shelter-screen-en.png` | cozy material language and readable resident zones |
+| File                       | Intended reference                                                 |
+| -------------------------- | ------------------------------------------------------------------ |
+| `01-start-screen-en.png`   | welcome mood, hero hierarchy, tactile controls                     |
+| `02-map-screen-en.png`     | distinct location silhouettes and central shelter composition      |
+| `03-shelter-screen-en.png` | cozy material language and readable resident zones                 |
 | `04-mission-screen-en.png` | clear source/target staging and preschool-friendly visual guidance |

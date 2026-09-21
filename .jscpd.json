@@ -1,0 +1,20 @@
+{
+  "threshold": 0,
+  "minLines": 8,
+  "minTokens": 100,
+  "reporters": ["console", "json"],
+  "output": "build/reports/jscpd",
+  "absolute": false,
+  "gitignore": true,
+  "formats": ["typescript", "javascript"],
+  "path": [
+    "sources",
+    "scripts",
+    "eslint.config.js",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "commitlint.config.mjs",
+    "markdownlint.config.mjs"
+  ],
+  "ignore": ["**/*.test.*"]
+}

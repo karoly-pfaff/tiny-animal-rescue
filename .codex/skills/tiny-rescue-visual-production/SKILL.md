@@ -11,11 +11,13 @@ Create consistent visuals from reusable art direction rather than inventing a ne
 
 Locate the Tiny Rescue project root. Read:
 
-1. `docs/product/screen-specifications.md`
-2. `docs/product/localization-accessibility.md`
-3. ADR-0005
-4. `prompts/images/style-lock.md`
-5. `prompts/images/negative-constraints.md`
+1. `AGENTS.md`
+2. `prompts/README.md`
+3. `docs/product/screen-specifications.md`
+4. `docs/product/localization-accessibility.md`
+5. ADR-0005
+6. `prompts/images/style-lock.md`
+7. `prompts/images/negative-constraints.md`
 
 Then read only the prompt template matching the requested asset. Use [references/asset-routing.md](references/asset-routing.md) to choose it.
 
@@ -23,7 +25,9 @@ Then read only the prompt template matching the requested asset. Use [references
 
 **Production assets** contain no UI text, labels, letters, numbers, logos, watermarks, or pseudo-writing. Runtime UI provides all player-facing text and controls.
 
-**Presentation mockups** may show exact English UI copy to demonstrate the intended application. Never treat a mockup with baked text as a shippable scene background.
+**Presentation mockups** may show exact HU or EN runtime UI copy to demonstrate the intended
+application. Never treat a mockup with baked text as a shippable scene background, localization
+source, or production candidate.
 
 **Localization edits** change only text. State every invariant explicitly and preserve composition, characters, controls, palette, materials, lighting, and dimensions.
 

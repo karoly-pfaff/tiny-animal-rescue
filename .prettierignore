@@ -1,0 +1,8 @@
+node_modules/
+artifacts/
+build/
+coverage/
+playwright-report/
+test-results/
+screens/*.png
+package-lock.json

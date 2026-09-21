@@ -81,4 +81,3 @@ backlog, tags, release notes, and implemented capability synchronized.
 - **Group multiple epics into one milestone/version:** hides which exit criterion a release actually
   satisfies.
 - **Version on calendar or merge count:** communicates activity rather than player-visible evidence.
-

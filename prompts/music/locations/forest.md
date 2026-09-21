@@ -21,4 +21,3 @@ Gentle instrumental woodland ambience for a premium preschool animal-rescue game
 ```text
 Quiet instrumental helping music for a preschool animal rescue in a friendly forest. Soft wooden marimba marks a slow steady pulse, with muted pizzicato strings, low clarinet, gentle harp plucks, and occasional flute answers around 72 BPM. Attentive and encouraging while moving branches, returning a bird to its nest, or finding acorns, but never tense. Minimal motif, warm consonant harmony, rounded attacks, ample silence for narration and effects, steady loopable center. No vocals, danger cue, sneaking rhythm, ticking, dark drones, dramatic build, heavy percussion, or heroic finale.
 ```
-

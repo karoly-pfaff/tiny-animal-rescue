@@ -21,4 +21,3 @@ Calm instrumental pond ambience for a premium preschool animal-rescue game. Soft
 ```text
 Gentle instrumental guidance music for a preschool animal rescue beside a calm pond. Soft kalimba pulse, warm marimba, light harp patterns, breathy flute, and subtle felt piano around 70 BPM. Patient concentration for tracing a path, clearing reeds, guiding a duckling, or reconnecting a puddle to the pond. Smooth flowing phrases, soft dynamics, no urgency, sparse enough for narration and touch effects, steady loopable center. No vocals, ticking, danger, underwater mystery, fast arpeggios, sharp droplets, dramatic build, heavy bass, or triumphant ending.
 ```
-

@@ -26,4 +26,3 @@ Repeated mechanics reduce learning load, enable stronger accessibility tuning, a
 - **Unique mechanic per rescue:** creates a minigame collection in disguise and undermines predictability.
 - **Only tap and drag:** simpler, but insufficient visual/tactile variety for sixteen missions.
 - **Generic scripting language:** moves complexity into content and conflicts with safe declarative packs.
-

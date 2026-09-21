@@ -55,12 +55,12 @@ Each primitive implements a shared lifecycle:
 
 ```ts
 type InteractionController = {
-  start(): void
-  pause(): void
-  resume(): void
-  reset(): void
-  dispose(): void
-}
+  start(): void;
+  pause(): void;
+  resume(): void;
+  reset(): void;
+  dispose(): void;
+};
 ```
 
 Concrete components receive normalized step data and emit domain events. They do not mutate global progress directly.
@@ -115,4 +115,3 @@ The approved extension points are:
 - new visual/audio assets
 
 A new interaction primitive, executable content behavior, remote content loading, or new persistence semantics is an engine change and requires an ADR.
-

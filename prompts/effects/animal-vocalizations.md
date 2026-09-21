@@ -73,4 +73,3 @@ Create one friendly small frog greeting: a single soft rounded croak with a tiny
 ```text
 Create one fish interaction reaction without inventing a voice: two tiny underwater bubbles and a soft fin-like water flick, gentle and playful, 0.5–0.9 seconds, mono or very narrow stereo, isolated. Provide three variants. No large splash, aquarium hum, sonar, dolphin sound, cartoon voice, or music.
 ```
-

@@ -4,7 +4,16 @@
   "title": "Tiny Rescue mission",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "type", "locationId", "prerequisites", "scene", "steps", "reward", "localization"],
+  "required": [
+    "id",
+    "type",
+    "locationId",
+    "prerequisites",
+    "scene",
+    "steps",
+    "reward",
+    "localization"
+  ],
   "properties": {
     "id": { "$ref": "#/$defs/id" },
     "type": { "enum": ["rescue", "help", "world"] },
@@ -185,4 +194,3 @@
     }
   }
 }
-

@@ -29,13 +29,13 @@ A World mission improves a place or assists a non-resident subject. It may set a
 
 ## Step selection guide
 
-| Story action | Primitive |
-|---|---|
-| move obstacles, press knots, free a covered subject | tap/remove |
+| Story action                                          | Primitive      |
+| ----------------------------------------------------- | -------------- |
+| move obstacles, press knots, free a covered subject   | tap/remove     |
 | carry ladder, nest material, water, animal, or object | drag-to-target |
-| clean mud, dust, or leaves over a broad area | wipe/clean |
-| pair an animal/item with an obvious destination | match |
-| guide an animal or water along a safe route | trace |
+| clean mud, dust, or leaves over a broad area          | wipe/clean     |
+| pair an animal/item with an obvious destination       | match          |
+| guide an animal or water along a safe route           | trace          |
 
 If the story cannot fit this table without becoming confusing, change the story rather than adding one-off logic.
 

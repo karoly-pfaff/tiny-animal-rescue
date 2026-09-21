@@ -13,25 +13,25 @@
 
 ```ts
 type SaveGameV1 = {
-  schemaVersion: 1
-  createdAt: string
-  updatedAt: string
-  locale: 'hu' | 'en'
+  schemaVersion: 1;
+  createdAt: string;
+  updatedAt: string;
+  locale: 'hu' | 'en';
   settings: {
-    musicVolume: number
-    effectsVolume: number
-    narrationVolume: number
-    reducedMotion: boolean
-  }
-  completedMissionIds: string[]
-  unlockedResidentIds: string[]
-  worldFlags: string[]
+    musicVolume: number;
+    effectsVolume: number;
+    narrationVolume: number;
+    reducedMotion: boolean;
+  };
+  completedMissionIds: string[];
+  unlockedResidentIds: string[];
+  worldFlags: string[];
   currentMission?: {
-    missionId: string
-    completedStepIds: string[]
-    stepState?: Record<string, unknown>
-  }
-}
+    missionId: string;
+    completedStepIds: string[];
+    stepState?: Record<string, unknown>;
+  };
+};
 ```
 
 The concrete persisted format must further constrain `stepState` by interaction type; arbitrary values are shown only to illustrate resumability.
@@ -69,4 +69,3 @@ Availability is derived rather than stored:
 ## Reset
 
 Reset progress is behind the parent gate, requires a second confirmation, and preserves audio/language settings unless the parent selects a full reset.
-

@@ -18,4 +18,3 @@ Selection notes:
 - <WHAT MUST BE PRESENT>
 - <WHAT DISQUALIFIES A CANDIDATE>
 ```
-

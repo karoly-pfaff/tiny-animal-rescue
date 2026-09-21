@@ -27,4 +27,3 @@ This preserves a firm finish line while allowing later `winter-rescue`-style pac
 - **Hard-code the base game and stop:** fastest now, expensive to revisit and encourages duplicated mission components.
 - **Build a full mod platform first:** delays the child-visible product and greatly expands scope.
 - **Promise an ongoing content service:** creates an obligation the project does not need.
-

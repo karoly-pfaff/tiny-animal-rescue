@@ -27,4 +27,3 @@ Local persistence satisfies the experience without collecting personal data or r
 - **Cloud account:** unnecessary privacy, operational, and compliance burden.
 - **LocalStorage only:** weaker transactional and structured-data behavior.
 - **No migration policy until needed:** risks losing the child's persistent shelter later.
-

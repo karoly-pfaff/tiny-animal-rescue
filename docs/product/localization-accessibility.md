@@ -78,4 +78,3 @@ External navigation, reset progress, legal information, and credits live behind 
 - font glyph coverage for Hungarian accented characters
 - audio duration does not block input and can be replayed cleanly
 - screenshots reviewed in both languages
-

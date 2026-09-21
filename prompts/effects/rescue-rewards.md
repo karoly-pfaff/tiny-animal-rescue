@@ -37,4 +37,3 @@ Create one calm environmental-improvement cue for a cleaned pond or repaired are
 ```text
 Create one special but gentle collection-complete effect: warm marimba, soft harp, pizzicato strings, and a quiet felt-piano arrival forming a short affectionate phrase, 2.5–4.0 seconds, stereo. Proud, tender, and complete without implying competition. No vocals, choir, huge orchestra, brass, cymbal crash, applause, fireworks, or mobile-game reward shower.
 ```
-
