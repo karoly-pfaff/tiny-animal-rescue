@@ -7,6 +7,6 @@ describe('application bootstrap', () => {
 
     await act(async () => import('../../sources/main'));
 
-    expect(screen.getByRole('heading', { name: 'Kezdőképernyő' })).toBeVisible();
+    expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
   });
 });

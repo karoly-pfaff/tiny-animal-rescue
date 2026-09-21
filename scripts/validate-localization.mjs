@@ -3,8 +3,10 @@ import { relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 const structuralAttributes = new Set([
+  'aria-describedby',
   'aria-hidden',
   'aria-labelledby',
+  'aria-modal',
   'className',
   'htmlFor',
   'id',
@@ -101,13 +103,13 @@ function isDeveloperError(node) {
   );
 }
 
-function isLocaleSelection(node) {
+function isConstrainedTechnicalLiteral(node) {
   const parent = node.parent;
   return (
     ts.isSatisfiesExpression(parent) &&
     ts.isTypeReferenceNode(parent.type) &&
     ts.isIdentifier(parent.type.typeName) &&
-    parent.type.typeName.text === 'Locale'
+    ['IDBTransactionMode', 'Locale', 'PersistenceKey'].includes(parent.type.typeName.text)
   );
 }
 
@@ -137,7 +139,7 @@ function isAllowedLiteral(node) {
     isComparisonValue(node) ||
     isTechnicalCallArgument(node) ||
     isDeveloperError(node) ||
-    isLocaleSelection(node)
+    isConstrainedTechnicalLiteral(node)
   );
 }
 

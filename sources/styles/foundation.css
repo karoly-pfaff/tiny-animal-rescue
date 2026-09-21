@@ -28,7 +28,8 @@ button {
   font: inherit;
 }
 
-.foundation-shell {
+.foundation-shell,
+.game-shell {
   display: grid;
   min-height: 100vh;
   min-height: 100svh;
@@ -37,7 +38,8 @@ button {
   background: linear-gradient(#86d7ed, #eaf7d3 72%, #8bc66b 72%);
 }
 
-.design-surface {
+.design-surface,
+.game-surface {
   position: relative;
   width: min(100vw, calc(100vh * 4 / 3));
   width: min(100vw, calc(100svh * 4 / 3));
@@ -158,7 +160,8 @@ button {
 }
 
 @media (orientation: portrait) {
-  .design-surface {
+  .design-surface,
+  .game-surface {
     width: 100vw;
     height: 100svh;
     aspect-ratio: auto;

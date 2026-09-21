@@ -6,3 +6,17 @@ playwright-report/
 test-results/
 .DS_Store
 *.log
+
+# Production media is delivered from object storage, never from Git.
+content/**/assets/**/*.png
+content/**/assets/**/*.jpg
+content/**/assets/**/*.jpeg
+content/**/assets/**/*.webp
+content/**/assets/**/*.avif
+content/**/assets/**/*.gif
+content/**/assets/**/*.mp3
+content/**/assets/**/*.ogg
+content/**/assets/**/*.wav
+content/**/assets/**/*.m4a
+content/**/assets/**/*.mp4
+content/**/assets/**/*.webm

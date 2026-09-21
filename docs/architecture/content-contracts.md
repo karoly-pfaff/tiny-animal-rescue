@@ -127,16 +127,23 @@ Positions use normalized coordinates relative to a 1024×768 design surface. The
 
 ## Asset references
 
-Asset references are pack-relative logical paths. The resolver rejects:
+Asset references are pack-relative logical object keys governed by
+[ADR-0010](adr/ADR-0010-external-production-media.md). Production media binaries live outside Git;
+pack inventories, prompt provenance, QA, ownership, and delivery metadata remain versioned. The
+resolver combines logical keys with the trusted deployment base and rejects:
 
 - absolute URLs
 - parent-directory traversal
 - undeclared cross-pack paths
-- missing files
+- missing delivered objects or unverified pending release assets
 - wrong media types
 - locale audio stored in a shared directory
 
 Required image metadata includes intended role, dimensions, and whether transparency is expected. Required audio metadata includes role, locale where applicable, and duration bounds where narration timing matters.
+
+Ignored local working media may satisfy dimension and visual QA during development. A code-native
+fallback may cover an `r2-pending` decorative asset, but it does not make that asset release-ready.
+Visual-regression baselines and presentation-only references are evidence, not runtime assets.
 
 ## Localization keys
 

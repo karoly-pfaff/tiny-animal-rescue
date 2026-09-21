@@ -88,6 +88,13 @@ export default tseslint.config(
     },
   },
   {
+    files: ['sources/content/first-rescue-assets.ts'],
+    rules: {
+      // This boundary alone translates semantic asset roles to deployment object keys.
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
     files: ['scripts/**/*.mjs', '*.js', '*.mjs'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: {

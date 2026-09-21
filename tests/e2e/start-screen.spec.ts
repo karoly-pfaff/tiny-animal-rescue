@@ -16,12 +16,15 @@ test('@preview renders the localized start screen from production preview', asyn
     'content',
     /viewport-fit=cover/,
   );
-  await expect(page.getByRole('heading', { name: 'Kezdőképernyő' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Játék' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await expect(page.getByRole('heading', { name: 'Kis Állatmentők' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Játék' })).toBeEnabled();
   await expect
     .poll(() => page.evaluate(() => document.fonts.check('800 32px "Baloo 2 Variable"', 'őűŐŰ')))
     .toBe(true);
-  await expect(page.getByRole('heading', { name: 'Kezdőképernyő' })).toHaveCSS(
+  await expect(page.getByRole('heading', { name: 'Kis Állatmentők' })).toHaveCSS(
     'font-family',
     /Baloo 2 Variable/,
   );
@@ -31,9 +34,10 @@ test('@preview renders the localized start screen from production preview', asyn
   );
 
   await activateWithPrimaryPointer(
-    page.locator('.design-surface'),
+    page.getByRole('button', { name: 'Játék' }),
     Boolean(testInfo.project.use.hasTouch),
   );
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
 
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
@@ -42,8 +46,9 @@ test('@preview renders the localized start screen from production preview', asyn
 
 test('@preview preserves the design surface and simulated safe areas', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
   const viewport = page.viewportSize();
-  const surface = await page.locator('.design-surface').boundingBox();
+  const surface = await page.locator('.game-surface').boundingBox();
 
   expect(viewport).not.toBeNull();
   expect(surface).not.toBeNull();
@@ -69,7 +74,7 @@ test('@preview preserves the design surface and simulated safe areas', async ({ 
     }`,
   });
 
-  const heading = await page.locator('.screen-heading').boundingBox();
+  const heading = await page.locator('.title-plaque').boundingBox();
   const action = await page.getByRole('button', { name: 'Játék' }).boundingBox();
   expect(heading).not.toBeNull();
   expect(action).not.toBeNull();
@@ -83,4 +88,32 @@ test('@preview preserves the design surface and simulated safe areas', async ({ 
   if (viewport.width <= viewport.height) {
     expect(heading.x + heading.width).toBeLessThanOrEqual(viewport.width - 72);
   }
+});
+
+test('@preview supports English first-run setup and child navigation', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('Tiny Rescue');
+  await page.reload();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await activateWithPrimaryPointer(
+    page.getByRole('button', { name: 'Play' }),
+    Boolean(testInfo.project.use.hasTouch),
+  );
+
+  await expect(page.getByRole('heading', { name: 'Rescue map' })).toBeVisible();
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview does not let a deep link bypass first-run setup', async ({ page }) => {
+  await page.goto('/#/map');
+
+  await expect(page.getByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).not.toBeVisible();
 });

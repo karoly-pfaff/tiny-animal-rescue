@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "start-background",
+      "objectKey": "images/start/welcome-garden.png",
+      "role": "start-background",
+      "width": 1448,
+      "height": 1086,
+      "promptRecord": "prompts/images/approved/epic-001/start-background.md",
+      "classification": "production-safe",
+      "qaStatus": "approved",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "delivery": "r2-pending"
+    }
+  ]
+}

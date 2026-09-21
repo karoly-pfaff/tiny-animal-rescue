@@ -42,7 +42,7 @@
     "test:integration": "vitest run tests/integration",
     "test:content": "node scripts/validate-content.mjs",
     "test:content:release": "node scripts/validate-release-content.mjs",
-    "test:assets": "node scripts/validate-assets.mjs",
+    "test:assets": "node scripts/test-asset-policy-fixtures.mjs && node scripts/validate-assets.mjs",
     "test:a11y": "vitest run tests/a11y",
     "test:governance": "node scripts/test-governance-fixtures.mjs",
     "test:e2e": "npm run build && node scripts/run-playwright.mjs test --grep-invert @visual",

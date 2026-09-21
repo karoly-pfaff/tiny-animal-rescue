@@ -1,10 +1,10 @@
 # EPIC-001: First rescue vertical slice
 
-- Status: Planned
+- Status: In progress
 - Milestone: M1
 - Target version: `0.2.0`
 - Dependencies: EPIC-000
-- ADRs: ADR-0001, ADR-0005, ADR-0006
+- ADRs: ADR-0001, ADR-0005, ADR-0006, ADR-0010
 
 ## Outcome
 
@@ -14,10 +14,10 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S01 — Child-facing start and first-run flow
 
-- [ ] One dominant Play action enters the first mission path.
-- [ ] First-run HU/EN selection is accessible without requiring reading from the child after caregiver setup.
-- [ ] Settings entry is visually secondary and parent-oriented.
-- [ ] Start art contains no baked text.
+- [x] One dominant Play action enters the first mission path.
+- [x] First-run HU/EN selection is accessible without requiring reading from the child after caregiver setup.
+- [x] Settings entry is visually secondary and parent-oriented.
+- [x] Start art contains no baked text.
 
 ### E001-S02 — Minimal Garden map entry
 
