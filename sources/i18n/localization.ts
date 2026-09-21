@@ -14,11 +14,16 @@ type Strings = Readonly<{
   chooseLanguageSaveError: string;
   english: string;
   englishCode: string;
+  firstMissionTitle: string;
+  garden: string;
+  gardenMissionLabel: string;
+  holdToMap: string;
   hungarian: string;
   hungarianCode: string;
   mapHint: string;
   parentSettings: string;
   play: string;
+  shelter: string;
   screenTitles: Readonly<Record<ScreenTitleKey, string>>;
 }>;
 
@@ -30,11 +35,16 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     chooseLanguageSaveError: 'A beállítás nem menthető. Próbáld újra.',
     english: 'English',
     englishCode: 'EN',
+    firstMissionTitle: 'Mimi a fán',
+    garden: 'Kert',
+    gardenMissionLabel: 'Kerti mentés: Mimi',
+    holdToMap: 'Tartsd nyomva a térképhez',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     mapHint: 'Az első mentés a Kertben vár.',
     parentSettings: 'Szülői beállítások',
     play: 'Játék',
+    shelter: 'Menhely',
     screenTitles: {
       'screen.start.title': 'Kis Állatmentők',
       'screen.map.title': 'Mentési térkép',
@@ -51,11 +61,16 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     chooseLanguageSaveError: 'The setting could not be saved. Please try again.',
     english: 'English',
     englishCode: 'EN',
+    firstMissionTitle: 'Mimi in the tree',
+    garden: 'Garden',
+    gardenMissionLabel: 'Garden rescue: Mimi',
+    holdToMap: 'Hold to return to the map',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     mapHint: 'The first rescue is waiting in the Garden.',
     parentSettings: 'Parent settings',
     play: 'Play',
+    shelter: 'Shelter',
     screenTitles: {
       'screen.start.title': 'Tiny Rescue',
       'screen.map.title': 'Rescue map',

@@ -13,6 +13,19 @@
       "ownership": "base",
       "licenseStatus": "approved",
       "delivery": "r2-pending"
+    },
+    {
+      "id": "garden-map-background",
+      "objectKey": "images/map/garden-map.png",
+      "role": "garden-map-background",
+      "width": 1448,
+      "height": 1086,
+      "promptRecord": "prompts/images/approved/epic-001/garden-map-background.md",
+      "classification": "production-safe",
+      "qaStatus": "approved",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "delivery": "r2-pending"
     }
   ]
 }

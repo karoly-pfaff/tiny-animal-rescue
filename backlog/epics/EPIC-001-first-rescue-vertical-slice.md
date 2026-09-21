@@ -21,10 +21,10 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S02 — Minimal Garden map entry
 
-- [ ] The map shows the shelter and Garden mission marker.
-- [ ] Selecting the marker opens the correct mission.
-- [ ] Other v1 locations are not yet shown as broken/locked promises.
-- [ ] Back navigation is safe from accidental single taps during play.
+- [x] The map shows the shelter and Garden mission marker.
+- [x] Selecting the marker opens the correct mission.
+- [x] Other v1 locations are not yet shown as broken/locked promises.
+- [x] Back navigation is safe from accidental single taps during play.
 
 ### E001-S03 — Ladder drag step
 

@@ -5,6 +5,7 @@ import '@fontsource-variable/nunito';
 
 import { App } from './app/app';
 import './styles/foundation.css';
+import './styles/first-rescue.css';
 import './styles/start-screen.css';
 
 const rootElement = document.querySelector('#root');

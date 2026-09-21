@@ -117,3 +117,31 @@ test('@preview does not let a deep link bypass first-run setup', async ({ page }
   await expect(page.getByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).not.toBeVisible();
 });
+
+test('@preview opens only the first Garden mission and protects mission exit', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await activateWithPrimaryPointer(
+    page.getByRole('button', { name: 'Játék' }),
+    Boolean(testInfo.project.use.hasTouch),
+  );
+
+  const gardenCall = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
+  await expect(gardenCall).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Menhely' })).toBeVisible();
+  await expect(page.getByText(/Erdő|Tanya|Tó/u)).not.toBeVisible();
+  await activateWithPrimaryPointer(gardenCall, Boolean(testInfo.project.use.hasTouch));
+  await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
+
+  const back = page.getByRole('button', { name: 'Tartsd nyomva a térképhez' });
+  await back.click();
+  await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
+  await back.dispatchEvent('pointerdown', {
+    isPrimary: true,
+    pointerId: 1,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+});

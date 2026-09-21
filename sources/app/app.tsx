@@ -6,6 +6,8 @@ import {
 } from '../persistence/locale-bootstrap-repository';
 import { getStrings, type Locale } from '../i18n/localization';
 import { FoundationScreen } from './foundation-screen';
+import { FirstMissionScreen } from './first-mission-screen';
+import { MapScreen } from './map-screen';
 import { resolveRoute } from './routes';
 import { StartScreen } from './start-screen';
 
@@ -83,6 +85,35 @@ function navigate(nextPath: string): void {
 
 type AppProps = Readonly<{ localeRepository?: LocaleBootstrapRepository }>;
 
+type PlayerRouteProps = Readonly<{
+  locale: Locale;
+  route: ReturnType<typeof resolveRoute>;
+}>;
+
+function PlayerRoute({ locale, route }: PlayerRouteProps) {
+  if (route.id === 'map') {
+    return (
+      <MapScreen
+        locale={locale}
+        onOpenGardenMission={() => {
+          navigate('/mission');
+        }}
+      />
+    );
+  }
+  if (route.id === 'mission') {
+    return (
+      <FirstMissionScreen
+        locale={locale}
+        onExit={() => {
+          navigate('/map');
+        }}
+      />
+    );
+  }
+  return <FoundationScreen locale={locale} route={route} />;
+}
+
 function shouldShowStart(locale: Locale | null | undefined, routeId: string): boolean {
   return locale === undefined || locale === null || routeId === 'start';
 }
@@ -118,5 +149,5 @@ export function App({ localeRepository = browserLocaleRepository }: AppProps) {
     );
   }
 
-  return <FoundationScreen locale={activeLocale} route={route} />;
+  return <PlayerRoute locale={activeLocale} route={route} />;
 }

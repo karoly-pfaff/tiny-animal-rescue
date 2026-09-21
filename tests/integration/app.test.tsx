@@ -72,4 +72,19 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(writeLocale).toHaveBeenCalledTimes(2);
   });
+
+  it('shows only the first Garden call and opens the correct mission', async () => {
+    window.location.hash = '/map';
+    const repository = createMemoryLocaleBootstrapRepository('en');
+    render(<App localeRepository={repository} />);
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Shelter' })).toBeVisible();
+    expect(screen.queryByText(/Forest|Farm|Pond/u)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    expect(screen.getByRole('heading', { name: 'Mimi in the tree' })).toBeVisible();
+    expect(screen.getByRole('main')).toHaveAttribute('data-mission-id', 'garden-kitten-tree');
+  });
 });

@@ -31,3 +31,27 @@ by `AGENTS.md`.
   Playwright has 16/16 behavioral and 12/12 visual passes across the viewport/touch matrix.
 - Disposition: the two-round audit is exhausted as required. Every Round-1 and Round-2 High/Medium
   finding is fixed with affected-gate evidence; no finding is declined or unresolved.
+
+## E001-S02 — Minimal Garden map entry
+
+- Round 1 found five Medium issues: the shelter control opened an unfinished dead end; protected exit
+  did not fully distinguish pointer identity or provide keyboard and assistive-technology activation;
+  the Garden marker lacked a recognizable animal portrait; mission and hold-state visual evidence was
+  missing; and the approved prompt cited a nonexistent reference filename.
+- The fixes made the shelter a truthful, non-interactive landmark until its story is implemented;
+  limited hold-to-exit to one primary pointer with cancellation and pointer capture; preserved an
+  explicit keyboard/assistive-technology path; added a code-native kitten portrait; added Hungarian
+  mission and English hold-state baselines across all four viewport projects; and corrected the prompt
+  reference to `screens/02-map-screen-en.png`.
+- Unit coverage exercises successful hold, early release, cancellation, right-click, second-pointer,
+  keyboard, and assistive-technology activation. Browser coverage proves the map-to-mission journey and
+  protected exit in mouse and touch projects. The twelve new Map/Mission baseline images were inspected
+  at full size.
+- Production map and start PNGs remain ignored and untracked under ADR-0010. Git retains the logical
+  inventory entry, approved prompt provenance, code-native fallback, and visual-regression evidence.
+- Final gate evidence: `npm test` passes 45/45 with 96.15% statement and 90.24% branch coverage;
+  `npm run test:e2e` passes 20/20; `npm run test:visual` passes 24/24; and `npm run validate:quick`
+  passes formatting, lint, duplication, dead-code, documentation, repository policy, type checking,
+  content, asset, accessibility, secret, watermark, and build checks.
+- Round 2 verified all five corrections and found no High or Medium regression.
+- Disposition: every finding is fixed; no finding is declined or unresolved.

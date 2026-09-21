@@ -1,0 +1,293 @@
+.map-screen {
+  background:
+    radial-gradient(ellipse at 48% 58%, #f3d39a 0 18%, transparent 18.5%),
+    radial-gradient(ellipse at 83% 58%, #9bcf75 0 25%, transparent 25.5%),
+    radial-gradient(ellipse at 12% 24%, #73b96d 0 26%, transparent 26.5%),
+    linear-gradient(#83d4eb 0 45%, #acd77d 45% 100%);
+}
+
+.map-title-plaque,
+.mission-title-plaque {
+  position: absolute;
+  top: max(4%, var(--safe-area-top));
+  left: 50%;
+  z-index: 2;
+  translate: -50%;
+  padding: 0.5rem 2rem;
+  border: 5px solid #fff1ce;
+  border-radius: 999px;
+  color: #fff9df;
+  background: linear-gradient(#ad6236, #78401f);
+  box-shadow: 0 0.5rem 0 #542d1c;
+  text-align: center;
+}
+
+.map-title-plaque h1,
+.mission-title-plaque h1 {
+  margin: 0;
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1;
+}
+
+.shelter-marker,
+.garden-mission-marker {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  min-width: 9rem;
+  min-height: 9rem;
+  place-items: center;
+  border: 5px solid #fff6d7;
+  border-radius: 2rem;
+  color: #fff;
+  box-shadow: 0 0.55rem 0 rgb(72 45 25 / 55%);
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  font-weight: 800;
+}
+
+.shelter-marker {
+  bottom: 17%;
+  left: 39%;
+  background: #a75832;
+}
+
+.garden-mission-marker {
+  right: 10%;
+  bottom: 25%;
+  border-radius: 50%;
+  background: #237321;
+  animation: garden-call 1.8s ease-in-out infinite;
+}
+
+.shelter-icon {
+  position: relative;
+  width: 4.7rem;
+  height: 3.5rem;
+  border-radius: 0.5rem;
+  background: #ffe3a3;
+}
+
+.shelter-icon::before {
+  position: absolute;
+  inset: -2.2rem -0.7rem auto;
+  border-right: 3rem solid transparent;
+  border-bottom: 2.5rem solid #d96749;
+  border-left: 3rem solid transparent;
+  content: '';
+}
+
+.shelter-icon::after {
+  position: absolute;
+  right: 1.75rem;
+  bottom: 0;
+  width: 1.25rem;
+  height: 2rem;
+  border-radius: 0.7rem 0.7rem 0 0;
+  background: #754634;
+  content: '';
+}
+
+.garden-marker-icon {
+  position: relative;
+  display: block;
+  width: 5.5rem;
+  height: 4.8rem;
+}
+
+.tree-crown {
+  position: absolute;
+  inset: 0 0 1.2rem;
+  border-radius: 50%;
+  background: #74c95a;
+}
+
+.tree-trunk {
+  position: absolute;
+  bottom: 0;
+  left: 2.35rem;
+  width: 0.85rem;
+  height: 2.6rem;
+  border-radius: 0.4rem;
+  background: #8a5430;
+}
+
+.kitten-portrait {
+  position: absolute;
+  top: 0.2rem;
+  right: -0.2rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0.25rem solid #fff;
+  border-radius: 50%;
+  background: #df793f;
+}
+
+.kitten-portrait::before {
+  position: absolute;
+  top: -0.55rem;
+  left: 0.05rem;
+  width: 0.85rem;
+  height: 0.8rem;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: #df793f;
+  box-shadow: 1rem 0 #df793f;
+  content: '';
+}
+
+.kitten-portrait::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 34% 43%, #3c2b24 0 8%, transparent 9%),
+    radial-gradient(circle at 66% 43%, #3c2b24 0 8%, transparent 9%),
+    radial-gradient(circle at 50% 66%, #f4c3a1 0 11%, transparent 12%);
+  content: '';
+}
+
+.first-mission {
+  background:
+    radial-gradient(ellipse at 76% 38%, #4b9856 0 24%, transparent 24.5%),
+    linear-gradient(#8edcf0 0 64%, #b5dc7f 64% 74%, #65ac56 74% 100%);
+}
+
+.mission-tree {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  width: 42%;
+  height: 72%;
+}
+
+.mission-tree-crown {
+  position: absolute;
+  inset: 0 0 24%;
+  border-radius: 48%;
+  background: #438e4e;
+}
+
+.mission-tree-trunk {
+  position: absolute;
+  bottom: 0;
+  left: 43%;
+  width: 16%;
+  height: 55%;
+  border-radius: 45% 45% 10% 10%;
+  background: #8a5737;
+}
+
+.mission-kitten {
+  position: absolute;
+  top: 28%;
+  left: 25%;
+  width: 18%;
+  aspect-ratio: 1;
+  border: 0.3rem solid #fff1d1;
+  border-radius: 50%;
+  background: #dd8750;
+}
+
+.mission-kitten::before,
+.mission-kitten::after {
+  position: absolute;
+  top: -28%;
+  width: 55%;
+  height: 55%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: inherit;
+  content: '';
+}
+
+.mission-kitten::before {
+  left: -8%;
+}
+
+.mission-kitten::after {
+  right: -8%;
+}
+
+.mission-back {
+  position: absolute;
+  top: max(4%, var(--safe-area-top));
+  left: max(3%, var(--safe-area-left));
+  z-index: 3;
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  gap: 0.55rem;
+  overflow: hidden;
+  padding: 0.6rem 1.1rem;
+  border: 4px solid #eef8ff;
+  border-radius: 999px;
+  color: #fff;
+  background: #235d84;
+  box-shadow: 0 0.4rem 0 #163e5c;
+  font-weight: 800;
+}
+
+.mission-back::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 0.45rem;
+  scale: 0 1;
+  transform-origin: left;
+  background: #ffe36d;
+  content: '';
+}
+
+.mission-back-icon {
+  width: 1rem;
+  height: 1rem;
+  rotate: -45deg;
+  border-top: 0.3rem solid currentColor;
+  border-left: 0.3rem solid currentColor;
+}
+
+.mission-back.is-holding::after {
+  scale: 1 1;
+  transition: scale 650ms linear;
+}
+
+@keyframes garden-call {
+  50% {
+    scale: 1.06;
+  }
+}
+
+@media (orientation: portrait) {
+  .map-title-plaque,
+  .mission-title-plaque {
+    top: max(6%, var(--safe-area-top));
+    width: 82%;
+  }
+
+  .shelter-marker {
+    bottom: 14%;
+    left: 12%;
+  }
+
+  .garden-mission-marker {
+    right: 10%;
+    bottom: 38%;
+  }
+
+  .mission-tree {
+    right: 5%;
+    bottom: 10%;
+    width: 67%;
+    height: 66%;
+  }
+
+  .mission-back {
+    top: auto;
+    bottom: max(3%, var(--safe-area-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-mission-marker {
+    animation: none;
+  }
+}
