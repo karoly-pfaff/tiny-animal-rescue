@@ -131,3 +131,25 @@ by `AGENTS.md`.
   is included; the four new shelter PNGs are versioned visual-regression evidence only.
 - Disposition: the Round-1 High is fixed and the bounded Round-2 audit passed. No finding is declined or
   unresolved.
+
+## E001-S06 — Vertical-slice E2E proof
+
+- Round 1 found one Medium issue: the touch project used touch for the ladder drag and Mimi action, but
+  Play, mission selection, and subsequent navigation still used Playwright's generic click. The tests
+  therefore did not prove an entirely pointer-driven touch journey.
+- The shared HU/EN rescue helper and both full happy paths now use the primary touch or mouse pointer for
+  every child action: Play, mission selection, Mimi, Shelter, the shelter reaction, Map, and replay.
+  The ladder continues to use the matching touch or mouse drag implementation.
+- Both locales complete the rescue in all four viewport projects, reload the persisted celebration, and
+  show Mimi in the Indoor Room. Browser console warnings/errors and page errors are collected for each
+  full journey and remain empty.
+- The reviewed 1024×768 baselines cover Start, Map, the initial ladder step, the placed-ladder/Mimi step,
+  Celebration, and Shelter. The same visual suite passes in the touch portrait and both larger landscape
+  projects.
+- Round 2 verified the pointer-driven correction and found no new High or Medium issue.
+- Final story-gate evidence: `npm test` passed 92 tests with 95.19% statement and 88.23% branch coverage;
+  `npm run test:e2e` passed 40/40; `npm run test:visual` passed 40/40; and
+  `npm run validate:quick` passed formatting, lint, duplication, dead-code, documentation, repository,
+  type, content, asset, accessibility, secret, watermark, and build gates.
+- Disposition: the Round-1 Medium is fixed and the bounded Round-2 audit passed. No finding is declined or
+  unresolved.

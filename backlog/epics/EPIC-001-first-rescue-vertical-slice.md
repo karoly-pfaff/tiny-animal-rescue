@@ -50,10 +50,10 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S06 — Vertical-slice E2E proof
 
-- [ ] HU and EN happy paths pass.
-- [ ] Reload after completion shows Mimi in shelter.
-- [ ] Reference screenshots cover Start, Map, both mission steps, Celebration, and Shelter.
-- [ ] No console error or unhandled rejection occurs.
+- [x] HU and EN happy paths pass.
+- [x] Reload after completion shows Mimi in shelter.
+- [x] Reference screenshots cover Start, Map, both mission steps, Celebration, and Shelter.
+- [x] No console error or unhandled rejection occurs.
 
 ## Exit criteria
 
