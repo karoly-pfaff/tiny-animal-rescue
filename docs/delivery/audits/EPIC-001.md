@@ -186,3 +186,25 @@ by `AGENTS.md`.
   matrix.
 - Disposition: every Round-1 finding is fixed, the bounded Round-2 audit passed, and no finding is
   declined or unresolved.
+
+## EPIC-001 release audit
+
+- Round 1 found two High and two Medium issues: the hosted history check rejected a non-canonical PR
+  body; save migrations had neither their required per-file 100% branch threshold nor two negative
+  branches covered; the voice manifest claimed hint pausing and music ducking that M1 did not
+  implement; and the schema example, rather than a real base-pack manifest, carried the product
+  release version.
+- The PR body was replaced by the exact generated squash crosswalk, including full story SHAs and the
+  evidence digest. The save schema now has a hard 100% statements, branches, functions, and lines
+  threshold, with corrupt v0 and invalid v1 settings regressions proving 37/37 branches.
+- The runtime voice contract now declares only the implemented single-voice replacement behavior;
+  unknown runtime fields fail a negative fixture. A schema-validated `content/base/pack.json` is the
+  bundled pack authority, must match the root product version, and has a version-independent failing
+  drift fixture that remains valid before and after the closure version bump.
+- Round 2 inspected the rebuilt epic tree and found no remaining High or Medium issue. Focused gates
+  passed with 96/96 unit and integration tests, 230 voice prompts plus three runtime cues, exact
+  content/base version parity, and 100% save-schema coverage. The complete final-head local and hosted
+  gates remain mandatory immediately before merge.
+- Disposition: every release-audit finding is fixed; no finding is declined or unresolved. Production
+  media remains external and untracked, with only R2 object keys, prompt/provenance inputs, and QA
+  metadata versioned in Git.

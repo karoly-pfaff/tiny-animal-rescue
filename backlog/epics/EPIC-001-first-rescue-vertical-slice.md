@@ -1,6 +1,6 @@
 # EPIC-001: First rescue vertical slice
 
-- Status: In progress
+- Status: Done
 - Milestone: M1
 - Target version: `0.2.0`
 - Dependencies: EPIC-000
