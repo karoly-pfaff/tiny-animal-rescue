@@ -12,8 +12,8 @@ describe('first rescue reward', () => {
     const store = createSessionFirstRescueProgressStore();
 
     expect(hasFirstRescueReward(store.read())).toBe(false);
-    await store.commitReward();
-    await store.commitReward();
+    await store.commitReward('en');
+    await store.commitReward('en');
 
     expect(store.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],

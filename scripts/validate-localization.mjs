@@ -124,6 +124,7 @@ function isConstrainedTechnicalLiteral(node) {
       'FirstRescueAssetRole',
       'FirstRescueMissionId',
       'FirstRescueNarrationCue',
+      'FirstRescueProgressLoadStatus',
       'FirstRescueResidentId',
       'FirstRescueWorldFlag',
       'IDBTransactionMode',
@@ -134,6 +135,8 @@ function isConstrainedTechnicalLiteral(node) {
       'NarrationFilename',
       'NarrationObjectKey',
       'PersistenceKey',
+      'ProgressBootstrapStatus',
+      'SaveGameLoadStatus',
     ].includes(parent.type.typeName.text)
   );
 }

@@ -5,9 +5,10 @@ import { getStrings } from '../i18n/localization';
 type MapScreenProps = Readonly<{
   locale: Locale;
   onOpenGardenMission: () => void;
+  onOpenShelter: () => void;
 }>;
 
-export function MapScreen({ locale, onOpenGardenMission }: MapScreenProps) {
+export function MapScreen({ locale, onOpenGardenMission, onOpenShelter }: MapScreenProps) {
   const strings = getStrings(locale);
   const backgroundUrl = resolveGardenMapBackground();
 
@@ -20,10 +21,15 @@ export function MapScreen({ locale, onOpenGardenMission }: MapScreenProps) {
         <header className="map-title-plaque">
           <h1 id="map-title">{strings.screenTitles['screen.map.title']}</h1>
         </header>
-        <div className="shelter-marker" role="img" aria-label={strings.shelter}>
+        <button
+          className="shelter-marker"
+          type="button"
+          aria-label={strings.shelter}
+          onClick={onOpenShelter}
+        >
           <span className="shelter-icon" aria-hidden="true" />
           <span>{strings.shelter}</span>
-        </div>
+        </button>
         <button
           className="garden-mission-marker"
           type="button"

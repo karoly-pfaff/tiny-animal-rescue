@@ -5,23 +5,26 @@ import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
 } from '../persistence/locale-bootstrap-repository';
+import { createIndexedDbSaveGameRepository } from '../persistence/save-game-repository';
 import { getStrings, type Locale } from '../i18n/localization';
-import { CelebrationScreen } from './celebration-screen';
 import {
-  createSessionFirstRescueProgressStore,
+  createPersistedFirstRescueProgressStore,
   type FirstRescueProgressStore,
-  hasFirstRescueReward,
 } from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
-import { FirstMissionScreen } from './first-mission-screen';
-import { MapScreen } from './map-screen';
+import { PlayerRoute } from './player-route';
+import { type ProgressBootstrapStatus, useProgressBootstrap } from './progress-bootstrap';
 import { resolveRoute } from './routes';
+import { SaveFailureScreen } from './save-failure-screen';
+import { SaveRecoveryNotice } from './save-recovery-notice';
 import { StartScreen } from './start-screen';
 
 const foundationLocale = 'hu' satisfies Locale;
 const browserLocaleRepository = createIndexedDbLocaleBootstrapRepository(window.indexedDB);
 const browserNarrationService = createBrowserNarrationService();
-const browserProgressStore = createSessionFirstRescueProgressStore();
+const browserProgressStore = createPersistedFirstRescueProgressStore(
+  createIndexedDbSaveGameRepository(window.indexedDB),
+);
 
 function getHashPath(): string {
   const path = window.location.hash.slice(1);
@@ -98,75 +101,32 @@ type AppProps = Readonly<{
   narrationService?: NarrationService;
 }>;
 
-type PlayerRouteProps = Readonly<{
-  firstRescueProgressStore: FirstRescueProgressStore;
-  locale: Locale;
-  narrationService: NarrationService;
-  route: ReturnType<typeof resolveRoute>;
-}>;
-
-function PlayerRoute({
-  firstRescueProgressStore,
-  locale,
-  narrationService,
-  route,
-}: PlayerRouteProps) {
-  if (route.id === 'map') {
-    return (
-      <MapScreen
-        locale={locale}
-        onOpenGardenMission={() => {
-          navigate('/mission');
-        }}
-      />
-    );
-  }
-  if (route.id === 'mission') {
-    return (
-      <FirstMissionScreen
-        locale={locale}
-        onCelebrate={() => {
-          navigate('/celebration');
-        }}
-        onCommitReward={async () => {
-          await firstRescueProgressStore.commitReward();
-        }}
-        onExit={() => {
-          navigate('/map');
-        }}
-        narrationService={narrationService}
-      />
-    );
-  }
-  if (route.id === 'celebration') {
-    if (!hasFirstRescueReward(firstRescueProgressStore.read())) {
-      return (
-        <MapScreen
-          locale={locale}
-          onOpenGardenMission={() => {
-            navigate('/mission');
-          }}
-        />
-      );
-    }
-    return (
-      <CelebrationScreen
-        locale={locale}
-        narrationService={narrationService}
-        onMap={() => {
-          navigate('/map');
-        }}
-        onShelter={() => {
-          navigate('/shelter');
-        }}
-      />
-    );
-  }
-  return <FoundationScreen locale={locale} route={route} />;
-}
-
 function shouldShowStart(locale: Locale | null | undefined, routeId: string): boolean {
   return locale === undefined || locale === null || routeId === 'start';
+}
+
+type BlockingProgressStatus = Extract<ProgressBootstrapStatus, 'loading' | 'storage-error'>;
+
+function isProgressBlocked(status: ProgressBootstrapStatus): status is BlockingProgressStatus {
+  return status === 'loading' || status === 'storage-error';
+}
+
+function ProgressBoundary({
+  locale,
+  onRetry,
+  route,
+  status,
+}: Readonly<{
+  locale: Locale;
+  onRetry: () => void;
+  route: ReturnType<typeof resolveRoute>;
+  status: BlockingProgressStatus;
+}>) {
+  return status === 'loading' ? (
+    <FoundationScreen locale={locale} route={route} />
+  ) : (
+    <SaveFailureScreen locale={locale} onRetry={onRetry} />
+  );
 }
 
 export function App(props: AppProps) {
@@ -187,8 +147,9 @@ function AppWithDependencies({
   const path = useHashPath();
   const { locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
-  const activeLocale = locale ?? foundationLocale;
-  const route = resolveRoute(path);
+  const progressBootstrap = useProgressBootstrap(firstRescueProgressStore, locale),
+    activeLocale = locale ?? foundationLocale,
+    route = resolveRoute(path);
 
   useEffect(() => {
     document.documentElement.lang = activeLocale;
@@ -214,12 +175,27 @@ function AppWithDependencies({
     );
   }
 
+  if (isProgressBlocked(progressBootstrap.status)) {
+    return (
+      <ProgressBoundary
+        locale={activeLocale}
+        onRetry={progressBootstrap.retry}
+        route={route}
+        status={progressBootstrap.status}
+      />
+    );
+  }
+
   return (
-    <PlayerRoute
-      firstRescueProgressStore={firstRescueProgressStore}
-      locale={activeLocale}
-      narrationService={narrationService}
-      route={route}
-    />
+    <>
+      <PlayerRoute
+        firstRescueProgressStore={firstRescueProgressStore}
+        locale={activeLocale}
+        narrationService={narrationService}
+        onNavigate={navigate}
+        route={route}
+      />
+      <SaveRecoveryNotice locale={activeLocale} status={progressBootstrap.status} />
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { expect, test, type Locator } from '@playwright/test';
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { dragLadder } from './support/ladder-drag';
 import { activateWithPrimaryPointer } from './support/pointer';
+import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
 
 async function setAnimationTime(element: Locator, milliseconds: number): Promise<void> {
   await element.evaluate((animatedElement, nextTime) => {
@@ -142,7 +143,7 @@ test('@preview opens only the first Garden mission and protects mission exit', a
 
   const gardenCall = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
   await expect(gardenCall).toBeVisible();
-  await expect(page.getByRole('img', { name: 'Menhely' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
   await expect(page.getByText(/Erdő|Tanya|Tó/u)).not.toBeVisible();
   await activateWithPrimaryPointer(gardenCall, Boolean(testInfo.project.use.hasTouch));
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
@@ -216,7 +217,7 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   expect(browserErrors).toEqual([]);
 });
 
-test('@preview completes Mimi rescue once and offers Map and Shelter', async ({
+test('@preview persists Mimi, replays idempotently, and shows her shelter reaction', async ({
   page,
 }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
@@ -239,7 +240,61 @@ test('@preview completes Mimi rescue once and offers Map and Shelter', async ({
   await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Térkép' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
   await page.getByRole('button', { name: 'Menhely' }).click();
-  await expect(page.getByRole('heading', { name: 'Menhely' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
+  const shelterMimi = page.getByRole('button', { name: 'Simogasd meg Mimit' });
+  await shelterMimi.click();
+  await expect(shelterMimi).toHaveClass(/is-happy/u);
+  await page.getByRole('button', { name: 'Térkép' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const replayLadder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder: replayLadder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await expect
+    .poll(async () => readPrimarySave(page))
+    .toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+      schemaVersion: 1,
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview recovers corrupt save data without crashing the child flow', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await writePrimarySave(page, { damaged: true, schemaVersion: 1 });
+  await page.goto('/#/map');
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await expect.poll(async () => readRecoveryCount(page)).toBe(1);
+  await expect
+    .poll(async () => readPrimarySave(page))
+    .toMatchObject({ schemaVersion: 1, unlockedResidentIds: ['mimi-kitten'] });
   expect(browserErrors).toEqual([]);
 });

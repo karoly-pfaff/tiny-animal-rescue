@@ -146,3 +146,25 @@ test('@visual matches the reviewed Mimi celebration', async ({ page }, testInfo)
   await expect(page).toHaveScreenshot('celebration-mimi.png', { fullPage: true });
   expect(browserErrors).toEqual([]);
 });
+
+test('@visual matches the reviewed Indoor Room with Mimi', async ({ page }, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await page.getByRole('button', { name: 'Menhely' }).click();
+  await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
+  await settleVisual(page);
+
+  await expect(page).toHaveScreenshot('shelter-indoor-mimi.png', { fullPage: true });
+  expect(browserErrors).toEqual([]);
+});

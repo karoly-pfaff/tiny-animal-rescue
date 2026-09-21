@@ -43,10 +43,10 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 
 ### E001-S05 — Minimal persistence and shelter proof
 
-- [ ] Completion and Mimi's resident unlock survive reload.
-- [ ] Re-entering the mission replays it without duplicating rewards.
-- [ ] The minimal Indoor Room shows Mimi and supports one tap reaction.
-- [ ] Corrupt local test data follows a safe recovery path.
+- [x] Completion and Mimi's resident unlock survive reload.
+- [x] Re-entering the mission replays it without duplicating rewards.
+- [x] The minimal Indoor Room shows Mimi and supports one tap reaction.
+- [x] Corrupt local test data follows a safe recovery path.
 
 ### E001-S06 — Vertical-slice E2E proof
 

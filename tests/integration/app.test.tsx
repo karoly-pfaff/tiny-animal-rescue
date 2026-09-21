@@ -8,7 +8,12 @@ import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence
 describe('App', () => {
   it('requires first-run locale choice, then follows the child path', async () => {
     const repository = createMemoryLocaleBootstrapRepository();
-    render(<App localeRepository={repository} />);
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
 
     expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
     expect(document.documentElement.lang).toBe('hu');
@@ -30,7 +35,12 @@ describe('App', () => {
 
   it('restores English and opens the parent-oriented settings route', async () => {
     const repository = createMemoryLocaleBootstrapRepository('en');
-    render(<App localeRepository={repository} />);
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
 
     expect(await screen.findByRole('heading', { name: 'Tiny Rescue' })).toBeVisible();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -47,7 +57,12 @@ describe('App', () => {
   it('does not let a deep link bypass first-run locale selection', async () => {
     window.location.hash = '/map';
     const repository = createMemoryLocaleBootstrapRepository();
-    render(<App localeRepository={repository} />);
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
 
     expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Mentési térkép' })).not.toBeInTheDocument();
@@ -77,10 +92,15 @@ describe('App', () => {
   it('shows only the first Garden call and opens the correct mission', async () => {
     window.location.hash = '/map';
     const repository = createMemoryLocaleBootstrapRepository('en');
-    render(<App localeRepository={repository} />);
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={repository}
+      />,
+    );
 
     expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
-    expect(screen.getByRole('img', { name: 'Shelter' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Shelter' })).toBeVisible();
     expect(screen.queryByText(/Forest|Farm|Pond/u)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
     await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
@@ -142,5 +162,28 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Mimi megmenekült!' })).not.toBeInTheDocument();
+  });
+
+  it('blocks play and retries after a transient save load failure', async () => {
+    window.location.hash = '/map';
+    const sessionStore = createSessionFirstRescueProgressStore();
+    const load = vi
+      .fn<() => Promise<'ready'>>()
+      .mockRejectedValueOnce(new Error('read failed'))
+      .mockResolvedValueOnce('ready');
+    const progressStore = { ...sessionStore, load };
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Saving is resting' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Garden rescue: Mimi' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });

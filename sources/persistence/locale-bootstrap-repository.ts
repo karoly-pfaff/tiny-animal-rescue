@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/localization';
+import { requestResult, transactionDone } from './indexed-db-helpers';
 
 export type LocaleBootstrapRepository = Readonly<{
   readLocale: () => Promise<Locale | null>;
@@ -28,31 +29,6 @@ export function parseLocaleBootstrapRecord(value: unknown): Locale | null {
   }
   const candidate = value as Partial<LocaleBootstrapRecord>;
   return candidate.schemaVersion === 1 && isLocale(candidate.locale) ? candidate.locale : null;
-}
-
-function requestResult<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    request.onerror = () => {
-      reject(request.error ?? new Error('IndexedDB request failed.'));
-    };
-  });
-}
-
-function transactionDone(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => {
-      resolve();
-    };
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error('IndexedDB write failed.'));
-    };
-    transaction.onabort = () => {
-      reject(transaction.error ?? new Error('IndexedDB write aborted.'));
-    };
-  });
 }
 
 function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {

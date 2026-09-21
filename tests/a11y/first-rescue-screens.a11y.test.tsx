@@ -4,11 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
+import { SaveFailureScreen } from '../../sources/app/save-failure-screen';
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
+import { ShelterScreen } from '../../sources/app/shelter-screen';
 
 describe('first rescue screen accessibility', () => {
   it.each([
-    <MapScreen key="map" locale="hu" onOpenGardenMission={vi.fn()} />,
+    <MapScreen key="map" locale="hu" onOpenGardenMission={vi.fn()} onOpenShelter={vi.fn()} />,
     <FirstMissionScreen
       key="mission"
       locale="en"
@@ -24,6 +26,17 @@ describe('first rescue screen accessibility', () => {
       onMap={vi.fn()}
       onShelter={vi.fn()}
     />,
+    <ShelterScreen
+      key="shelter"
+      locale="en"
+      onMap={vi.fn()}
+      progress={{
+        completedMissionIds: ['garden-kitten-tree'],
+        unlockedResidentIds: ['mimi-kitten'],
+        worldFlags: ['mimi-rescued'],
+      }}
+    />,
+    <SaveFailureScreen key="save-failure" locale="hu" onRetry={vi.fn()} />,
   ])('has no automatically detectable violation', async (screen) => {
     const { container } = render(screen);
     const results = await axe.run(container);

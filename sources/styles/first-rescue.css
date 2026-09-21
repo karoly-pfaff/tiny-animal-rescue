@@ -416,6 +416,187 @@
   content: '';
 }
 
+.indoor-shelter {
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 100%, #c4764c 0 45%, transparent 45.5%),
+    linear-gradient(90deg, #f1c992 0 4%, transparent 4% 96%, #f1c992 96%),
+    linear-gradient(#f8e4bc 0 72%, #b66942 72% 100%);
+}
+
+.indoor-shelter::before {
+  position: absolute;
+  top: 22%;
+  left: 12%;
+  width: 23%;
+  height: 31%;
+  border: 0.7rem solid #fff0c9;
+  border-radius: 45% 45% 0 0;
+  background: linear-gradient(135deg, #8edcf0 0 48%, #fff 48% 52%, #8edcf0 52%);
+  box-shadow: 0 0.5rem 0 rgb(102 65 38 / 24%);
+  content: '';
+}
+
+.shelter-title-plaque {
+  position: absolute;
+  top: max(5%, var(--safe-area-top));
+  left: 50%;
+  z-index: 2;
+  translate: -50%;
+  padding: 0.5rem 2rem;
+  border: 0.35rem solid #fff1ce;
+  border-radius: 999px;
+  color: #fff9df;
+  background: linear-gradient(#ad6236, #78401f);
+  box-shadow: 0 0.5rem 0 #542d1c;
+}
+
+.shelter-title-plaque h1 {
+  margin: 0;
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1;
+}
+
+.shelter-mimi {
+  position: absolute;
+  bottom: 19%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  min-width: 10rem;
+  place-items: center;
+  gap: 0.35rem;
+  translate: -50%;
+  border: 0;
+  color: #60331f;
+  background: transparent;
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+}
+
+.shelter-mimi-face {
+  position: relative;
+  display: block;
+  width: clamp(8rem, 18vw, 13rem);
+  aspect-ratio: 1;
+  border: 0.65rem solid #fff1d1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 43%, #3c2b24 0 4%, transparent 4.7%),
+    radial-gradient(circle at 66% 43%, #3c2b24 0 4%, transparent 4.7%),
+    radial-gradient(ellipse at 50% 65%, #3c2b24 0 5%, transparent 5.7%), #dd8750;
+  box-shadow: 0 0.7rem 0 rgb(100 59 35 / 28%);
+}
+
+.shelter-mimi-face::before,
+.shelter-mimi-face::after {
+  position: absolute;
+  top: -27%;
+  z-index: -1;
+  width: 58%;
+  height: 58%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: #dd8750;
+  content: '';
+}
+
+.shelter-mimi-face::before {
+  left: -5%;
+}
+
+.shelter-mimi-face::after {
+  right: -5%;
+}
+
+.shelter-mimi.is-happy .shelter-mimi-face {
+  animation: shelter-mimi-happy 450ms ease-in-out 2;
+}
+
+.shelter-map-action {
+  position: absolute;
+  right: max(4%, var(--safe-area-right));
+  bottom: max(5%, var(--safe-area-bottom));
+  z-index: 3;
+  display: grid;
+  min-width: 8rem;
+  min-height: 6.5rem;
+  place-items: center;
+  padding: 0.6rem 1rem;
+  border: 0.3rem solid #fff6d7;
+  border-radius: 1.4rem;
+  color: #fff;
+  background: #235d84;
+  box-shadow: 0 0.45rem 0 rgb(35 50 60 / 45%);
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.shelter-empty {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  max-width: 25rem;
+  translate: -50% -50%;
+  color: #60331f;
+  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  font-weight: 800;
+  text-align: center;
+}
+
+.save-recovery-notice {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  max-width: min(28rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 0.2rem solid #fff2cf;
+  border-radius: 1rem;
+  color: #fff;
+  background: #5c3a2b;
+  box-shadow: 0 0.35rem 0 rgb(45 29 22 / 45%);
+  font-weight: 800;
+}
+
+.save-failure-screen {
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 5vmin, 4rem);
+  background: linear-gradient(180deg, #f9e4b8, #f2c883);
+}
+
+.save-failure-card {
+  width: min(34rem, 100%);
+  padding: clamp(1.5rem, 5vmin, 3rem);
+  border: 0.3rem solid #fff2d0;
+  border-radius: 2rem;
+  color: #41261d;
+  background: #fff8e9;
+  box-shadow: 0 0.6rem 0 #8b502d;
+  text-align: center;
+}
+
+.save-failure-card h1,
+.save-failure-card p {
+  margin-block: 0 1rem;
+}
+
+.save-failure-card button {
+  min-width: 10rem;
+  min-height: 3.5rem;
+  border: 0.2rem solid #fff2d0;
+  border-radius: 1.25rem;
+  color: #fff;
+  background: #22658c;
+  box-shadow: 0 0.35rem 0 #54301f;
+  font: inherit;
+  font-weight: 800;
+}
+
 .drag-interaction {
   position: absolute;
   z-index: 2;
@@ -647,6 +828,14 @@
   }
 }
 
+@keyframes shelter-mimi-happy {
+  50% {
+    translate: 0 -0.8rem;
+    rotate: -3deg;
+    scale: 1.05;
+  }
+}
+
 @media (orientation: portrait) {
   .map-title-plaque,
   .mission-title-plaque {
@@ -704,6 +893,17 @@
     min-width: min(40vw, 12rem);
     min-height: 7.5rem;
   }
+
+  .indoor-shelter::before {
+    top: 20%;
+    left: 8%;
+    width: 34%;
+    height: 25%;
+  }
+
+  .shelter-mimi {
+    bottom: 23%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -724,7 +924,8 @@
 
   .mission-kitten-action,
   .celebration-rays,
-  .celebration-mimi {
+  .celebration-mimi,
+  .shelter-mimi-face {
     animation: none;
   }
 }

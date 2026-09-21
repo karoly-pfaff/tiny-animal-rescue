@@ -107,3 +107,27 @@ by `AGENTS.md`.
   post-audit StrictMode fix additionally passes 7/7 focused mission unit tests.
 - Disposition: every in-scope Round-1 finding and the Round-2 High are fixed. The only declined item
   concerns preserved user-owned files outside the story diff; no production media is tracked.
+
+## E001-S05 — Minimal persistence and shelter proof
+
+- Round 1 found one High issue: any IndexedDB load rejection was treated as corrupt data, while the
+  repository could still create a new empty save. A transient storage failure could therefore allow
+  the next rescue to overwrite a valid but temporarily unreadable save.
+- The fix separates recoverable corrupt content from unavailable storage. The repository marks itself
+  non-writable before every load and permits updates only after a successful valid, missing, migrated,
+  or deliberately recovered load. Storage failures block the child flow behind a localized HU/EN
+  screen with an explicit retry action; corrupt records are still quarantined atomically on the next
+  successful write.
+- Regression coverage proves that unavailable storage and failed reads reject writes without changing
+  the existing record, retry restores the player route after a transient error, corrupt data recovers
+  safely, completion survives reload, replay rewards remain idempotent, and Mimi appears and reacts in
+  the Indoor Room. The storage-failure screen is included in accessibility checks.
+- Round 2 verified the storage-authority fix and found no remaining High or Medium issue.
+- Final story-gate evidence: `npm test` passed 92 tests with 95.19% statement and 87.86% branch
+  coverage; `npm run test:e2e` passed 36/36; `npm run test:visual` passed 40/40; and
+  `npm run validate:quick` passed formatting, lint, duplication, dead-code, documentation, repository,
+  type, content, asset, accessibility, secret, watermark, and build gates.
+- The user-owned `prompts/voice/**` pack remains untracked and outside S05. No production media binary
+  is included; the four new shelter PNGs are versioned visual-regression evidence only.
+- Disposition: the Round-1 High is fixed and the bounded Round-2 audit passed. No finding is declined or
+  unresolved.
