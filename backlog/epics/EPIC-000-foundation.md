@@ -1,6 +1,6 @@
 # EPIC-000: Repository and engineering foundation
 
-- Status: In progress
+- Status: Done
 - Milestone: M0
 - Target version: `0.1.0`
 - Dependencies: none
@@ -68,11 +68,11 @@ Acceptance criteria:
 
 ### E000-S06 — Establish continuous integration and review governance
 
-- [ ] Pull requests, merge-queue candidates when enabled, and pushes to `main` run the required
+- [x] Pull requests, merge-queue candidates when enabled, and pushes to `main` run the required
       `quality`, `tests`, `browser`, `visual`, `supply-chain`, and `security` checks without skippable
       path filters.
 - [x] Local aggregate commands and CI jobs invoke the same underlying scripts.
-- [ ] Branch/ruleset policy forbids direct/force pushes and merging stale, absent, or failing checks.
+- [x] Branch/ruleset policy forbids direct/force pushes and merging stale, absent, or failing checks.
 - [x] Repository settings permit squash merge only; merge-commit and rebase-merge paths are disabled,
       and automation uses the exact prevalidated squash title/body without interactive editing.
 - [x] A required `history` check enforces one Conventional Commit per accepted story, at most one

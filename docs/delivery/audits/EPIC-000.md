@@ -68,18 +68,55 @@ finding; the disposition remains reviewable with the story history.
   separately rebuilt artifact digest provide the history inputs. Named-model fixtures, scheduled
   CodeQL, adapter-level negative cases, and a single exact normative-example substitution strengthen
   coverage without blanket deliverable exemptions.
-- Local focused evidence after the fixes: ESLint, Knip, jscpd, documentation links, 44 governance
+- Local focused evidence after the fixes: ESLint, Knip, jscpd, documentation links, 62 governance
   fixtures, repository-policy validation, and the authored/build watermark scan pass.
-- Hosted application evidence is currently blocked: GitHub accepted the squash-only repository
-  settings but returned HTTP 403 for the active private-repository ruleset because the account needs
-  GitHub Pro or the repository must be public. This is recorded as an external completion blocker,
-  not treated as a passing ruleset.
+- The first hosted application attempt was blocked: GitHub accepted the squash-only repository
+  settings but returned HTTP 403 for the active private-repository ruleset because the account needed
+  GitHub Pro or a public repository. The user authorized public visibility; the versioned governance
+  automation then applied and read back active `protected-main` ruleset `23751969` without findings.
 - Round 2 verified every Round-1 code correction and found no new implementation High. It reported
   that the audit section was not yet visible during its parallel read and one remaining Medium:
   adapter fixtures did not directly exercise main-range derivation, tag artifact-report ingestion,
   or the final pre-merge policy composition. The audit section is this retained record; shared pure
   adapters now drive the production paths, and negative fixtures cover multi-commit main pushes,
   rebuilt-artifact mismatch, post-check PR metadata edits, and changed required-check results.
-- Disposition: no unresolved code High or Medium after the bounded second round. E000-S06 and
-  EPIC-000 remain externally blocked on hosted ruleset capability and hosted run evidence; this log
-  does not waive either acceptance criterion.
+- Initial hosted candidate evidence on then-current head
+  `6a0b7b8bdb746b53bfb7879435e1b85e5f28729a`: required jobs `quality`, `history`, `tests`, `browser`,
+  `visual`, `supply-chain`, and `security` all passed in
+  [run 35568217892](https://github.com/karoly-pfaff/tiny-animal-rescue/actions/runs/35568217892),
+  including retained coverage, browser, visual, supply-chain, and history artifacts. Protected PR
+  checks remain the authoritative final-closure-head evidence and are deliberately not self-recorded
+  inside the commit they validate.
+- Disposition: passed with no unresolved story-level code, hosted-governance, High, or Medium
+  finding after the bounded second round and initial hosted qualification. Protected PR checks own
+  the final exact-closure-head verification.
+
+## EPIC-000 exit audit
+
+- A fresh epic-level audit found that closure-subject validation had diverged between commitlint and
+  history validation. Both paths now use one shared subject policy, with a valid single-closure
+  fixture and case-policy fixtures.
+- The same audit found that the documented secret gate covered authored files but not the Git history
+  available to CI. The gate now fails closed if history cannot be inspected and scans all available
+  refs, with adapter fixtures for clean and retained-secret histories.
+- The audit also found an overstatement of hosted closure evidence and inconsistent backlog status
+  vocabulary. The evidence boundary now assigns exact-head verification to protected PR checks, and
+  both backlog views use the defined `Done` state.
+- The corrected closure candidate passed the independent exit re-audit with no unresolved High or
+  Medium finding. The exact-head full gate passed with 62 governance fixtures, zero dependency
+  vulnerabilities, 8/8 preview tests, 8/8 E2E tests, 4/4 visual tests, and a 12-file artifact digest
+  of `sha256:5e1d7bc003b0e5470dc3bacc5370e4afd2334ed9bc51c505b44b66daafe34553`.
+- Disposition: implementation audit passed. Milestone exit remains pending until the amended closure
+  head is uploaded and all seven protected PR checks pass; merge is forbidden before then.
+- The first live merge attempt exposed a provider edge case after a legitimate metadata-triggered
+  rerun: the merge gate treated required checks from an older check suite as duplicates of the newest
+  suite. The gate now selects only the newest exact-head suite, still rejects same-suite retry
+  duplicates, and has positive and negative adapter fixtures for both cases.
+- The independent audit then found that GitHub's default `filter=latest` response hid earlier
+  attempts inside one suite. The production adapter now requests `filter=all`, follows every 100-item
+  page, and has an adapter-level regression fixture for the exact query and pagination.
+- Round 2 verified the production adapter, exact URLs, pagination, newest-suite selection, and
+  same-suite retry rejection. The exact-head full gate passed again with no unresolved High or Medium
+  finding and no new High introduced by the fix.
+- Final disposition: implementation exit audit passed. Milestone exit still requires all seven
+  protected PR checks on the amended closure head before merge.
