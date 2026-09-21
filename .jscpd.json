@@ -14,7 +14,7 @@
     "vite.config.ts",
     "vitest.config.ts",
     "commitlint.config.mjs",
-    ".markdownlint-cli2.mjs"
+    "markdownlint.config.mjs"
   ],
   "ignore": ["**/*.test.*"]
 }

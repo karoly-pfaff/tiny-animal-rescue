@@ -1,0 +1,12 @@
+name: tiny-rescue-codeql
+
+paths:
+  - sources
+  - scripts
+
+paths-ignore:
+  - build
+  - coverage
+  - node_modules
+  - playwright-report
+  - test-results

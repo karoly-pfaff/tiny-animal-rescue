@@ -71,18 +71,18 @@ Acceptance criteria:
 - [ ] Pull requests, merge-queue candidates when enabled, and pushes to `main` run the required
       `quality`, `tests`, `browser`, `visual`, `supply-chain`, and `security` checks without skippable
       path filters.
-- [ ] Local aggregate commands and CI jobs invoke the same underlying scripts.
+- [x] Local aggregate commands and CI jobs invoke the same underlying scripts.
 - [ ] Branch/ruleset policy forbids direct/force pushes and merging stale, absent, or failing checks.
-- [ ] Repository settings permit squash merge only; merge-commit and rebase-merge paths are disabled,
+- [x] Repository settings permit squash merge only; merge-commit and rebase-merge paths are disabled,
       and automation uses the exact prevalidated squash title/body without interactive editing.
-- [ ] A required `history` check enforces one Conventional Commit per accepted story, at most one
+- [x] A required `history` check enforces one Conventional Commit per accepted story, at most one
       epic closure commit, one canonical PR per epic, the PR story/SHA map, deterministic squash/tag
       crosswalks, and squash-only epic merge structure in explicit branch/PR/queue/main/tag modes.
-- [ ] Automated validators reject known AI, agent, editor, tool, metadata, textual, OCR, visual/audio
+- [x] Automated validators reject known AI, agent, editor, tool, metadata, textual, OCR, visual/audio
       fixture, and promotional watermark patterns while preserving required legal notices and internal
       provenance evidence; full-size visual and listening QA own non-mechanical media cases.
-- [ ] A fixture proves each non-obvious gate can fail for its target defect.
-- [ ] The fresh-context independent-audit protocol in `AGENTS.md` is exercised once and its finding
+- [x] A fixture proves each non-obvious gate can fail for its target defect.
+- [x] The fresh-context independent-audit protocol in `AGENTS.md` is exercised once and its finding
       disposition is recorded.
 
 ## Exit criteria

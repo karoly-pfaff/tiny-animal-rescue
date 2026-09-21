@@ -54,3 +54,32 @@ finding; the disposition remains reviewable with the story history.
   reference, and documentation gates passed.
 - Round 2 verified all four fixes and found no new High issue.
 - Disposition: passed with no unresolved High or Medium finding.
+
+## E000-S06 — Establish continuous integration and review governance
+
+- Round 1 found that mutable PR metadata was not revalidated immediately before merge; hosted
+  governance read-back was incomplete; canonical PR lookup was branch-local; merge-queue and main
+  evidence was partially asserted instead of derived; tag artifact identity was self-asserted;
+  named-model watermark phrases and scheduled CodeQL were incomplete; adapter fixtures and policy
+  example exclusions were too weak/broad. All code findings were fixed.
+- The merge path now reruns the shared provider-backed pull-request policy against current metadata
+  and exact head checks. Provider reconciliation compares the returned settings and full ruleset.
+  Epic-wide PR enumeration, queue ancestry/binary-patch comparison, actual main push ranges, and a
+  separately rebuilt artifact digest provide the history inputs. Named-model fixtures, scheduled
+  CodeQL, adapter-level negative cases, and a single exact normative-example substitution strengthen
+  coverage without blanket deliverable exemptions.
+- Local focused evidence after the fixes: ESLint, Knip, jscpd, documentation links, 44 governance
+  fixtures, repository-policy validation, and the authored/build watermark scan pass.
+- Hosted application evidence is currently blocked: GitHub accepted the squash-only repository
+  settings but returned HTTP 403 for the active private-repository ruleset because the account needs
+  GitHub Pro or the repository must be public. This is recorded as an external completion blocker,
+  not treated as a passing ruleset.
+- Round 2 verified every Round-1 code correction and found no new implementation High. It reported
+  that the audit section was not yet visible during its parallel read and one remaining Medium:
+  adapter fixtures did not directly exercise main-range derivation, tag artifact-report ingestion,
+  or the final pre-merge policy composition. The audit section is this retained record; shared pure
+  adapters now drive the production paths, and negative fixtures cover multi-commit main pushes,
+  rebuilt-artifact mismatch, post-check PR metadata edits, and changed required-check results.
+- Disposition: no unresolved code High or Medium after the bounded second round. E000-S06 and
+  EPIC-000 remain externally blocked on hosted ruleset capability and hosted run evidence; this log
+  does not waive either acceptance criterion.

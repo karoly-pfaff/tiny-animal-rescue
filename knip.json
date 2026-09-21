@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": ["markdownlint.config.mjs"],
   "project": ["sources/**/*.{ts,tsx}", "scripts/**/*.mjs", "tests/**/*.{ts,tsx}", "*.{ts,js,mjs}"],
   "rules": {
     "binaries": "error",

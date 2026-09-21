@@ -39,17 +39,13 @@ single epic commit on `main`.
 
 ## Pull-request contract
 
-The epic pull-request description states:
-
-1. epic ID and every included story ID, or the separately scoped non-epic correction;
-2. acceptance criteria satisfied;
-3. ADRs/contracts affected;
-4. commands and manual/visual evidence;
-5. screenshot/baseline changes by locale and viewport;
-6. dependency, schema, persistence, content, or asset compatibility impact;
-7. independent-audit findings and disposition;
-8. known risk, approved waiver, or follow-up with owner and removal milestone.
-9. every story's final canonical commit SHA, acceptance evidence, and verification.
+The epic pull-request description is exactly the deterministic squash crosswalk defined by the
+[story commit workflow](story-commit-workflow.md). It contains the epic/milestone/version, canonical
+PR identity, every story's full commit SHA, optional closure SHA, aggregate gate, evidence digest,
+and release footer. Acceptance criteria, ADR/compatibility impact, commands, manual/visual evidence,
+audit disposition, and known risks live in the linked backlog/audit records, check summaries, and PR
+conversation. Keeping those outside the description lets merge automation copy the already validated
+description verbatim into the squash commit.
 
 Review the complete diff before opening the pull request. Resolve unrelated changes and accidental
 generated/build output rather than asking a reviewer to ignore them. A draft epic PR may open after
@@ -72,6 +68,9 @@ only for the latest reviewed commit.
   the evidence contract even if the host UI labels it successful.
 - Emergency bypass requires explicit user authorization, a recorded reason, and an immediate follow-up
   patch that restores the normal gate. It never moves or replaces an existing release tag.
+
+The checked-in provider configuration and reconciliation procedure are in
+[repository governance](repository-governance.md).
 
 ## Dependency updates
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const ignoredDirectories = new Set([
   '.git',
+  'artifacts',
   'build',
   'coverage',
   'node_modules',

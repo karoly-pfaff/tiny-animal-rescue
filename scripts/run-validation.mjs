@@ -11,6 +11,7 @@ const groups = {
     'test:assets',
     'test:a11y',
     'scan:secrets',
+    'scan:watermarks',
     'build',
   ],
   full: [

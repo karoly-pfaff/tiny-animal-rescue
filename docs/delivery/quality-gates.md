@@ -167,11 +167,14 @@ The root `package.json` provides these stable scripts:
 ```text
 npm run format
 npm run format:check
+npm run generate:squash
+npm run governance:apply
 npm run lint
 npm run lint:code
 npm run lint:duplicates
 npm run lint:dead-code
 npm run lint:docs
+npm run lint:governance
 npm run lint:history
 npm run typecheck
 npm run test
@@ -181,6 +184,7 @@ npm run test:content
 npm run test:content:release
 npm run test:assets
 npm run test:a11y
+npm run test:governance
 npm run test:e2e
 npm run test:visual
 npm run test:preview
@@ -188,6 +192,9 @@ npm run audit:dependencies
 npm run audit:licenses
 npm run scan:secrets
 npm run scan:static
+npm run scan:watermarks
+node scripts/run-ci-history.mjs
+npm run validate:repository
 npm run validate:waivers
 npm run build
 npm run test:artifact

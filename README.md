@@ -61,6 +61,7 @@ See [v1 scope](docs/product/v1-scope.md) and the [content catalog](docs/product/
 | Inspect temporary exceptions                          | [Quality waiver registry](docs/delivery/quality-waivers.md)                                       |
 | Contribute and merge changes                          | [Git workflow](docs/delivery/git-workflow.md)                                                     |
 | Keep one commit per story and one squash per epic     | [Story commit workflow](docs/delivery/story-commit-workflow.md)                                   |
+| Apply and verify hosted repository policy             | [Repository governance](docs/delivery/repository-governance.md)                                   |
 | Understand milestones and releases                    | [Versioning](docs/delivery/versioning.md)                                                         |
 | Promote the qualified candidate to 1.0                | [GA promotion](docs/delivery/ga-promotion.md)                                                     |
 | Execute with Codex                                    | [AGENTS.md](AGENTS.md)                                                                            |
