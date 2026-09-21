@@ -21,7 +21,6 @@ type Strings = Readonly<{
   gardenMissionLabel: string;
   holdToMap: string;
   helpMimi: string;
-  helpMimiNarration: string;
   indoorRoom: string;
   hungarian: string;
   hungarianCode: string;
@@ -29,7 +28,6 @@ type Strings = Readonly<{
   ladderPlaced: string;
   map: string;
   mapHint: string;
-  mimiCelebrationNarration: string;
   mimiHappy: string;
   mimiName: string;
   mimiTapLabel: string;
@@ -61,7 +59,6 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     gardenMissionLabel: 'Kerti mentés: Mimi',
     holdToMap: 'Tartsd nyomva a térképhez',
     helpMimi: 'Segíts Miminek lejönni',
-    helpMimiNarration: 'Koppints Mimire!',
     indoorRoom: 'Belső szoba',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
@@ -69,7 +66,6 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     ladderPlaced: 'A létra a helyére került.',
     map: 'Térkép',
     mapHint: 'Az első mentés a Kertben vár.',
-    mimiCelebrationNarration: 'Mimi biztonságban van!',
     mimiHappy: 'Mimi boldogan dorombol.',
     mimiName: 'Mimi',
     mimiTapLabel: 'Simogasd meg Mimit',
@@ -106,7 +102,6 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     gardenMissionLabel: 'Garden rescue: Mimi',
     holdToMap: 'Hold to return to the map',
     helpMimi: 'Help Mimi come down',
-    helpMimiNarration: 'Tap Mimi!',
     indoorRoom: 'Indoor Room',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
@@ -114,7 +109,6 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     ladderPlaced: 'The ladder is in place.',
     map: 'Map',
     mapHint: 'The first rescue is waiting in the Garden.',
-    mimiCelebrationNarration: 'Mimi is safe!',
     mimiHappy: 'Mimi purrs happily.',
     mimiName: 'Mimi',
     mimiTapLabel: 'Give Mimi a gentle pat',

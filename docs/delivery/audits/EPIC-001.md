@@ -153,3 +153,36 @@ by `AGENTS.md`.
   type, content, asset, accessibility, secret, watermark, and build gates.
 - Disposition: the Round-1 Medium is fixed and the bounded Round-2 audit passed. No finding is declined or
   unresolved.
+
+## E001-S07 — Voice prompt and runtime contract
+
+- Round 1 found two High and three Medium issues. The bilingual pack omitted the required
+  `farm-piglet-mud-wash` basin-fill instruction while spending two cues on a trace-only turtle step;
+  the gate trusted matching locale inventories without an external canonical ID contract or complete
+  R2-key collision check; first-rescue runtime records lacked ownership, role, narrator, duration,
+  license, and provenance metadata; clean-output validation inspected policy prose but not exact
+  spoken text; and the first tightened policy regex falsely rejected valid Markdown-wrapped bans.
+- The prompt inventory now keeps 115 lines per locale by treating the turtle trace as one continuous
+  `follow-path` step and adding the piglet's distinct `fill-wash-basin` step before `wash-piglet`.
+  `canonical-ids.json` fixes the complete ordered semantic contract independently of localized text.
+  Every HU and EN line derives a safe locale-specific R2 object key and the gate rejects collisions.
+- Runtime metadata now records base-pack ownership, required-instruction or mission-success role,
+  primary narrator role, 0.4–2.5 second duration bounds, approved prompt QA, explicitly not-produced
+  audio QA, pending production license/provenance, and `r2-pending` delivery. No recording or other
+  production media binary is tracked; manifests and prompt/provenance inputs alone enter Git.
+- Clean-output validation normalizes Markdown whitespace before proving that every governing document
+  forbids audible watermarks and generator/service branding. It separately rejects obvious generator,
+  service, promotional, watermark, and URL preambles in exact spoken inventory text. Negative fixtures
+  prove coherent two-locale ID drift, R2-key collisions, energy parity drift, fallback drift, missing
+  metadata, spoken branding, and permissive policy prose all fail.
+- The first mission reads localized fallback text and R2 keys from one metadata-only runtime manifest.
+  Entering the mission narrates the ladder action, placing it narrates the Mimi action, and celebration
+  narrates the mission-success cue. Production recordings will later occupy the declared R2 keys; the
+  browser voice remains a development fallback.
+- Round 2 verified every correction and found no remaining High or Medium issue. Final evidence:
+  `npm run test:voice-prompts` validates 230 localized prompts and three runtime cues;
+  `npm test` passes 94/94 with 95.08% statement and 87.59% branch coverage;
+  `npm run validate:quick` passes; and `npm run test:e2e` passes 40/40 across the full viewport/input
+  matrix.
+- Disposition: every Round-1 finding is fixed, the bounded Round-2 audit passed, and no finding is
+  declined or unresolved.

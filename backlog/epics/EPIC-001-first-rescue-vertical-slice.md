@@ -55,6 +55,19 @@ Deliver the complete `garden-kitten-tree` experience: start → map → mission 
 - [x] Reference screenshots cover Start, Map, both mission steps, Celebration, and Shelter.
 - [x] No console error or unhandled rejection occurs.
 
+### E001-S07 — Voice prompt and runtime contract
+
+- [x] The complete 115-line HU and EN voice inventories match the canonical ID contract and pass
+      schema, count, group, ID-order, delivery-energy, spoken-output, and R2-key uniqueness validation.
+- [x] Both required first-rescue steps and the success state resolve exact localized text and R2
+      object keys from one metadata-only runtime manifest.
+- [x] Narrator, pronunciation, generation, localization, clean-output, and release rules explicitly
+      forbid audible watermarks and generator/service branding.
+- [x] Voice media remains outside Git with `r2-pending` delivery and honest ownership, duration,
+      license, provenance, and pre-production audio QA metadata.
+- [x] The voice gate runs in `validate:quick`, and negative fixtures prove parity, mapping, text, and
+      clean-output defects are rejected.
+
 ## Exit criteria
 
 - A non-developer can complete the rescue on a touch device or touch-emulated browser.

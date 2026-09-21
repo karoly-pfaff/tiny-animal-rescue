@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveFirstRescueNarration } from '../../sources/content/first-rescue-narration';
+import {
+  getFirstRescueNarrationText,
+  resolveFirstRescueNarration,
+} from '../../sources/content/first-rescue-narration';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -20,6 +23,20 @@ describe('first rescue narration resolver', () => {
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.help-mimi-down', 'en'),
     ).toBe(
       'https://assets.example/audio/voice/en/missions/garden-kitten-tree/step-help-mimi-down.ogg',
+    );
+    expect(
+      resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.place-ladder', 'hu'),
+    ).toBe(
+      'https://assets.example/audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg',
+    );
+  });
+
+  it('reads the exact localized fallback from the authoritative voice manifest', () => {
+    expect(
+      getFirstRescueNarrationText('voice.mission.garden-kitten-tree.step.place-ladder', 'en'),
+    ).toBe('Drag the ladder to the tree!');
+    expect(getFirstRescueNarrationText('voice.mission.garden-kitten-tree.success', 'hu')).toBe(
+      'Mimi biztonságban van!',
     );
   });
 });

@@ -1,4 +1,11 @@
-# Audio prompt catalog
+# Asset prompt catalog
+
+## Voice
+
+The authoritative localized narration index is the [voice catalog](voice/catalog.md). It contains 115
+semantic lines per locale with identical HU/EN IDs and ordering. The machine-readable inventories are
+under `voice/scripts/`; the first-rescue runtime subset is registered in
+`content/base/assets/voice-manifest.json`.
 
 ## Music
 
@@ -85,7 +92,7 @@ headings in the owning prompt files.
 
 ## Intentionally excluded
 
-- localized narration scripts and voice casting;
 - final music mastering and loop edit points;
+- final voice recordings and mastering outputs;
 - loud failure, timer, score, countdown, purchase, advertisement, or competitive reward sounds;
 - engine implementation.

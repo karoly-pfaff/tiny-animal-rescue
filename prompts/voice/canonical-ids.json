@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "global": [
+    "welcome",
+    "first-play",
+    "play",
+    "map",
+    "shelter",
+    "choose-location",
+    "mission-available",
+    "mission-complete",
+    "resident-unlocked",
+    "all-residents-safe",
+    "repeat-prompt",
+    "lets-go"
+  ],
+  "locations": ["garden", "forest", "farm", "pond"],
+  "shelterAreas": ["indoor-room", "garden", "pondside"],
+  "hints": [
+    { "interaction": "tap", "levels": ["primary", "stronger"] },
+    { "interaction": "drag", "levels": ["primary", "stronger"] },
+    { "interaction": "wipe", "levels": ["primary", "stronger"] },
+    { "interaction": "match", "levels": ["primary", "stronger"] },
+    { "interaction": "trace", "levels": ["primary", "stronger"] }
+  ],
+  "residents": [
+    "mimi-kitten",
+    "morzsi-puppy",
+    "pipi-chick",
+    "csipi-bird",
+    "suni-hedgehog",
+    "makk-squirrel",
+    "pamacs-lamb",
+    "rozi-fawn",
+    "toto-turtle",
+    "kiki-duckling",
+    "breki-frog",
+    "habi-fish"
+  ],
+  "parent": ["settings-opened", "locale-changed", "reset-confirm", "progress-reset"],
+  "missions": [
+    {
+      "id": "garden-kitten-tree",
+      "steps": ["place-ladder", "help-mimi-down"]
+    },
+    {
+      "id": "forest-hedgehog-branches",
+      "steps": ["remove-left-branch", "remove-right-branch", "remove-last-branch"]
+    },
+    {
+      "id": "farm-chick-find-mother",
+      "steps": ["find-hen", "guide-pipi"]
+    },
+    {
+      "id": "garden-puppy-tangled-leash",
+      "steps": ["loosen-first-loop", "loosen-second-loop", "pull-leash-free"]
+    },
+    {
+      "id": "forest-bird-nest",
+      "steps": ["rebuild-nest", "return-csipi"]
+    },
+    {
+      "id": "pond-turtle-find-water",
+      "steps": ["follow-path"]
+    },
+    {
+      "id": "farm-lamb-fence",
+      "steps": ["remove-loose-board", "open-gate", "help-pamacs-through"]
+    },
+    {
+      "id": "garden-frog-too-dry",
+      "steps": ["add-shade", "add-water"]
+    },
+    {
+      "id": "forest-squirrel-lost-acorns",
+      "steps": ["match-first-acorn", "match-second-acorn", "match-last-acorn"]
+    },
+    {
+      "id": "pond-duckling-reeds",
+      "steps": ["remove-first-reed", "remove-last-reed", "follow-family"]
+    },
+    {
+      "id": "forest-fawn-stuck-twig",
+      "steps": ["remove-twig", "wipe-leaves"]
+    },
+    {
+      "id": "pond-fish-small-puddle",
+      "steps": ["trace-water-channel", "move-habi-to-pond"]
+    },
+    {
+      "id": "farm-piglet-mud-wash",
+      "steps": ["fill-wash-basin", "wash-piglet"]
+    },
+    {
+      "id": "pond-clear-litter",
+      "steps": ["collect-paper", "collect-cup", "collect-bag"]
+    },
+    {
+      "id": "garden-mimi-find-ball",
+      "steps": ["reveal-ball", "return-ball"]
+    },
+    {
+      "id": "forest-suni-picnic",
+      "steps": ["place-blanket", "place-cup", "place-apple"]
+    }
+  ]
+}

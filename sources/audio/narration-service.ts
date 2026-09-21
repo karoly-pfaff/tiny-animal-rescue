@@ -23,6 +23,8 @@ export type NarrationService = Readonly<{
   stop: () => void;
 }>;
 
+export const placeLadderNarrationCue =
+  'voice.mission.garden-kitten-tree.step.place-ladder' satisfies FirstRescueNarrationCue;
 export const helpMimiNarrationCue =
   'voice.mission.garden-kitten-tree.step.help-mimi-down' satisfies FirstRescueNarrationCue;
 export const rescueSuccessNarrationCue =

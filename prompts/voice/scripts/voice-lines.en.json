@@ -1,0 +1,617 @@
+{
+  "version": 1,
+  "locale": "en",
+  "narrator": "primary",
+  "lines": [
+    {
+      "id": "voice.global.welcome",
+      "group": "global",
+      "text": "Welcome to Tiny Rescue!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.first-play",
+      "group": "global",
+      "text": "Let’s help the animals!",
+      "energy": 3
+    },
+    { "id": "voice.global.play", "group": "global", "text": "Play", "energy": 2 },
+    { "id": "voice.global.map", "group": "global", "text": "Map", "energy": 2 },
+    { "id": "voice.global.shelter", "group": "global", "text": "Shelter", "energy": 2 },
+    {
+      "id": "voice.global.choose-location",
+      "group": "global",
+      "text": "Choose a place to visit!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.mission-available",
+      "group": "global",
+      "text": "Someone needs our help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.global.mission-complete",
+      "group": "global",
+      "text": "The rescue is complete!",
+      "energy": 4
+    },
+    {
+      "id": "voice.global.resident-unlocked",
+      "group": "global",
+      "text": "A new friend has joined the shelter!",
+      "energy": 4
+    },
+    {
+      "id": "voice.global.all-residents-safe",
+      "group": "global",
+      "text": "All the animals are safe!",
+      "energy": 4
+    },
+    { "id": "voice.global.repeat-prompt", "group": "global", "text": "Listen again!", "energy": 2 },
+    { "id": "voice.global.lets-go", "group": "global", "text": "Let’s go!", "energy": 3 },
+
+    { "id": "voice.location.garden.name", "group": "location", "text": "Garden", "energy": 2 },
+    { "id": "voice.location.forest.name", "group": "location", "text": "Forest", "energy": 2 },
+    { "id": "voice.location.farm.name", "group": "location", "text": "Farm", "energy": 2 },
+    { "id": "voice.location.pond.name", "group": "location", "text": "Pond", "energy": 2 },
+    {
+      "id": "voice.shelter.indoor-room.name",
+      "group": "location",
+      "text": "Indoor Room",
+      "energy": 2
+    },
+    {
+      "id": "voice.shelter.garden.name",
+      "group": "location",
+      "text": "Shelter Garden",
+      "energy": 2
+    },
+    { "id": "voice.shelter.pondside.name", "group": "location", "text": "Pondside", "energy": 2 },
+
+    {
+      "id": "voice.hint.tap.primary",
+      "group": "hint",
+      "text": "Tap the glowing object!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.tap.stronger",
+      "group": "hint",
+      "text": "It’s waiting here. Tap it!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.drag.primary",
+      "group": "hint",
+      "text": "Pick it up and drag it into place!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.drag.stronger",
+      "group": "hint",
+      "text": "Drag it to the glowing place!",
+      "energy": 3
+    },
+    { "id": "voice.hint.wipe.primary", "group": "hint", "text": "Wipe it gently!", "energy": 2 },
+    {
+      "id": "voice.hint.wipe.stronger",
+      "group": "hint",
+      "text": "Move your finger over it!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.match.primary",
+      "group": "hint",
+      "text": "Find where it belongs!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.match.stronger",
+      "group": "hint",
+      "text": "Put it in the matching place!",
+      "energy": 3
+    },
+    {
+      "id": "voice.hint.trace.primary",
+      "group": "hint",
+      "text": "Follow the path with your finger!",
+      "energy": 2
+    },
+    {
+      "id": "voice.hint.trace.stronger",
+      "group": "hint",
+      "text": "Start here and follow the glowing path!",
+      "energy": 3
+    },
+
+    { "id": "voice.resident.mimi-kitten.name", "group": "resident", "text": "Mimi", "energy": 2 },
+    {
+      "id": "voice.resident.morzsi-puppy.name",
+      "group": "resident",
+      "text": "Biscuit",
+      "energy": 2
+    },
+    { "id": "voice.resident.pipi-chick.name", "group": "resident", "text": "Pipi", "energy": 2 },
+    { "id": "voice.resident.csipi-bird.name", "group": "resident", "text": "Peep", "energy": 2 },
+    {
+      "id": "voice.resident.suni-hedgehog.name",
+      "group": "resident",
+      "text": "Prickle",
+      "energy": 2
+    },
+    {
+      "id": "voice.resident.makk-squirrel.name",
+      "group": "resident",
+      "text": "Acorn",
+      "energy": 2
+    },
+    { "id": "voice.resident.pamacs-lamb.name", "group": "resident", "text": "Floss", "energy": 2 },
+    { "id": "voice.resident.rozi-fawn.name", "group": "resident", "text": "Rosie", "energy": 2 },
+    { "id": "voice.resident.toto-turtle.name", "group": "resident", "text": "Toto", "energy": 2 },
+    { "id": "voice.resident.kiki-duckling.name", "group": "resident", "text": "Kiki", "energy": 2 },
+    { "id": "voice.resident.breki-frog.name", "group": "resident", "text": "Hoppy", "energy": 2 },
+    { "id": "voice.resident.habi-fish.name", "group": "resident", "text": "Bubbles", "energy": 2 },
+
+    {
+      "id": "voice.parent.settings-opened",
+      "group": "parent",
+      "text": "Parent settings",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.locale-changed",
+      "group": "parent",
+      "text": "The language has been changed to English.",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.reset-confirm",
+      "group": "parent",
+      "text": "Are you sure you want to delete all progress?",
+      "energy": 1
+    },
+    {
+      "id": "voice.parent.progress-reset",
+      "group": "parent",
+      "text": "Progress has been deleted.",
+      "energy": 1
+    },
+
+    {
+      "id": "voice.mission.garden-kitten-tree.intro",
+      "group": "mission-intro",
+      "text": "Mimi is stuck in the tree. Let’s help her!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.step.place-ladder",
+      "group": "mission-step",
+      "text": "Drag the ladder to the tree!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.step.help-mimi-down",
+      "group": "mission-step",
+      "text": "Tap Mimi!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-kitten-tree.success",
+      "group": "mission-success",
+      "text": "Mimi is safe!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-hedgehog-branches.intro",
+      "group": "mission-intro",
+      "text": "Prickle is stuck between the branches. Let’s help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-left-branch",
+      "group": "mission-step",
+      "text": "Tap the branch on the left!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-right-branch",
+      "group": "mission-step",
+      "text": "Now tap the branch on the right!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.step.remove-last-branch",
+      "group": "mission-step",
+      "text": "Move the last branch away!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-hedgehog-branches.success",
+      "group": "mission-success",
+      "text": "Prickle is free again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-chick-find-mother.intro",
+      "group": "mission-intro",
+      "text": "Pipi can’t find her mother. Let’s help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.step.find-hen",
+      "group": "mission-step",
+      "text": "Find Pipi’s mother!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.step.guide-pipi",
+      "group": "mission-step",
+      "text": "Drag Pipi to the mother hen!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-chick-find-mother.success",
+      "group": "mission-success",
+      "text": "Pipi found her mother!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.intro",
+      "group": "mission-intro",
+      "text": "Biscuit’s leash is tangled around him. Let’s help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.loosen-first-loop",
+      "group": "mission-step",
+      "text": "Tap the first loop!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.loosen-second-loop",
+      "group": "mission-step",
+      "text": "Tap the second loop!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.step.pull-leash-free",
+      "group": "mission-step",
+      "text": "Drag the leash away from Biscuit!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-puppy-tangled-leash.success",
+      "group": "mission-success",
+      "text": "Biscuit is free again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-bird-nest.intro",
+      "group": "mission-intro",
+      "text": "Peep’s nest needs fixing. Let’s help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.step.rebuild-nest",
+      "group": "mission-step",
+      "text": "Drag the twigs to the nest!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.step.return-csipi",
+      "group": "mission-step",
+      "text": "Drag Peep into the nest!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-bird-nest.success",
+      "group": "mission-success",
+      "text": "Peep is safe in the nest!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-turtle-find-water.intro",
+      "group": "mission-intro",
+      "text": "Toto can’t find the pond. Let’s show the way!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-turtle-find-water.step.follow-path",
+      "group": "mission-step",
+      "text": "Follow the path from Toto to the pond!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-turtle-find-water.success",
+      "group": "mission-success",
+      "text": "Toto found the water!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-lamb-fence.intro",
+      "group": "mission-intro",
+      "text": "Floss is behind the fence. Let’s open the way!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.remove-loose-board",
+      "group": "mission-step",
+      "text": "Move the loose board away!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.open-gate",
+      "group": "mission-step",
+      "text": "Pull the gate open!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.step.help-pamacs-through",
+      "group": "mission-step",
+      "text": "Tap Floss!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-lamb-fence.success",
+      "group": "mission-success",
+      "text": "Floss is safe!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-frog-too-dry.intro",
+      "group": "mission-intro",
+      "text": "Hoppy is too dry. Let’s help him cool down!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.step.add-shade",
+      "group": "mission-step",
+      "text": "Drag the leaf above Hoppy!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.step.add-water",
+      "group": "mission-step",
+      "text": "Drag the water drops to Hoppy!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-frog-too-dry.success",
+      "group": "mission-success",
+      "text": "Hoppy is cool and happy now!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.intro",
+      "group": "mission-intro",
+      "text": "Acorn dropped all the acorns. Let’s collect them!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-first-acorn",
+      "group": "mission-step",
+      "text": "Put the first acorn in the basket!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-second-acorn",
+      "group": "mission-step",
+      "text": "Put the next acorn in the basket!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.step.match-last-acorn",
+      "group": "mission-step",
+      "text": "Put the last acorn in the basket!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-squirrel-lost-acorns.success",
+      "group": "mission-success",
+      "text": "Acorn found every acorn!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-duckling-reeds.intro",
+      "group": "mission-intro",
+      "text": "Kiki is stuck in the reeds. Let’s clear the way!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.remove-first-reed",
+      "group": "mission-step",
+      "text": "Tap this reed!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.remove-last-reed",
+      "group": "mission-step",
+      "text": "Move the other reed away too!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.step.follow-family",
+      "group": "mission-step",
+      "text": "Guide Kiki to the family!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-duckling-reeds.success",
+      "group": "mission-success",
+      "text": "Kiki is back with the family!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.intro",
+      "group": "mission-intro",
+      "text": "A twig is caught on Rosie’s leg. Let’s help!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.step.remove-twig",
+      "group": "mission-step",
+      "text": "Tap the twig!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.step.wipe-leaves",
+      "group": "mission-step",
+      "text": "Wipe the leaves off Rosie!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-fawn-stuck-twig.success",
+      "group": "mission-success",
+      "text": "Rosie can walk freely again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-fish-small-puddle.intro",
+      "group": "mission-intro",
+      "text": "Bubbles is in a little puddle. Let’s guide her back to the pond!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.step.trace-water-channel",
+      "group": "mission-step",
+      "text": "Follow the path to let the water flow!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.step.move-habi-to-pond",
+      "group": "mission-step",
+      "text": "Drag Bubbles into the pond!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-fish-small-puddle.success",
+      "group": "mission-success",
+      "text": "Bubbles is swimming in the pond again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.intro",
+      "group": "mission-intro",
+      "text": "The piglet is covered in mud. Let’s wash it off!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.step.fill-wash-basin",
+      "group": "mission-step",
+      "text": "Drag the water to the wash basin!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.step.wash-piglet",
+      "group": "mission-step",
+      "text": "Wipe away the mud!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.farm-piglet-mud-wash.success",
+      "group": "mission-success",
+      "text": "The piglet is clean again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.pond-clear-litter.intro",
+      "group": "mission-intro",
+      "text": "A few things were left by the pond. Let’s tidy up!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-paper",
+      "group": "mission-step",
+      "text": "Drag the paper into the bin!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-cup",
+      "group": "mission-step",
+      "text": "Put the cup in the bin too!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.step.collect-bag",
+      "group": "mission-step",
+      "text": "Drag the bag into the bin!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.pond-clear-litter.success",
+      "group": "mission-success",
+      "text": "The pondside is clean again!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.garden-mimi-find-ball.intro",
+      "group": "mission-intro",
+      "text": "Mimi can’t find her ball. Let’s look for it!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.step.reveal-ball",
+      "group": "mission-step",
+      "text": "Tap the leaves!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.step.return-ball",
+      "group": "mission-step",
+      "text": "Drag the ball to Mimi!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.garden-mimi-find-ball.success",
+      "group": "mission-success",
+      "text": "Mimi found her ball!",
+      "energy": 4
+    },
+
+    {
+      "id": "voice.mission.forest-suni-picnic.intro",
+      "group": "mission-intro",
+      "text": "Prickle would like a picnic. Let’s get it ready!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-blanket",
+      "group": "mission-step",
+      "text": "Drag the blanket onto the grass!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-cup",
+      "group": "mission-step",
+      "text": "Put the cup on the blanket!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.step.place-apple",
+      "group": "mission-step",
+      "text": "Put the apple on the blanket too!",
+      "energy": 3
+    },
+    {
+      "id": "voice.mission.forest-suni-picnic.success",
+      "group": "mission-success",
+      "text": "Prickle’s picnic is ready!",
+      "energy": 4
+    }
+  ]
+}

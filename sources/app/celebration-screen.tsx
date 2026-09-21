@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { rescueSuccessNarrationCue, type NarrationService } from '../audio/narration-service';
+import { getFirstRescueNarrationText } from '../content/first-rescue-narration';
 import { getStrings, type Locale } from '../i18n/localization';
 
 type CelebrationScreenProps = Readonly<{
@@ -17,15 +18,16 @@ export function CelebrationScreen({
   onShelter,
 }: CelebrationScreenProps) {
   const strings = getStrings(locale);
+  const narrationText = getFirstRescueNarrationText(rescueSuccessNarrationCue, locale);
 
   useEffect(() => {
     narrationService.speak({
       cue: rescueSuccessNarrationCue,
       locale,
-      text: strings.mimiCelebrationNarration,
+      text: narrationText,
     });
     return narrationService.stop;
-  }, [locale, narrationService, strings.mimiCelebrationNarration]);
+  }, [locale, narrationService, narrationText]);
 
   return (
     <main className="game-shell" data-route="celebration">
@@ -36,7 +38,7 @@ export function CelebrationScreen({
         </div>
         <header className="celebration-title-plaque">
           <h1 id="celebration-title">{strings.celebrationTitle}</h1>
-          <p>{strings.mimiCelebrationNarration}</p>
+          <p>{narrationText}</p>
         </header>
         <nav className="celebration-actions" aria-label={strings.celebrationChoices}>
           <button className="celebration-action map-action" type="button" onClick={onMap}>

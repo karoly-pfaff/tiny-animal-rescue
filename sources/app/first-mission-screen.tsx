@@ -6,7 +6,12 @@ import {
   useState,
 } from 'react';
 
-import { helpMimiNarrationCue, type NarrationService } from '../audio/narration-service';
+import {
+  helpMimiNarrationCue,
+  placeLadderNarrationCue,
+  type NarrationService,
+} from '../audio/narration-service';
+import { getFirstRescueNarrationText } from '../content/first-rescue-narration';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 import { DragToTarget } from '../interactions/drag-to-target';
@@ -51,7 +56,7 @@ export function FirstMissionScreen({
   const exitTimer = useRef<number | null>(null);
   const strings = getStrings(locale),
     rescue = useRescueCompletion({
-      helpMimiText: strings.helpMimiNarration,
+      helpMimiText: getFirstRescueNarrationText(helpMimiNarrationCue, locale),
       locale,
       narrationService,
       onCelebrate,
@@ -158,6 +163,17 @@ export function FirstMissionScreen({
   );
 }
 
+function useMissionEntryNarration(locale: Locale, narrationService: NarrationService): void {
+  useEffect(() => {
+    narrationService.speak({
+      cue: placeLadderNarrationCue,
+      locale,
+      text: getFirstRescueNarrationText(placeLadderNarrationCue, locale),
+    });
+    return narrationService.stop;
+  }, [locale, narrationService]);
+}
+
 type RescueCompletionOptions = Readonly<{
   helpMimiText: string;
   locale: Locale;
@@ -173,6 +189,7 @@ function useRescueCompletion({
   onCelebrate,
   onCommitReward,
 }: RescueCompletionOptions) {
+  useMissionEntryNarration(locale, narrationService);
   const [phase, setPhase] = useState<MissionPhase>(ladderPhase);
   const [saveFailed, setSaveFailed] = useState(false);
   const completionStarted = useRef(false);

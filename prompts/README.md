@@ -3,8 +3,9 @@
 Version: 0.1.0
 
 This pack is the single entry point for generating or editing Tiny Rescue visual, music, and effect
-assets. It combines reusable style locks, negative constraints, asset-specific templates, runtime-ID
-routing, and provenance requirements so separately produced assets still belong to one product.
+assets, plus localized voice assets. It combines reusable style locks, negative constraints,
+asset-specific templates, runtime-ID routing, and provenance requirements so separately produced
+assets still belong to one product.
 
 Generated output is source material, not automatically a production asset. A candidate becomes
 shippable only after the required editing, full-size or repeated-playback QA, ownership and runtime
@@ -46,6 +47,17 @@ effects/
   environmental-loops.md
   animal-vocalizations.md
   manifest.example.json
+voice/
+  README.md
+  catalog.md
+  narrator-brief.md
+  pronunciation-guide.md
+  recording-and-generation.md
+  release-checklist.md
+  line-generation-template.md
+  localization/
+  schemas/
+  scripts/
 integration.md
 catalog.md
 ```
@@ -126,6 +138,13 @@ Each gameplay location contains a calm base ambience and a slightly more focused
 8. Record the approval evidence below.
 
 See [the catalog](catalog.md) for the full music and effect runtime-ID index.
+
+## Voice prompts
+
+Localized narration uses the [voice prompt pack](voice/README.md). Its complete HU/EN inventories,
+casting and pronunciation rules, per-line generation template, R2 mapping, and release checklist are
+versioned here as authored inputs. Voice recordings remain external production media and do not enter
+Git.
 
 An approved music/effect record includes:
 

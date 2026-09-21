@@ -99,6 +99,18 @@ describe('FirstMissionScreen protected exit', () => {
 });
 
 describe('FirstMissionScreen rescue completion', () => {
+  it('narrates the first required action on entry and stops narration on exit', () => {
+    const { props, unmount } = renderMission({ locale: 'hu' });
+
+    expect(props.narrationService.speak).toHaveBeenCalledWith({
+      cue: 'voice.mission.garden-kitten-tree.step.place-ladder',
+      locale: 'hu',
+      text: 'Húzd a létrát a fához!',
+    });
+    unmount();
+    expect(props.narrationService.stop).toHaveBeenCalledOnce();
+  });
+
   it('makes Mimi actionable only after the ladder and completes once after reward commit', async () => {
     vi.useFakeTimers();
     let finishCommit: () => void = () => undefined;

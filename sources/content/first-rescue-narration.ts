@@ -1,22 +1,26 @@
+import voiceManifest from '../../content/base/assets/voice-manifest.json';
 import type { Locale } from '../i18n/localization';
 
 export type FirstRescueNarrationCue =
+  | 'voice.mission.garden-kitten-tree.step.place-ladder'
   | 'voice.mission.garden-kitten-tree.step.help-mimi-down'
   | 'voice.mission.garden-kitten-tree.success';
 
-type NarrationObjectKey = `audio/voice/${Locale}/missions/garden-kitten-tree/${string}.ogg`;
-type NarrationFilename = 'step-help-mimi-down.ogg' | 'success.ogg';
+type VoiceAsset = Readonly<{
+  cue: string;
+  fallbackText: Readonly<Record<Locale, string>>;
+  objectKeys: Readonly<Record<Locale, string>>;
+}>;
 
-const helpMimiCue =
-  'voice.mission.garden-kitten-tree.step.help-mimi-down' satisfies FirstRescueNarrationCue;
-const successCue = 'voice.mission.garden-kitten-tree.success' satisfies FirstRescueNarrationCue;
-const helpMimiFilename = 'step-help-mimi-down.ogg' satisfies NarrationFilename;
-const successFilename = 'success.ogg' satisfies NarrationFilename;
+type VoiceManifest = Readonly<{
+  assets: readonly VoiceAsset[];
+}>;
 
-const filenameByCue: Readonly<Record<FirstRescueNarrationCue, NarrationFilename>> = {
-  [helpMimiCue]: helpMimiFilename,
-  [successCue]: successFilename,
-};
+const firstRescueVoiceManifest = voiceManifest satisfies VoiceManifest;
+
+export function getFirstRescueNarrationText(cue: FirstRescueNarrationCue, locale: Locale): string {
+  return findVoiceAsset(cue).fallbackText[locale];
+}
 
 export function resolveFirstRescueNarration(
   cue: FirstRescueNarrationCue,
@@ -26,7 +30,14 @@ export function resolveFirstRescueNarration(
   if (assetBaseUrl === undefined) {
     return null;
   }
-  const objectKey =
-    `audio/voice/${locale}/missions/garden-kitten-tree/${filenameByCue[cue]}` satisfies NarrationObjectKey;
+  const objectKey = findVoiceAsset(cue).objectKeys[locale];
   return `${assetBaseUrl.replace(/\/$/u, '')}/${objectKey}`;
+}
+
+function findVoiceAsset(cue: FirstRescueNarrationCue): VoiceAsset {
+  const asset = firstRescueVoiceManifest.assets.find((candidate) => candidate.cue === cue);
+  if (asset === undefined) {
+    throw new Error(`Missing first-rescue voice asset: ${cue}`);
+  }
+  return asset;
 }

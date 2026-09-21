@@ -88,9 +88,9 @@ export default tseslint.config(
     },
   },
   {
-    files: ['sources/content/first-rescue-assets.ts'],
+    files: ['sources/content/first-rescue-assets.ts', 'sources/content/first-rescue-narration.ts'],
     rules: {
-      // This boundary alone translates semantic asset roles to deployment object keys.
+      // These content boundaries translate semantic asset roles to deployment object keys.
       'no-restricted-imports': 'off',
     },
   },
