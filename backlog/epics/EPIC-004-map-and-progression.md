@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M4
 - Target version: `0.5.0`
+- Inspection journeys: `map,progression,replay`
 - Dependencies: EPIC-002, EPIC-003
 - ADRs: ADR-0002, ADR-0008
 

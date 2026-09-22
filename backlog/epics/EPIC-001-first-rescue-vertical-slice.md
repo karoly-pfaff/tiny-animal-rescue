@@ -3,6 +3,7 @@
 - Status: Done
 - Milestone: M1
 - Target version: `0.2.0`
+- Inspection journeys: `start,map,rescue,celebration,shelter,replay,reload`
 - Dependencies: EPIC-000
 - ADRs: ADR-0001, ADR-0005, ADR-0006, ADR-0010
 

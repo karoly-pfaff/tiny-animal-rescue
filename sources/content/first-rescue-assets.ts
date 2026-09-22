@@ -9,10 +9,14 @@ function resolveAsset(role: FirstRescueAssetRole): string | null {
   if (record === undefined) {
     throw new Error('A first-rescue asset is missing from the base asset inventory.');
   }
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
-  return assetBaseUrl === undefined
-    ? null
-    : `${assetBaseUrl.replace(/\/$/u, '')}/${record.objectKey}`;
+  const materialized = import.meta.env.VITE_MATERIALIZED_ASSETS;
+  if (materialized === undefined) {
+    return null;
+  }
+  if (materialized !== 'true') {
+    throw new Error('VITE_MATERIALIZED_ASSETS must be exactly true when it is defined.');
+  }
+  return `./content/base/assets/${record.objectKey}`;
 }
 
 export function resolveGardenMapBackground(): string | null {

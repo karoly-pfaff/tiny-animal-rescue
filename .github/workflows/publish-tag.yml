@@ -1,0 +1,94 @@
+name: publish validated milestone tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Merged canonical release work-item pull-request number
+        required: true
+        type: number
+      inspection_comment:
+        description: Provider comment ID containing the exact-head live inspection record
+        required: true
+        type: number
+      approval_comment:
+        description: Repository-owner comment ID explicitly approving this exact tag
+        required: true
+        type: number
+      qualification_run:
+        description: Trusted media-qualification workflow run ID cited by the inspection
+        required: true
+        type: number
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: media-qualified-*
+          path: qualified-media
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.qualification_run }}
+      - run: >-
+          node scripts/publish-tag.mjs
+          --pull-request ${{ inputs.pull_request }}
+          --inspection-comment ${{ inputs.inspection_comment }}
+          --approval-comment ${{ inputs.approval_comment }}
+          --qualification-run ${{ inputs.qualification_run }}
+          --qualification qualified-media
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: approved-release-tag-${{ github.run_id }}
+          path: build/release-tag
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: release-tag-publication
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.RELEASE_TAG_DEPLOY_KEY }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: approved-release-tag-${{ github.run_id }}
+          path: build/release-tag
+      - name: publish immutable annotated tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_name="$(tr -d '\r\n' < build/release-tag/tag-name.txt)"
+          tag_sha="$(tr -d '\r\n' < build/release-tag/tag-sha.txt)"
+          [[ "$tag_name" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
+          [[ "$tag_sha" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$tag_sha"
+          test -z "$(git ls-remote --tags origin "refs/tags/$tag_name")"
+          git config user.name tiny-rescue-release-publisher
+          git config user.email tiny-rescue-release-publisher@users.noreply.github.com
+          git tag --annotate "$tag_name" --file build/release-tag/tag-message.txt "$tag_sha"
+          git push origin "refs/tags/$tag_name"

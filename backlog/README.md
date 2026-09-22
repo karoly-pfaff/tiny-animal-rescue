@@ -77,3 +77,10 @@ These ideas are intentionally not part of v1.0:
 - additional interaction primitives
 
 Moving an item out of the icebox requires explicit user direction and, where applicable, an ADR.
+
+## Maintenance items
+
+Post-release corrections use separately scoped records rather than being hidden in a later epic:
+
+- [DOC-001: Local assets and live epic inspection contract](maintenance/DOC-001-local-assets-and-live-epic-inspection.md)
+- [PATCH-001: Correct v0.2 asset and visual evidence](maintenance/PATCH-001-v0.2.1-asset-evidence-correction.md)

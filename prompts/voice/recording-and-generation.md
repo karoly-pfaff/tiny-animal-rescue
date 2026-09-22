@@ -56,6 +56,8 @@ audio/voice/en/missions/garden-kitten-tree/step-place-ladder.ogg
 ## Storage boundary
 
 Do not commit WAV, OGG, MP3, or other voice media to Git. Keep lossless masters in the approved
-production store and upload approved runtime OGG files to R2. Repository manifests store object keys
-relative to `content/<pack-id>/assets/`, for example
-`audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg`.
+production store and upload approved runtime OGG files to R2. Before build, repository tooling
+downloads the declared object, verifies its immutable digest and media metadata, and materializes it
+under the ignored `content/<pack-id>/assets/` tree. Repository manifests store object keys relative to
+that tree, for example `audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg`. The browser
+resolves the packaged local file and never fetches R2 directly.

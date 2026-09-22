@@ -128,7 +128,8 @@ manifest's ownership, narrator, duration, license, provenance, QA, and delivery 
 the audible-watermark and generator/service branding prohibition in both policy documents and exact
 spoken text. Its negative fixtures must demonstrate that coherent ID drift, key collision, parity,
 mapping, metadata, fallback-text, and clean-output defects fail the gate. Voice binaries are external
-R2 deliverables and never Git inputs.
+R2 deliverables, are materialized into the ignored local pack tree before a media-complete build, and
+never become Git inputs or direct browser downloads.
 
 ### Browser and visual
 
@@ -146,6 +147,44 @@ R2 deliverables and never Git inputs.
   catch semantic/ARIA/focus defects but never replace the motor, audio/visual, sensory, reading, and
   observed-child checks required by this product.
 
+### Live epic product inspection
+
+Automated browser and visual gates are necessary but not sufficient for epic closure. Under ADR-0012,
+every epic and every player-visible patch must be inspected on the exact candidate commit after its
+aggregate gate passes and before merge approval is requested.
+
+The protected media-qualification workflow synchronizes and verifies required production media with
+trusted `main` policy, creates the production build and visual evidence in a separate secretless
+candidate job, then uses a fresh trusted finalizer to combine that product with the original immutable
+materialization handoff. The finalizer reconstructs the receipt from tracked locks and never executes
+candidate code. It independently detects and measures every original and packaged binary, scans both
+copies for forbidden watermark/attribution metadata, injects the trusted bytes at their canonical
+pack-local paths, rejects remote production-media URLs, and requires the bundle to reference every
+locked object. The product/base-pack version must equal the trusted backlog target before merge.
+The implementer opens that exact retained build in a real browser and completes the
+backlog-declared journey set in Hungarian and English with mouse and touch input. Inspection covers the complete supported
+viewport matrix (1024x768, 1280x800, 1366x1024, and 768x1024) at full size and checks actual asset
+loading, absence of placeholders/fallbacks/watermarks/baked text,
+composition, hierarchy, target visibility, clipping, overlap, transition states, and console/runtime
+failures.
+
+Record the exact commit, product version, commands, browser, locale/input/viewport matrix, journeys,
+asset-inventory and artifact digests, evidence paths, findings/dispositions, inspector, timestamp, and
+pass/fail result in a provider-backed pull-request comment with attached evidence artifacts. The
+versioned audit record defines the expected matrix and may later link the provider record, but the
+final pass evidence stays outside the candidate tree to avoid changing the inspected SHA. Screenshots
+support the record but never substitute for opening and walking through the assembled product. Any
+candidate change after inspection invalidates the affected portion of the sign-off. A failed or
+missing inspection blocks Done status, merge readiness, and version tagging even when every automated
+check is green.
+
+Merge and tag automation fetch that comment, enforce its ordered schema and passing result, and bind
+it to the canonical PR, exact inspected head, version, independently recomputed artifact and
+asset-inventory digests, materialization receipt, qualification run, and trusted workflow identity.
+The provider artifact name contains the inspected SHA and both digests; the workflow run must be a
+successful dispatch of `.github/workflows/qualify-media.yml` from the exact protected-main policy SHA.
+A numeric comment or workflow-run ID by itself is never evidence.
+
 ## Dependency and artifact gates
 
 - `npm audit --audit-level=high` blocks unresolved high or critical advisories. Lower findings require
@@ -160,6 +199,10 @@ R2 deliverables and never Git inputs.
   user/maintainer records a compatibility decision.
 - A production build must contain no source secret, absolute development path, development endpoint,
   test-only route, debug overlay, placeholder asset, or identifiable observation data.
+- A media-complete production build packages only digest-verified assets materialized under the local
+  pack tree. It contains no R2 credential, signed URL, direct R2 fetch path, or player-time dependency
+  on the media origin. Its trusted finalization scan rejects unreferenced locked media, remote media
+  URLs, binary watermark markers, and product/base-pack version drift.
 - Public production output contains no source map or embedded source/debug metadata. If private source
   maps are authorized later, they are a separately access-controlled artifact and never enter
   `build/` or the deployed static bundle. `test:artifact` enforces this policy plus version metadata,
@@ -225,6 +268,10 @@ and watermark validation, waiver validation, dependency and shipped-license audi
 analysis, production-preview smoke, serialized E2E at the full supported viewport matrix, visual
 regression, and built-artifact inspection.
 
+`validate:full` remains an automated aggregate. Passing it does not perform or imply the live epic
+product inspection; that separately recorded gate must also pass before an epic or player-visible
+patch is presented for merge approval.
+
 `validate:release` is the M7, M8, M9, and GA-promotion gate: `validate:full` plus
 `test:content:release`, final asset/provenance rules, SBOM, release metadata, artifact digest, and the
 applicable release checklist. All aggregate commands call the same underlying repository scripts as
@@ -252,9 +299,31 @@ checks with stable names:
 | `security`     | repository secret/static scans plus provider-hosted CodeQL SARIF                           |
 
 `main` is protected: no direct push, no force push, no merge with a missing/stale/failing required
-check, and no administrator bypass except a documented emergency. Required workflows cannot use path
+check, and no human or administrator bypass. Its only ruleset bypass is the least-privilege dedicated
+merge-authorization App described below. Required workflows cannot use path
 filters that leave a check absent. Concurrency cancellation may stop an obsolete run only after a newer
 commit for the same change has started its replacement run.
+
+Merge automation additionally requires a provider-backed owner approval whose exact body binds the
+PR number, current head SHA, version, and live-inspection comment. A dedicated GitHub App identity,
+not the generic Actions integration, owns the required `authorization` context and is the main
+ruleset's only bypass actor. It executes trusted `main` policy on a fresh protected-environment runner,
+keeps authorization non-successful until its squash finishes, and never exposes its token to candidate
+build code. Its short-lived token requests the exact read scopes needed for evidence plus commit-status
+write and the contents-write scope required by GitHub's pull-request merge endpoint; it receives no
+administration, environment, deployment, or workflow write scope. The App accepts the seven jobs only
+from the canonical `required-quality` workflow ID and active path and the exact SHA/branch/event. It
+selects the newest identity-matching workflow run by run number, attempt, and ID before considering
+status or conclusion; that newest run itself must be completed and successful, and every accepted
+check must be tied to its check-suite ID. A newer pending or failed canonical run therefore blocks an
+older success, and same-name jobs from another candidate workflow do not count. Thus the seven quality
+jobs alone cannot permit a normal merge.
+Protected `v*` tags reject
+direct creation, update, and deletion. Only creation has the
+dedicated release-deploy-key bypass; update and deletion have no bypass. The tag workflow exposes the
+key only in a second owner-reviewed job after unprivileged validation binds the squash SHA, artifact
+digest, and asset-inventory digest. Governance fixtures reject absent, stale,
+wrong-user, wrong-head, wrong-PR, failed, incomplete, and unbound inspection or approval evidence.
 
 CI retains machine-readable test and coverage reports plus failure artifacts. An epic release records
 the successful run URL or equivalent local evidence from a clean checkout.
@@ -292,6 +361,12 @@ move it out of the required pipeline while it still claims to protect a release 
 - [`npm ci`](https://docs.npmjs.com/cli/commands/npm-ci/) and
   [`npm audit`](https://docs.npmjs.com/cli/commands/npm-audit/)
 - [GitHub required status checks](https://docs.github.com/en/pull-requests/reference/status-checks)
+- [GitHub repository rulesets REST schema](https://docs.github.com/en/rest/repos/rules) and
+  [GitHub Actions artifact REST schema](https://docs.github.com/en/rest/actions/artifacts)
+- [GitHub Actions workflow-run REST schema](https://docs.github.com/en/rest/actions/workflow-runs)
+- [GitHub pull-request merge REST endpoint and App permissions](https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request)
+- [Cloudflare R2 S3 authentication](https://developers.cloudflare.com/r2/get-started/s3/) and
+  [S3 compatibility/`auto` region](https://developers.cloudflare.com/r2/api/s3/api/)
 - [Playwright accessibility testing](https://playwright.dev/docs/accessibility-testing) and
   [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
 - [GitHub CodeQL code scanning](https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql)

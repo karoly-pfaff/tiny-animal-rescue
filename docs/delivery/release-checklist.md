@@ -22,6 +22,8 @@ may be filtered, and only by an active exact `quality-waivers.json` entry that p
 - [ ] All IDs and references resolve and are unique.
 - [ ] The prerequisite graph is acyclic.
 - [ ] Every required asset exists, has correct ownership, and is not a placeholder.
+- [ ] Every required external object is digest-verified and materialized into the ignored local pack
+      tree before the candidate build; the retained receipt matches the artifact inputs.
 - [ ] No production-resolved or shippable visual asset contains baked or pseudo text.
 - [ ] Every approved visual has its final prompt/reference record, tool/date when known, dimensions,
       production-safe or presentation-only classification, full-size QA result, and provenance/license.
@@ -71,6 +73,8 @@ may be filtered, and only by an active exact `quality-waivers.json` entry that p
 - [ ] Production build and static preview work.
 - [ ] No unexpected console errors occur in critical E2E flows.
 - [ ] Reference screenshots are approved.
+- [ ] The exact candidate production preview was opened in a real browser and the ADR-0012 live
+      locale/input/viewport walkthrough passed with retained evidence.
 - [ ] Licenses and credits for fonts, audio, and art sources are present.
 - [ ] No secret, personal data, or development-only endpoint is included.
 - [ ] Secret scanning and static security analysis have no unresolved High/Critical finding.

@@ -21,7 +21,14 @@ This optimizes a solo project for fast iteration without giving up reviewable st
 6. `main`, release tags, and published milestone commits are never rewritten.
 
 Non-epic security patches or maintenance use a separately scoped backlog item and pull request. They
-must not be hidden inside an active epic merely to preserve the one-squash shape.
+must not be hidden inside an active epic merely to preserve the one-squash shape. Their backlog item
+declares the exact branch, target/related version, Conventional Commit type, aggregate gate, release
+intent, live-inspection requirement, and exact journey list when applicable. That branch contains one
+canonical commit scoped to the maintenance ID and reaches `main` as one squash.
+Except for the one-time governance bootstrap documented in repository governance, maintenance policy
+is predeclared on protected `main` before implementation begins. The trusted merge job resolves that
+base-branch declaration, so candidate code cannot downgrade its release, gate, type, or inspection
+requirements.
 
 ## Commit-message standard
 
@@ -120,7 +127,13 @@ Epic closure is deliberately two-phase so version policy and final-head validati
    allowed evidence metadata below.
 3. Run the complete applicable aggregate gate on that exact closure head. Any failure returns to the
    owning story or closure metadata and invalidates stale evidence.
-4. The target version is earned and published only by the validated squash merge and immutable tag;
+4. Complete the independent fresh-context audit, resolve its findings, and rerun affected automated
+   gates on the exact closure head.
+5. Synchronize every required production asset, rebuild the exact closure head, open the production
+   preview in a real browser, complete the ADR-0012 walkthrough, and retain its provider-backed
+   inspection record outside the candidate tree. Any finding returns to the owning story and
+   invalidates stale automated and manual evidence.
+6. The target version is earned and published only by the validated squash merge and immutable tag;
    creating the candidate bump does not itself advance the milestone.
 
 The optional closure commit uses:
@@ -157,30 +170,39 @@ commits do not become ancestors of `main`. Update recorded SHAs after any autosq
 The exact squash body is generated deterministically before merge and contains a machine-readable
 crosswalk with epic ID, milestone, target version, canonical PR identity/URL, every story ID and full
 SHA, optional closure SHA, applicable aggregate gate, evidence digest, and `Release: v<version>`
-footer. The annotated milestone tag repeats that crosswalk and additionally records the resulting
-squash SHA and artifact digest. These two Git-native records preserve traceability in a standalone
-clone even when the hosting UI is unavailable.
+footer. Merge automation appends the immutable merge-approval comment ID. The annotated milestone tag
+repeats that crosswalk and records the merge-approval, live-inspection, and distinct tag-approval
+comment IDs, resulting squash SHA, artifact digest, and asset-inventory digest. These
+Git-native and provider records preserve traceability without treating a green build as publication
+authority.
 
 Before merge:
 
 1. verify one canonical commit per accepted story and at most one closure commit;
 2. review the entire epic diff against current `main`;
 3. run a clean frozen install and the applicable aggregate gate;
-4. complete the epic-level fresh-context audit and disposition every finding;
-5. verify milestone/version/release evidence and all required status checks on the final branch head;
-6. validate the exact proposed PR title and deterministic squash body/crosswalk;
-7. let the repository merge automation perform the squash with those exact validated inputs;
-8. verify the resulting `main` subject/body, squash SHA, tree identity, and post-merge history check;
-9. build the release artifact from the exact verified squash SHA and record its digest, reports, and
-   provenance without creating a tag yet;
-10. generate and lint the now-complete annotated-tag message including that digest, create the local
-    unpushed tag targeting the same squash SHA, run tag/history validation, push the validated tag,
-    verify its remote identity, and only then delete the epic branch.
+4. complete the epic-level fresh-context audit, disposition every finding, and rerun affected gates;
+5. materialize every required production asset, open the exact production preview, complete and record
+   the ADR-0012 live product inspection, and resolve every finding;
+6. verify milestone/version/release evidence and all required status checks on the final branch head;
+7. validate the exact proposed PR title and deterministic squash body/crosswalk;
+8. present the complete candidate evidence and obtain the user's explicit approval to merge only;
+9. only after that approval, let repository merge automation perform the squash with those exact
+   validated inputs;
+10. verify the resulting `main` subject/body, squash SHA, tree identity, and post-merge history check;
+11. verify the squash tree equals the inspected head, independently verify the immutable qualified
+    build/receipt, and wait for the complete trusted `main` check suite on that exact squash SHA;
+12. generate and lint the now-complete annotated-tag message including the inspection identity and
+    digests, obtain a separate explicit tag approval tied to the squash SHA and both digests, then use
+    the protected tag-publication workflow's environment-scoped deploy key to re-download and
+    independently verify the exact retained qualified artifact, then create the tag without
+    substituting a clean-checkout fallback build. Verify its remote
+    identity and tag-triggered checks before deleting the epic branch.
 
 Interactive merge-message editing is forbidden. Repository settings allow squash merge only; merge
 commit and rebase-merge modes are disabled. The merge automation/provider API must use the validated
-PR title and generated squash body verbatim. If it cannot guarantee this, stop rather than merging
-and change the repository integration deliberately.
+PR title and generated squash body with only the verified merge-approval comment footer appended. If
+it cannot guarantee this, stop rather than merging and change the repository integration deliberately.
 
 The applicable aggregate gate is `validate:full` through M6 and `validate:release` for M7, M8, M9,
 and GA promotion. A failed, stale, cancelled, empty, or retry-only result does not authorize merge.
@@ -222,23 +244,26 @@ watermark. Release approval requires both the automated evidence and recorded hu
 
 EPIC-000 adds one validator with explicit, fixture-tested modes; no mode silently skips a rule:
 
-- `branch` mode is offline, takes an explicit base ref and epic file, and validates the local commit
-  range, story coverage, closure count, Conventional Commits, and textual watermark patterns;
+- `branch` mode is offline, takes an explicit base ref, resolves the epic or maintenance item from its
+  declared branch, and validates the local commit range, story/maintenance coverage, closure count,
+  Conventional Commits, and textual watermark patterns;
 - `pull-request` mode receives trusted provider event data, title/body, base/head SHAs, and PR identity;
   it performs branch checks, validates the deterministic squash inputs and story map, and queries PR
-  history to require one canonical PR per epic while allowing that same PR to be reopened;
+  history to require one canonical PR per exact work-item branch while allowing that same PR to be
+  reopened;
 - `merge-queue` mode applies the same PR contract to the queued candidate and proves its tree contains
   the approved epic head without unrelated changes;
 - `main` mode validates the new squash subject/body/crosswalk and tree identity rather than expecting
   story commits in `main` ancestry;
 - `tag` mode validates the unpushed annotated tag name/message/crosswalk, target squash SHA, release
-  notes, version, artifact digest, and watermark rules before publication.
+  notes, version, artifact digest, asset-inventory digest, and watermark rules before publication.
 
 Local `validate:full` invokes offline `branch` mode with an explicit base. Hosted `history` checks use
 the appropriate provider-backed mode and credentials; missing event data or credentials fail rather
-than downgrade to branch mode. For an epic pull request, the validator:
+than downgrade to branch mode. For a work-item pull request, the validator:
 
-- derives the expected story IDs from the target epic;
+- derives the expected story IDs from the target epic, or the single maintenance ID from its backlog
+  item;
 - requires exactly one canonical subject for every accepted story;
 - rejects duplicate, missing, unknown, merge, or unassigned commits;
 - permits at most one correctly named epic closure commit;

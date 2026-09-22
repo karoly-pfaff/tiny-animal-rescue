@@ -1,25 +1,142 @@
-name: merge validated epic
+name: merge validated work item
 
 on:
   workflow_dispatch:
     inputs:
       pull_request:
-        description: Canonical epic pull-request number
+        description: Canonical work-item pull-request number
         required: true
+        type: number
+      inspection_comment:
+        description: Provider comment ID containing the exact-head live inspection record
+        required: false
+        type: number
+      approval_comment:
+        description: Repository-owner comment ID explicitly approving this exact merge candidate
+        required: true
+        type: number
+      qualification_run:
+        description: Trusted media-qualification workflow run ID; required for inspected work
+        required: false
         type: number
 
 permissions:
-  contents: write
-  pull-requests: write
+  actions: read
+  contents: read
+
+concurrency:
+  group: merge-authorization-main
+  cancel-in-progress: false
 
 jobs:
-  squash:
+  validate:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: refs/heads/main
+          path: policy
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: candidate
+          ref: refs/pull/${{ inputs.pull_request }}/head
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: policy/.node-version
+          cache: npm
+          cache-dependency-path: policy/package-lock.json
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+        working-directory: policy
+      - run: node ../policy/scripts/validate-repository-policy.mjs
+        working-directory: candidate
+      - if: inputs.inspection_comment == 0
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: candidate/.node-version
+          cache: npm
+          cache-dependency-path: candidate/package-lock.json
+      - if: inputs.inspection_comment == 0
+        run: npm ci
+        working-directory: candidate
+      - if: inputs.inspection_comment == 0
+        run: npm run build
+        working-directory: candidate
+      - if: inputs.inspection_comment == 0
+        run: node ../policy/scripts/validate-artifact.mjs
+        working-directory: candidate
+      - if: inputs.inspection_comment == 0
+        run: >-
+          node policy/scripts/prepare-merge-evidence.mjs
+          --candidate candidate
+          --output merge-evidence/release-evidence.json
+      - if: inputs.inspection_comment != 0
+        uses: actions/download-artifact@v8
+        with:
+          pattern: media-qualified-*
+          path: qualified-media
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.qualification_run }}
+      - if: inputs.inspection_comment != 0
+        run: >-
+          node policy/scripts/verify-qualified-media.mjs
+          --source candidate
+          --qualification qualified-media
+          --expected-head "$(git -C candidate rev-parse HEAD)"
+          --expected-policy "$(git -C policy rev-parse HEAD)"
+          --artifact-prefix media-qualified-
+          --qualification-run ${{ inputs.qualification_run }}
+          --output merge-evidence/release-evidence.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: merge-evidence-${{ github.run_id }}
+          path: merge-evidence/release-evidence.json
+          retention-days: 1
+          if-no-files-found: error
+
+  authorize:
+    if: github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: merge-authorization
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: refs/heads/main
       - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-      - run: node scripts/merge-epic.mjs --pull-request ${{ inputs.pull_request }}
+          cache: npm
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v8
+        with:
+          name: merge-evidence-${{ github.run_id }}
+          path: build/merge-evidence
+      - id: authorization-app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.MERGE_AUTHORIZATION_APP_ID }}
+          private-key: ${{ secrets.MERGE_AUTHORIZATION_APP_PRIVATE_KEY }}
+          permission-actions: read
+          permission-checks: read
+          permission-contents: write
+          permission-issues: read
+          permission-pull-requests: read
+          permission-statuses: write
+      - run: >-
+          node scripts/merge-epic.mjs
+          --pull-request ${{ inputs.pull_request }}
+          --inspection-comment ${{ inputs.inspection_comment }}
+          --approval-comment ${{ inputs.approval_comment }}
+          --qualification-run ${{ inputs.qualification_run }}
+          --evidence build/merge-evidence/release-evidence.json
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ steps.authorization-app.outputs.token }}

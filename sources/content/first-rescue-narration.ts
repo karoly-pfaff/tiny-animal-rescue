@@ -26,12 +26,15 @@ export function resolveFirstRescueNarration(
   cue: FirstRescueNarrationCue,
   locale: Locale,
 ): string | null {
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
-  if (assetBaseUrl === undefined) {
+  const materialized = import.meta.env.VITE_MATERIALIZED_ASSETS;
+  if (materialized === undefined) {
     return null;
   }
+  if (materialized !== 'true') {
+    throw new Error('VITE_MATERIALIZED_ASSETS must be exactly true when it is defined.');
+  }
   const objectKey = findVoiceAsset(cue).objectKeys[locale];
-  return `${assetBaseUrl.replace(/\/$/u, '')}/${objectKey}`;
+  return `./content/base/assets/${objectKey}`;
 }
 
 function findVoiceAsset(cue: FirstRescueNarrationCue): VoiceAsset {

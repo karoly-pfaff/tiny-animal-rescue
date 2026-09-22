@@ -147,6 +147,10 @@ tests as soon as the relevant modules exist.
   test claims to prove. Prefer in-memory implementations of real ports over behaviorless mocks.
 - Snapshots and DOM existence assertions cannot be the sole proof of interaction correctness or visual
   quality. Visual changes require inspected screenshots at the affected reference viewports/locales.
+- Every epic and every player-visible patch closure additionally requires opening the exact production
+  preview in a real browser and inspecting the assembled journeys with their verified production
+  assets. A green baseline comparison cannot approve a placeholder, fallback, stale build, or
+  incoherent composition.
 - Tests use fake clocks, seeded randomness, isolated saves, and deterministic fixtures. Network,
   wall-clock narration duration, execution order, and prior test state must not influence a result.
 - A skipped, focused, quarantined, or retried-only passing test is not green. Any temporary skip needs

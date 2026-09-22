@@ -208,3 +208,19 @@ by `AGENTS.md`.
 - Disposition: every release-audit finding is fixed; no finding is declined or unresolved. Production
   media remains external and untracked, with only R2 object keys, prompt/provenance inputs, and QA
   metadata versioned in Git.
+
+## Post-release correction — 2026-09-22
+
+The original automated and independent audit results above remain accurate for the behavior and files
+they examined, but their visual-completion conclusion is superseded. The `v0.2.0` candidate had no
+materialized Mimi production media: the asset inventory covered only the start and Garden map
+backgrounds, while mission, celebration, and shelter screens used code-native Mimi fallbacks. Stored
+Playwright baselines proved regression stability for those fallbacks, not production-asset
+completeness, and no live real-browser product walkthrough was retained on the exact candidate.
+
+[DOC-001](../../../backlog/maintenance/DOC-001-local-assets-and-live-epic-inspection.md), ADR-0011,
+and ADR-0012 correct the governing contract. The immutable `v0.2.0` tag is not rewritten; the missing
+Mimi asset set, local materialization pipeline, enforcement regression tests, and live inspection are
+tracked by PATCH-001 for a future `v0.2.1` candidate. Until that patch passes and receives explicit
+merge/tag approval, `v0.2.0` is behavioral vertical-slice evidence rather than a visually complete
+asset-backed milestone.

@@ -10,25 +10,32 @@ afterEach(() => {
 });
 
 describe('first rescue narration resolver', () => {
-  it('returns no production URL while the external asset base is unavailable', () => {
-    vi.stubEnv('VITE_ASSET_BASE_URL', undefined);
+  it('returns no production URL while materialized assets are unavailable', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', undefined);
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.success', 'hu'),
     ).toBeNull();
   });
 
-  it('resolves locale-specific semantic cues under the trusted R2 base', () => {
-    vi.stubEnv('VITE_ASSET_BASE_URL', 'https://assets.example/');
+  it('resolves locale-specific semantic cues under the packaged local asset tree', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'true');
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.help-mimi-down', 'en'),
     ).toBe(
-      'https://assets.example/audio/voice/en/missions/garden-kitten-tree/step-help-mimi-down.ogg',
+      './content/base/assets/audio/voice/en/missions/garden-kitten-tree/step-help-mimi-down.ogg',
     );
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.place-ladder', 'hu'),
     ).toBe(
-      'https://assets.example/audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg',
+      './content/base/assets/audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg',
     );
+  });
+
+  it('fails closed instead of treating a configured value as a remote asset base', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'https://assets.example');
+    expect(() =>
+      resolveFirstRescueNarration('voice.mission.garden-kitten-tree.success', 'hu'),
+    ).toThrow(/must be exactly true/u);
   });
 
   it('reads the exact localized fallback from the authoritative voice manifest', () => {

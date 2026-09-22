@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { validateApprovalRecord } from './approval-policy.mjs';
+import { validateInspectionRecord } from './inspection-policy.mjs';
 import { isAllowedSubjectCase } from './commit-subject-policy.mjs';
 import { validateWatermarkRecord } from './watermark-policy.mjs';
 
@@ -17,20 +19,27 @@ const allowedTypes = new Set([
 const shaPattern = /^[0-9a-f]{40}$/u;
 const digestPattern = /^sha256:[0-9a-f]{64}$/u;
 
+export function mergeApprovalCommentIdFromBody(body) {
+  const match = /^Merge-Approval-Comment: #(?<value>\d+)$/mu.exec(body ?? '');
+  return Number(match?.groups?.value);
+}
+
 function push(findings, condition, message) {
   if (!condition) {
     findings.push(message);
   }
 }
 
-function expectedTitle(epic) {
-  return `feat(${epic.id}): deliver ${epic.title.toLowerCase()}`;
+function expectedTitle(item) {
+  const action = item.kind === 'epic' ? `deliver ${item.title}` : item.title;
+  return `${item.commitType}(${item.id}): ${action.toLowerCase()}`;
 }
 
 function splitCommits(input) {
+  if (input.item.kind !== 'epic') return { stories: input.commits, closures: [] };
   return {
-    stories: input.commits.filter((commit) => commit.scope !== input.epic.id),
-    closures: input.commits.filter((commit) => commit.scope === input.epic.id),
+    stories: input.commits.filter((commit) => commit.scope !== input.item.id),
+    closures: input.commits.filter((commit) => commit.scope === input.item.id),
   };
 }
 
@@ -48,7 +57,12 @@ function validateCommit(commit, input, findings) {
   push(findings, allowedTypes.has(type), `${commit.sha}: unsupported commit type ${type}.`);
   push(
     findings,
-    input.epic.stories.includes(scope) || scope === input.epic.id,
+    input.item.kind === 'epic' || type === input.item.commitType,
+    `${commit.sha}: commit type does not match ${input.item.id} policy.`,
+  );
+  push(
+    findings,
+    input.item.stories.includes(scope) || scope === input.item.id,
     `${commit.sha}: unknown scope ${scope}.`,
   );
   push(
@@ -73,11 +87,11 @@ function validateCommit(commit, input, findings) {
 function validateBranch(input, findings, requireComplete) {
   push(
     findings,
-    new RegExp(`^epic/${input.epic.number}-[a-z0-9]+(?:-[a-z0-9]+)*$`, 'u').test(input.branch),
-    `${input.branch}: branch name does not match ${input.epic.id}.`,
+    input.branch === input.item.branch,
+    `${input.branch}: branch name does not match ${input.item.id}.`,
   );
-  push(findings, input.mergeCommitCount === 0, 'Epic branch contains merge commits.');
-  push(findings, input.commits.length > 0, 'Epic branch contains no canonical commit.');
+  push(findings, input.mergeCommitCount === 0, 'Work-item branch contains merge commits.');
+  push(findings, input.commits.length > 0, 'Work-item branch contains no canonical commit.');
   input.commits.forEach((commit) => validateCommit(commit, input, findings));
   const { stories, closures } = splitCommits(input);
   const observed = stories.map((commit) => commit.scope);
@@ -88,24 +102,24 @@ function validateBranch(input, findings, requireComplete) {
       `${story} does not have exactly one canonical commit.`,
     );
   }
-  const indexes = observed.map((story) => input.epic.stories.indexOf(story));
+  const indexes = observed.map((story) => input.item.stories.indexOf(story));
   push(
     findings,
     indexes.every((value, index) => index === 0 || value >= indexes[index - 1]),
     'Canonical story commits are not in dependency order.',
   );
-  push(findings, closures.length <= 1, 'Epic branch contains more than one closure commit.');
+  push(findings, closures.length <= 1, 'Work-item branch contains more than one closure commit.');
   if (closures.length === 1) {
     const closure = closures[0];
     push(
       findings,
       closure === input.commits.at(-1) &&
-        closure.subject === `chore(${input.epic.id}): close milestone ${input.epic.milestone}`,
+        closure.subject === `chore(${input.item.id}): close milestone ${input.item.milestone}`,
       `${closure.sha}: closure commit is not the final canonical closure.`,
     );
   }
   if (requireComplete) {
-    input.epic.stories.forEach((story) =>
+    input.item.stories.forEach((story) =>
       push(findings, observed.includes(story), `Missing canonical commit for ${story}.`),
     );
   }
@@ -114,33 +128,38 @@ function validateBranch(input, findings, requireComplete) {
 function evidenceDigest(input) {
   const { stories, closures } = splitCommits(input);
   const evidence = {
-    epic: input.epic.id,
-    milestone: input.epic.milestone,
-    version: input.epic.version,
+    item: input.item.id,
+    kind: input.item.kind,
+    milestone: input.item.milestone ?? 'none',
+    version: input.item.version,
     pullRequest: input.pullRequest.number,
     stories: stories.map(({ scope, sha }) => [scope, sha]),
     closure: closures[0]?.sha ?? 'none',
-    gate: input.epic.aggregateGate,
+    gate: input.item.aggregateGate,
   };
   return `sha256:${createHash('sha256').update(JSON.stringify(evidence)).digest('hex')}`;
 }
 
 export function generateSquashMessage(input) {
   const { stories, closures } = splitCommits(input);
+  const identity =
+    input.item.kind === 'epic'
+      ? [`Epic: ${input.item.id}`, `Milestone: ${input.item.milestone}`]
+      : [`Work-Item: ${input.item.id}`, `Kind: ${input.item.kind}`];
+  const commitLabel = input.item.kind === 'epic' ? 'Story' : 'Commit';
   return {
-    title: expectedTitle(input.epic),
+    title: expectedTitle(input.item),
     body: [
       'Tiny-Rescue-Crosswalk: 1',
-      `Epic: ${input.epic.id}`,
-      `Milestone: ${input.epic.milestone}`,
-      `Target-Version: ${input.epic.version}`,
+      ...identity,
+      `Target-Version: ${input.item.version}`,
       `Pull-Request: #${input.pullRequest.number}`,
       `Pull-Request-URL: ${input.pullRequest.url}`,
-      ...stories.map((commit) => `Story: ${commit.scope} ${commit.sha}`),
+      ...stories.map((commit) => `${commitLabel}: ${commit.scope} ${commit.sha}`),
       `Closure: ${closures[0]?.sha ?? 'none'}`,
-      `Aggregate-Gate: ${input.epic.aggregateGate}`,
+      `Aggregate-Gate: ${input.item.aggregateGate}`,
       `Evidence-Digest: ${evidenceDigest(input)}`,
-      `Release: v${input.epic.version}`,
+      `Release: ${input.item.publishesRelease ? `v${input.item.version}` : 'none'}`,
     ].join('\n'),
   };
 }
@@ -150,9 +169,9 @@ function validatePullRequest(input, findings) {
   push(
     findings,
     input.pullRequest.canonicalCount === 1,
-    'Epic must have exactly one canonical pull request.',
+    'Work item must have exactly one canonical pull request.',
   );
-  push(findings, input.pullRequest.base === 'main', 'Epic pull request must target main.');
+  push(findings, input.pullRequest.base === 'main', 'Work-item pull request must target main.');
   push(findings, input.pullRequest.headSha === input.headSha, 'Pull-request head SHA is stale.');
   const expected = generateSquashMessage(input);
   push(
@@ -179,7 +198,7 @@ function validateQueue(input, findings) {
   push(
     findings,
     input.queue.associatedPullRequests === 1,
-    'Merge-queue candidate must contain exactly one epic pull request.',
+    'Merge-queue candidate must contain exactly one work-item pull request.',
   );
   push(
     findings,
@@ -198,12 +217,13 @@ function validateMain(input, findings) {
   push(
     findings,
     input.main.newCommits.length === 1,
-    'Main must receive exactly one epic squash commit.',
+    'Main must receive exactly one work-item squash commit.',
   );
   const commit = input.main.newCommits[0];
   if (commit === undefined) return;
   const expected = generateSquashMessage(input);
-  push(findings, commit.parentCount === 1, 'Epic main commit must be a non-merge squash commit.');
+  const mergeApprovalCommentId = mergeApprovalCommentIdFromBody(commit.body);
+  push(findings, commit.parentCount === 1, 'Main commit must be a non-merge squash commit.');
   push(
     findings,
     commit.subject === expected.title,
@@ -211,7 +231,12 @@ function validateMain(input, findings) {
   );
   push(
     findings,
-    commit.body === expected.body,
+    Number.isInteger(mergeApprovalCommentId) && mergeApprovalCommentId > 0,
+    'Main squash body does not bind the immutable merge-approval comment.',
+  );
+  push(
+    findings,
+    commit.body === `${expected.body}\nMerge-Approval-Comment: #${mergeApprovalCommentId}`,
     'Main squash body does not match the validated crosswalk.',
   );
   push(
@@ -221,13 +246,22 @@ function validateMain(input, findings) {
   );
 }
 
-function validateTag(input, findings) {
-  validateBranch(input, findings, true);
+function validateTagCandidate(input, findings) {
+  push(
+    findings,
+    input.item.publishesRelease === true,
+    'Work item is not allowed to publish a tag.',
+  );
+  push(
+    findings,
+    input.item.requiresInspection === true,
+    'Release work item must require live product inspection.',
+  );
   push(findings, input.tag.annotated, 'Milestone tag must be annotated.');
   push(
     findings,
-    input.tag.name === `v${input.epic.version}`,
-    'Tag name does not match the epic target version.',
+    input.tag.name === `v${input.item.version}`,
+    'Tag name does not match the work-item target version.',
   );
   push(findings, shaPattern.test(input.tag.squashSha), 'Tag squash SHA must be a full commit SHA.');
   push(
@@ -241,10 +275,96 @@ function validateTag(input, findings) {
     input.tag.artifactDigest === input.tag.observedArtifactDigest,
     'Tag artifact digest differs from the independently rebuilt artifact.',
   );
-  const expected = `${generateSquashMessage(input).body}\nSquash: ${input.tag.squashSha}\nArtifact-Digest: ${input.tag.artifactDigest}`;
   push(
     findings,
-    input.tag.message === expected,
+    input.tag.assetInventoryDigest === input.tag.observedAssetInventoryDigest,
+    'Tag asset-inventory digest differs from the independently rebuilt inventory.',
+  );
+  push(
+    findings,
+    input.tag.treeMatchesInspectedHead === true,
+    'Tag squash tree differs from the live-inspected pull-request head.',
+  );
+  push(
+    findings,
+    Number.isInteger(input.tag.mergeApprovalCommentId) &&
+      input.tag.mergeApprovalCommentId > 0 &&
+      input.tag.mergeApprovalCommentId !== input.tag.approvalCommentId,
+    'Tag publication requires a distinct immutable approval after the merge approval.',
+  );
+}
+
+function tagInspectionExpectation(input) {
+  return {
+    commentId: input.tag.inspectionCommentId,
+    pullNumber: input.pullRequest.number,
+    targetSha: input.pullRequest.headSha,
+    version: input.item.version,
+    ownerLogin: input.tag.approver,
+    artifactDigest: input.tag.artifactDigest,
+    assetInventoryDigest: input.tag.assetInventoryDigest,
+    repository: input.tag.repository,
+    requiredLocales: input.tag.requiredLocales,
+    requiredInputs: input.tag.requiredInputs,
+    requiredViewports: input.tag.requiredViewports,
+    requiredJourneys: input.item.inspectionJourneys,
+    artifactNamePrefix: input.tag.artifactNamePrefix,
+    artifactWorkflowPath: input.tag.artifactWorkflowPath,
+    artifactWorkflowEvent: input.tag.artifactWorkflowEvent,
+    artifactWorkflowBranch: input.tag.artifactWorkflowBranch,
+    artifactWorkflowHeadSha: input.tag.artifactWorkflowHeadSha,
+  };
+}
+
+function tagApprovalExpectation(input) {
+  return {
+    operation: 'tag',
+    commentId: input.tag.approvalCommentId,
+    pullNumber: input.pullRequest.number,
+    targetSha: input.tag.squashSha,
+    version: input.item.version,
+    inspectionCommentId: input.tag.inspectionCommentId,
+    artifactDigest: input.tag.artifactDigest,
+    assetInventoryDigest: input.tag.assetInventoryDigest,
+    approver: input.tag.approver,
+  };
+}
+
+function mergeApprovalExpectation(input) {
+  return {
+    operation: 'merge',
+    commentId: input.tag.mergeApprovalCommentId,
+    pullNumber: input.pullRequest.number,
+    targetSha: input.pullRequest.headSha,
+    version: input.item.version,
+    inspectionCommentId: input.tag.inspectionCommentId,
+    approver: input.tag.approver,
+  };
+}
+
+function expectedTagMessage(input) {
+  return [
+    generateSquashMessage(input).body,
+    `Merge-Approval-Comment: #${input.tag.mergeApprovalCommentId}`,
+    `Inspection-Comment: #${input.tag.inspectionCommentId}`,
+    `Approval-Comment: #${input.tag.approvalCommentId}`,
+    `Squash: ${input.tag.squashSha}`,
+    `Artifact-Digest: ${input.tag.artifactDigest}`,
+    `Asset-Inventory-Digest: ${input.tag.assetInventoryDigest}`,
+  ].join('\n');
+}
+
+function validateTag(input, findings) {
+  validateBranch(input, findings, true);
+  validateTagCandidate(input, findings);
+  findings.push(...validateInspectionRecord(input.tag.inspection, tagInspectionExpectation(input)));
+  findings.push(
+    ...validateApprovalRecord(input.tag.mergeApproval, mergeApprovalExpectation(input)),
+  );
+  findings.push(...validateApprovalRecord(input.tag.approval, tagApprovalExpectation(input)));
+  push(
+    findings,
+    input.tag.message === expectedTagMessage(input),
     'Annotated tag message does not match the deterministic release crosswalk.',
   );
   findings.push(

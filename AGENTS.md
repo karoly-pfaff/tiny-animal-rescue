@@ -52,7 +52,9 @@ For milestone, compatibility, or release work, also read `docs/delivery/versioni
 - Engine packages may not import a concrete base-game mission or animal by ID.
 - Content packs may declare content but may not register arbitrary executable code.
 - Runtime state stores identifiers and progress, never duplicated content definitions.
-- Resolve all asset paths through the content resolver; do not hard-code public URLs in components.
+- Materialize verified R2 media into the ignored `content/<pack-id>/assets/` tree before a
+  media-complete build. Resolve only packaged local asset paths through the content resolver; runtime
+  code must not construct or fetch public R2 URLs.
 - Persist only versioned, migration-capable save data.
 - Prefer explicit discriminated unions and exhaustive switches over loosely typed maps.
 - A new interaction type requires an ADR or an explicit amendment to ADR-0003.
@@ -97,10 +99,15 @@ Repository convention: generated output belongs in `build/`; authored source bel
 5. Run the smallest relevant test suite, then `validate:quick`; run `validate:full` before merge or
    an ordinary epic completion, and `validate:release` for M7, M8, M9, and GA promotion.
 6. Update docs, schemas, examples, backlog status, and version evidence if the contract changed.
-7. Dispatch the independent audit required below and resolve its actionable findings.
-8. Before starting the next story, normalize the epic branch to exactly one canonical commit for the
+7. Dispatch the independent audit required below, resolve its actionable findings, and rerun every
+   affected automated gate.
+8. For every epic and any player-visible patch, build the exact candidate with every required
+   production asset materialized, open the production preview in a real browser, complete the affected
+   journeys, inspect the supported visual states at full size, and record the live inspection evidence
+   required by ADR-0012 before requesting merge approval.
+9. Before starting the next story, normalize the epic branch to exactly one canonical commit for the
    completed story and update the pull-request story/commit map.
-9. Report what changed, what was verified, and any remaining risk or declined finding.
+10. Report what changed, what was verified, and any remaining risk or declined finding.
 
 Do not silently reinterpret acceptance criteria. If two documents conflict, precedence is:
 
@@ -152,6 +159,9 @@ self-certify it as complete.
   milestone-ready; `validate:release` passes for M7, M8, M9, and GA promotion.
 - The independent audit has no unresolved High finding and every Medium is fixed or explicitly
   declined.
+- Every epic and every player-visible patch closure has a passing live production-preview inspection
+  on the exact candidate commit with required local production assets present; stored screenshots and
+  automated assertions alone do not satisfy this requirement.
 - New content passes schema, reference, ownership, localization, and asset validation.
 - Required interactions work with touch and mouse simulation.
 - The 1024×768 reference viewport remains usable; the supported viewport matrix is not regressed.
@@ -170,6 +180,8 @@ self-certify it as complete.
 - Content validation is a release gate, not a best-effort warning.
 - Use deterministic clocks and seeded randomness in tests.
 - Do not approve visual changes solely from DOM assertions; capture and inspect reference screenshots.
+- Before epic closure, open the assembled production preview in a real browser and visually inspect
+  the changed journeys; do not infer product quality from a green screenshot comparison.
 
 ## Content authoring rules
 
@@ -195,8 +207,10 @@ Create or amend an ADR before implementing any change to:
 - persistence shape or migration policy
 - content pack boundaries
 - localization asset rules
+- production-media storage, synchronization, materialization, or runtime delivery
 - child-safety or privacy posture
 - the required quality-gate families, their enforcement ownership, or the independent-audit policy
+- the live epic product-inspection policy
 - the one-epic/one-milestone/one-minor version sequence
 
 Record rejected alternatives and consequences. Do not mark an ADR accepted retroactively after implementation.
