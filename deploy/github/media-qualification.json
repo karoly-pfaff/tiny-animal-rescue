@@ -1,0 +1,13 @@
+{
+  "environment": "media-qualification",
+  "requiredReviewer": "karoly-pfaff",
+  "preventSelfReview": false,
+  "endpointSecretName": "R2_ENDPOINT",
+  "bucketSecretName": "R2_BUCKET",
+  "accessKeyIdSecretName": "R2_ACCESS_KEY_ID",
+  "secretAccessKeySecretName": "R2_SECRET_ACCESS_KEY",
+  "workflowPath": ".github/workflows/qualify-media.yml",
+  "workflowEvent": "workflow_dispatch",
+  "workflowBranch": "main",
+  "artifactNamePrefix": "media-qualified-"
+}

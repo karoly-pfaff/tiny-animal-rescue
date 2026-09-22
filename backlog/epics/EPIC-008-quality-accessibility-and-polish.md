@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M8
 - Target version: `0.9.0`
+- Inspection journeys: `full-regression`
 - Dependencies: EPIC-003 through EPIC-007
 - ADRs: all accepted ADRs
 

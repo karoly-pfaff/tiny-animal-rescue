@@ -45,6 +45,36 @@
       "mode": "tag",
       "mutation": "tag-observed",
       "valid": false
+    },
+    {
+      "name": "tag without explicit approval",
+      "mode": "tag",
+      "mutation": "tag-approval-absent",
+      "valid": false
+    },
+    {
+      "name": "tag reuses the merge approval comment",
+      "mode": "tag",
+      "mutation": "tag-reused-approval",
+      "valid": false
+    },
+    {
+      "name": "merge approval was edited after creation",
+      "mode": "tag",
+      "mutation": "tag-merge-approval-edited",
+      "valid": false
+    },
+    {
+      "name": "tag without live inspection evidence",
+      "mode": "tag",
+      "mutation": "tag-inspection-absent",
+      "valid": false
+    },
+    {
+      "name": "tag squash tree differs from inspected head",
+      "mode": "tag",
+      "mutation": "tag-tree",
+      "valid": false
     }
   ],
   "watermarks": [
@@ -145,12 +175,176 @@
     { "name": "merge method drift", "mutation": "merge-method", "valid": false },
     { "name": "ruleset bypass", "mutation": "bypass", "valid": false },
     { "name": "non-strict checks", "mutation": "stale-checks", "valid": false },
+    {
+      "name": "seven quality checks without authorization",
+      "mutation": "missing-authorization-check",
+      "valid": false
+    },
+    {
+      "name": "generic GitHub Actions can forge authorization",
+      "mutation": "generic-actions-authorization",
+      "valid": false
+    },
+    {
+      "name": "authorization workflow does not use the dedicated app",
+      "mutation": "untrusted-authorization-workflow",
+      "valid": false
+    },
+    {
+      "name": "authorization token requests an unnecessary write permission",
+      "mutation": "overprivileged-authorization-token",
+      "valid": false
+    },
+    {
+      "name": "authorization token cannot perform the provider merge",
+      "mutation": "underprivileged-authorization-token",
+      "valid": false
+    },
+    {
+      "name": "candidate code receives media credential",
+      "mutation": "candidate-code-receives-r2-secret",
+      "valid": false
+    },
+    {
+      "name": "required workflow tolerates a failed step",
+      "mutation": "continue-on-error",
+      "valid": false
+    },
+    {
+      "name": "secret job executes candidate command",
+      "mutation": "candidate-command-in-secret-job",
+      "valid": false
+    },
+    {
+      "name": "media build omits packaged-local resolver mode",
+      "mutation": "missing-materialized-assets-mode",
+      "valid": false
+    },
+    {
+      "name": "candidate validator replaces trusted media validation",
+      "mutation": "candidate-noop-asset-validator",
+      "valid": false
+    },
     { "name": "missing required job", "mutation": "missing-job", "valid": false },
     { "name": "skippable path filter", "mutation": "path-filter", "valid": false },
     { "name": "missing scheduled security", "mutation": "missing-schedule", "valid": false },
     {
       "name": "history without artifact dependency",
       "mutation": "missing-history-need",
+      "valid": false
+    },
+    {
+      "name": "merge workflow without explicit approval input",
+      "mutation": "missing-approval-input",
+      "valid": false
+    },
+    {
+      "name": "release tag ruleset allows the wrong bypass actor",
+      "mutation": "tag-ruleset-bypass",
+      "valid": false
+    },
+    {
+      "name": "release deploy key can bypass tag immutability",
+      "mutation": "tag-immutability-bypass",
+      "valid": false
+    },
+    {
+      "name": "release tag update is not blocked",
+      "mutation": "tag-immutability-missing-update",
+      "valid": false
+    },
+    {
+      "name": "release tag update allows fetch and merge",
+      "mutation": "tag-immutability-allows-update",
+      "valid": false
+    },
+    {
+      "name": "tag workflow without explicit approval input",
+      "mutation": "missing-tag-approval-input",
+      "valid": false
+    },
+    {
+      "name": "release publisher uses another environment",
+      "mutation": "release-publisher-environment",
+      "valid": false
+    },
+    {
+      "name": "release deploy key is exposed before validation",
+      "mutation": "release-key-before-validation",
+      "valid": false
+    },
+    {
+      "name": "inspection omits supported viewports",
+      "mutation": "incomplete-inspection-viewports",
+      "valid": false
+    }
+  ],
+  "hostedReleasePublisher": [
+    { "name": "dedicated hosted release identity", "mutation": "none", "valid": true },
+    { "name": "second write deploy key", "mutation": "extra-key", "valid": false },
+    { "name": "missing environment secret", "mutation": "missing-secret", "valid": false },
+    { "name": "wrong environment reviewer", "mutation": "wrong-reviewer", "valid": false }
+  ],
+  "deployKeyPagination": [
+    { "name": "sole writer after pagination", "mutation": "none", "valid": true },
+    {
+      "name": "second-page unexpected writer",
+      "mutation": "hidden-write-key",
+      "valid": false
+    }
+  ],
+  "mainCheckSuites": [
+    { "name": "exact squash checks complete", "mutation": "none", "valid": true },
+    { "name": "exact squash check failing", "mutation": "check", "valid": false },
+    {
+      "name": "older failure superseded by exact successful suite",
+      "mutation": "new-suite",
+      "valid": true
+    },
+    {
+      "name": "duplicate retry inside exact suite",
+      "mutation": "same-suite-retry",
+      "valid": false
+    },
+    {
+      "name": "newer same-name checks from another workflow",
+      "mutation": "forged-workflow",
+      "valid": false
+    },
+    {
+      "name": "newer canonical workflow run failed",
+      "mutation": "newer-failed-run",
+      "valid": false
+    },
+    {
+      "name": "newer canonical workflow run pending",
+      "mutation": "newer-pending-run",
+      "valid": false
+    }
+  ],
+  "hostedAuthorizationPublisher": [
+    { "name": "dedicated hosted authorization identity", "mutation": "none", "valid": true },
+    {
+      "name": "missing authorization private key",
+      "mutation": "missing-private-key",
+      "valid": false
+    },
+    {
+      "name": "authorization accepts unprotected branches",
+      "mutation": "unprotected-branches",
+      "valid": false
+    }
+  ],
+  "hostedMediaQualification": [
+    { "name": "protected media qualification", "mutation": "none", "valid": true },
+    { "name": "missing R2 secret", "mutation": "missing-secret", "valid": false },
+    { "name": "wrong media reviewer", "mutation": "wrong-reviewer", "valid": false }
+  ],
+  "hostedSecretIsolation": [
+    { "name": "protected secrets exist only in environments", "mutation": "none", "valid": true },
+    {
+      "name": "protected secret is duplicated at repository level",
+      "mutation": "duplicate-protected",
       "valid": false
     }
   ],
@@ -164,7 +358,7 @@
     {
       "name": "second epic branch pull request",
       "kind": "canonical-pr",
-      "refs": ["epic/042-fixture", "epic/042-replacement"],
+      "refs": ["epic/042-fixture", "epic/042-fixture"],
       "valid": false
     },
     {
@@ -249,8 +443,132 @@
       "valid": false
     },
     {
+      "name": "merge approval is absent",
+      "kind": "pre-merge",
+      "mutation": "approval-absent",
+      "valid": false
+    },
+    {
+      "name": "merge approval is stale",
+      "kind": "pre-merge",
+      "mutation": "approval-stale",
+      "valid": false
+    },
+    {
+      "name": "merge approval has wrong user",
+      "kind": "pre-merge",
+      "mutation": "approval-wrong-user",
+      "valid": false
+    },
+    {
+      "name": "merge approval uses another comment identity",
+      "kind": "pre-merge",
+      "mutation": "approval-wrong-comment",
+      "valid": false
+    },
+    {
+      "name": "merge approval has wrong head",
+      "kind": "pre-merge",
+      "mutation": "approval-wrong-head",
+      "valid": false
+    },
+    {
+      "name": "merge approval was edited after creation",
+      "kind": "pre-merge",
+      "mutation": "approval-edited",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence is absent",
+      "kind": "pre-merge",
+      "mutation": "inspection-absent",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence belongs to another pull request",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-pr",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence uses another comment identity",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-comment",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence records a failed result",
+      "kind": "pre-merge",
+      "mutation": "inspection-failed",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence targets another head",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-head",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence has another artifact digest",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-digest",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence omits a supported viewport",
+      "kind": "pre-merge",
+      "mutation": "inspection-missing-viewport",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence omits a declared journey",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-journey",
+      "valid": false
+    },
+    {
+      "name": "inspection evidence uses a non-provider URL",
+      "kind": "pre-merge",
+      "mutation": "inspection-non-provider-url",
+      "valid": false
+    },
+    {
+      "name": "inspection artifact is expired",
+      "kind": "pre-merge",
+      "mutation": "inspection-expired-artifact",
+      "valid": false
+    },
+    {
+      "name": "inspection artifact belongs to another head",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-artifact-head",
+      "valid": false
+    },
+    {
+      "name": "inspection artifact name is not digest bound",
+      "kind": "pre-merge",
+      "mutation": "inspection-wrong-artifact-name",
+      "valid": false
+    },
+    {
+      "name": "inspection artifact comes from an untrusted workflow",
+      "kind": "pre-merge",
+      "mutation": "inspection-untrusted-workflow",
+      "valid": false
+    },
+    {
       "name": "check runs request all paginated attempts",
       "kind": "check-runs",
+      "valid": true
+    },
+    {
+      "name": "quality checks bind to canonical workflow run",
+      "kind": "trusted-checks",
+      "valid": true
+    },
+    {
+      "name": "tag target resolves before policy parent",
+      "kind": "tag-revisions",
       "valid": true
     },
     {

@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M5
 - Target version: `0.6.0`
+- Inspection journeys: `shelter,persistence,reload`
 - Dependencies: EPIC-002, EPIC-004
 - ADRs: ADR-0004, ADR-0006, ADR-0008
 

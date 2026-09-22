@@ -1,0 +1,16 @@
+{
+  "appIdEnvironment": "AUTHORIZATION_APP_ID",
+  "environment": "merge-authorization",
+  "appIdSecretName": "MERGE_AUTHORIZATION_APP_ID",
+  "privateKeySecretName": "MERGE_AUTHORIZATION_APP_PRIVATE_KEY",
+  "tokenPermissions": {
+    "actions": "read",
+    "checks": "read",
+    "contents": "write",
+    "issues": "read",
+    "pullRequests": "read",
+    "statuses": "write"
+  },
+  "requiredReviewer": "karoly-pfaff",
+  "preventSelfReview": false
+}

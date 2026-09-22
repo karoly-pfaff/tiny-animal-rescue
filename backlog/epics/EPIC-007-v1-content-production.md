@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M7
 - Target version: `0.8.0`
+- Inspection journeys: `all-missions,all-residents`
 - Dependencies: EPIC-003, EPIC-004, EPIC-005, EPIC-006
 - ADRs: ADR-0002 through ADR-0005, ADR-0008
 

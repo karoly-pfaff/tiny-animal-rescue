@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M9
 - Target version: `0.10.0`
+- Inspection journeys: `release-smoke`
 - Dependencies: EPIC-000 through EPIC-008
 - ADRs: all accepted ADRs
 

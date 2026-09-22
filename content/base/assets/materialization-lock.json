@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "packId": "base",
+  "packVersion": "0.2.1",
+  "source": "r2",
+  "objects": [
+    {
+      "objectKey": "images/map/garden-map.png",
+      "digest": "sha256:c0dbbcc42f888aeb4ebfe5ff369f8055d2a95b06b970326e7eb04a7169bb4f45",
+      "bytes": 2693369,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1448,
+      "height": 1086
+    },
+    {
+      "objectKey": "images/missions/garden-kitten-tree/background.png",
+      "digest": "sha256:580ab5529b4b812a607f729a0f77220f13bfec10a8e56f6e1c870b08352704ec",
+      "bytes": 2891889,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1448,
+      "height": 1086
+    },
+    {
+      "objectKey": "images/missions/garden-kitten-tree/ladder.png",
+      "digest": "sha256:b00da393ff655843d28105c8fcb45d35e23e177b1a9b45a09249f63d0dc0d118",
+      "bytes": 771678,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "objectKey": "images/residents/mimi/canonical.png",
+      "digest": "sha256:a4e572d3eff471958c506af01a4d792d2ceb465b6433725701b03ddbdbda3965",
+      "bytes": 1637741,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "objectKey": "images/residents/mimi/celebration.png",
+      "digest": "sha256:986f9ebf10ff80a9ac0176289217d2dadad23fc3cc94ed325bc389cc02dc230a",
+      "bytes": 1433801,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "objectKey": "images/residents/mimi/mission.png",
+      "digest": "sha256:489b1ab5c92fbeb1f42972096e83c217c94b770c5b787f9aca82e0fdfe25a2b6",
+      "bytes": 1603509,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "objectKey": "images/residents/mimi/shelter-idle.png",
+      "digest": "sha256:44436b4e770ef35a0e112b23b91647561a9fcf32352534ec45d66274fcc0aff8",
+      "bytes": 1516219,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "objectKey": "images/shelter/indoor-room.png",
+      "digest": "sha256:8de0e9e270dd9944ced5b0d5245500cb65d54aff590664678633a4fbcfc9464f",
+      "bytes": 2622799,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1448,
+      "height": 1086
+    },
+    {
+      "objectKey": "images/start/welcome-garden.png",
+      "digest": "sha256:38219097f2ab473e5c20194af7bc3656120074c2fb0bd2c240290cbba42ab8b7",
+      "bytes": 2347576,
+      "mediaType": "image/png",
+      "ownership": "base",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "qaStatus": "approved",
+      "width": 1448,
+      "height": 1086
+    }
+  ]
+}

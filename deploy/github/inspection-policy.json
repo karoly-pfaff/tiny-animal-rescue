@@ -1,0 +1,9 @@
+{
+  "requiredLocales": ["hu", "en"],
+  "requiredInputs": ["mouse", "touch"],
+  "requiredViewports": ["1024x768", "1280x800", "1366x1024", "768x1024"],
+  "artifactNamePrefix": "media-qualified-",
+  "artifactWorkflowPath": ".github/workflows/qualify-media.yml",
+  "artifactWorkflowEvent": "workflow_dispatch",
+  "artifactWorkflowBranch": "main"
+}

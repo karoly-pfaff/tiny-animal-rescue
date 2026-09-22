@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M2
 - Target version: `0.3.0`
+- Inspection journeys: `start,map,content-loading`
 - Dependencies: EPIC-001
 - ADRs: ADR-0002, ADR-0007, ADR-0008
 

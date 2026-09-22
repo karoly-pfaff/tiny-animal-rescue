@@ -128,22 +128,55 @@ Positions use normalized coordinates relative to a 1024×768 design surface. The
 ## Asset references
 
 Asset references are pack-relative logical object keys governed by
-[ADR-0010](adr/ADR-0010-external-production-media.md). Production media binaries live outside Git;
-pack inventories, prompt provenance, QA, ownership, and delivery metadata remain versioned. The
-resolver combines logical keys with the trusted deployment base and rejects:
+[ADR-0011](adr/ADR-0011-local-content-asset-materialization.md). Production media binaries live
+outside Git and are distributed from R2; pack inventories, prompt provenance, QA, ownership, and
+delivery metadata remain versioned. A repository-owned sync step verifies and materializes them into
+the ignored local pack tree before build. The runtime resolver maps logical keys to packaged local
+URLs and rejects:
 
 - absolute URLs
 - parent-directory traversal
 - undeclared cross-pack paths
-- missing delivered objects or unverified pending release assets
+- missing materialized objects, digest mismatches, or unverified pending release assets
 - wrong media types
 - locale audio stored in a shared directory
+
+Run `npm run assets:sync` from a clean checkout after setting the trusted `R2_ENDPOINT`, `R2_BUCKET`,
+`R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` environment variables. The command reads only tracked
+materialization locks, downloads each exact object, and writes verified media plus the secret-free
+receipt under the ignored candidate tree. `npm run test:assets:materialized` then checks lock,
+inventory, byte, digest, media-type, dimension/transparency, ownership, provenance, license, and QA
+parity before a media-complete build. Neither the downloaded binaries nor the receipt may be added to
+Git.
 
 Required image metadata includes intended role, dimensions, and whether transparency is expected. Required audio metadata includes role, locale where applicable, and duration bounds where narration timing matters.
 
 Ignored local working media may satisfy dimension and visual QA during development. A code-native
-fallback may cover an `r2-pending` decorative asset, but it does not make that asset release-ready.
+fallback may cover an `r2-pending` decorative asset, but it does not make that asset epic- or
+release-ready when the backlog item claims the corresponding production media.
 Visual-regression baselines and presentation-only references are evidence, not runtime assets.
+
+A media-complete candidate also provides one tracked
+`content/<pack-id>/assets/materialization-lock.json` per affected pack. Schema version 1 records the
+pack ID/version, source `r2`, and a non-empty object list. Each object records a safe pack-relative
+object key, `sha256:<hex>` digest, exact byte count, media type, pack ownership, approved QA/license/
+provenance states, and either positive image dimensions or positive audio duration in milliseconds.
+The trusted materializer rejects missing/duplicate/traversing keys, metadata drift, redirecting or
+non-HTTPS origins, response media-type drift, and any byte/digest mismatch before atomic placement.
+The materializer detects the binary media type, measures image dimensions or audio duration from the
+downloaded bytes, and requires those measurements to equal the lock. The resulting ignored receipt
+binds the candidate head, complete tracked asset-inventory digest, source identity, sync time,
+pack/version, complete lock metadata, and measured properties of every materialized object without
+including a credential or signed URL. Qualification reconstructs the object set from the tracked
+locks, then the trusted finalizer re-detects and remeasures each original handoff object. It copies
+those exact bytes into the production artifact at
+`build/app/content/<pack-id>/assets/<object-key>`, verifies every packaged copy against the receipt,
+scans both original and packaged binary metadata for forbidden watermark/attribution markers, and
+requires the bundle to reference the local pack prefix and every locked object key. Remote production
+media URLs are forbidden. Root product and base-pack versions must match the trusted backlog target;
+only then is the application artifact digest calculated. A self-consistent replacement file and
+replacement receipt, a candidate-supplied substitute in the product, an unused injected object,
+remote runtime media, version drift, or forged dimensions/duration therefore fail.
 
 ## Localization keys
 

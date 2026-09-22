@@ -1,5 +1,4 @@
 import {
-  type CSSProperties,
   type Dispatch,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -15,12 +14,14 @@ import {
   isInsideTarget,
   type NormalizedPoint,
   type NormalizedTarget,
-  toPercent,
 } from './drag-geometry';
 import { capturePointer, isPrimaryActivationPointer, releasePointer } from './pointer-capture';
+import { createHintStyle, createItemStyle, createTargetStyle } from './drag-to-target-styles';
+import { LadderArt } from './ladder-art';
 
 type DragToTargetProps = Readonly<{
   accessibleLabel: string;
+  assetUrl?: string | null;
   completionAnnouncement: string;
   hintDelayMs?: number;
   onComplete: () => void;
@@ -67,7 +68,13 @@ export function DragToTarget(props: DragToTargetProps) {
   const hintStyle = createHintStyle(props.start, props.target.center);
 
   return (
-    <div className="drag-interaction" data-guidance={showHint} data-phase={phase} ref={interaction}>
+    <div
+      className="drag-interaction"
+      data-guidance={showHint}
+      data-phase={phase}
+      data-production-art={typeof props.assetUrl === 'string'}
+      ref={interaction}
+    >
       <span className="ladder-target" aria-hidden="true" style={targetStyle} />
       {showHint && phase === idlePhase ? (
         <span className="drag-ghost-hand" aria-hidden="true" style={hintStyle} />
@@ -100,9 +107,7 @@ export function DragToTarget(props: DragToTargetProps) {
         style={itemStyle}
         type="button"
       >
-        <span className="ladder-rail ladder-rail-left" aria-hidden="true" />
-        <span className="ladder-rail ladder-rail-right" aria-hidden="true" />
-        <span className="ladder-rungs" aria-hidden="true" />
+        <LadderArt assetUrl={props.assetUrl} />
       </button>
       <span className="visually-hidden" aria-live="polite">
         {phase === placedPhase ? props.completionAnnouncement : null}
@@ -246,26 +251,4 @@ function returnToStart(context: DragContext): void {
 function moveTo(position: NormalizedPoint, context: DragContext): void {
   context.latestPosition.current = position;
   context.setPosition(position);
-}
-
-function createItemStyle(position: NormalizedPoint): CSSProperties {
-  return { left: toPercent(position.x), top: toPercent(position.y) };
-}
-
-function createTargetStyle(target: NormalizedTarget): CSSProperties {
-  return {
-    height: toPercent(target.height),
-    left: toPercent(target.center.x),
-    top: toPercent(target.center.y),
-    width: toPercent(target.width),
-  };
-}
-
-function createHintStyle(start: NormalizedPoint, end: NormalizedPoint): CSSProperties {
-  return {
-    '--hint-end-x': toPercent(end.x),
-    '--hint-end-y': toPercent(end.y),
-    '--hint-start-x': toPercent(start.x),
-    '--hint-start-y': toPercent(start.y),
-  } as CSSProperties;
 }

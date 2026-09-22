@@ -1,12 +1,36 @@
-import { readFile } from 'node:fs/promises';
+import { loadRepositoryPolicyFiles } from './lib/repository-policy-files.mjs';
 import { validateRepositoryPolicy } from './lib/repository-policy.mjs';
 
-const [settings, ruleset, workflow] = await Promise.all([
-  readFile('deploy/github/repository-settings.json', 'utf8').then(JSON.parse),
-  readFile('deploy/github/main-ruleset.json', 'utf8').then(JSON.parse),
-  readFile('.github/workflows/ci.yml', 'utf8'),
-]);
-const findings = validateRepositoryPolicy({ settings, ruleset, workflow });
+const {
+  settings,
+  ruleset,
+  tagRuleset,
+  tagImmutabilityRuleset,
+  workflow,
+  mergeWorkflow,
+  publishWorkflow,
+  qualifyMediaWorkflow,
+  approvalPolicy,
+  inspectionPolicy,
+  authorizationPublisher,
+  releasePublisher,
+  mediaQualification,
+} = await loadRepositoryPolicyFiles();
+const findings = validateRepositoryPolicy({
+  settings,
+  ruleset,
+  workflow,
+  mergeWorkflow,
+  publishWorkflow,
+  qualifyMediaWorkflow,
+  tagRuleset,
+  tagImmutabilityRuleset,
+  approvalPolicy,
+  inspectionPolicy,
+  authorizationPublisher,
+  releasePublisher,
+  mediaQualification,
+});
 if (findings.length > 0) {
   console.error(findings.join('\n'));
   process.exit(1);

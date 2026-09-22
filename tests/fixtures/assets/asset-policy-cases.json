@@ -17,6 +17,81 @@
     "valid": true
   },
   {
+    "name": "valid digest-locked transparent production asset",
+    "record": {
+      "id": "mimi-canonical",
+      "objectKey": "images/residents/mimi/canonical.png",
+      "width": 1254,
+      "height": 1254,
+      "transparent": true,
+      "mediaType": "image/png",
+      "bytes": 42,
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "classification": "production-safe",
+      "delivery": "r2-locked",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "ownership": "base",
+      "qaStatus": "approved"
+    },
+    "promptText": "Asset ID: `mimi-canonical`\nR2 object key: `images/residents/mimi/canonical.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": {
+      "width": 1254,
+      "height": 1254,
+      "transparent": true,
+      "bytes": 42,
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "valid": true
+  },
+  {
+    "name": "rejects a required first-rescue asset that remains R2-pending",
+    "record": {
+      "id": "start-background",
+      "objectKey": "images/start/welcome-garden.png",
+      "role": "start-background",
+      "width": 1448,
+      "height": 1086,
+      "classification": "production-safe",
+      "delivery": "r2-pending",
+      "licenseStatus": "approved",
+      "ownership": "base",
+      "qaStatus": "approved"
+    },
+    "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": { "width": 1448, "height": 1086 },
+    "requireLocked": true,
+    "valid": false
+  },
+  {
+    "name": "rejects a self-consistent-looking replacement with the wrong digest",
+    "record": {
+      "id": "mimi-canonical",
+      "objectKey": "images/residents/mimi/canonical.png",
+      "width": 1254,
+      "height": 1254,
+      "transparent": true,
+      "mediaType": "image/png",
+      "bytes": 42,
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "classification": "production-safe",
+      "delivery": "r2-locked",
+      "licenseStatus": "approved",
+      "provenanceStatus": "approved",
+      "ownership": "base",
+      "qaStatus": "approved"
+    },
+    "promptText": "Asset ID: `mimi-canonical`\nR2 object key: `images/residents/mimi/canonical.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": {
+      "width": 1254,
+      "height": 1254,
+      "transparent": true,
+      "bytes": 42,
+      "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "valid": false
+  },
+  {
     "name": "rejects path traversal and missing provenance",
     "record": {
       "id": "bad_asset",

@@ -10,28 +10,31 @@ afterEach(() => {
 });
 
 describe('first rescue narration resolver', () => {
-  it('returns no production URL while the external asset base is unavailable', () => {
-    vi.stubEnv('VITE_ASSET_BASE_URL', undefined);
+  it('returns no production URL while materialized assets are unavailable', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', undefined);
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.success', 'hu'),
     ).toBeNull();
   });
 
-  it('resolves locale-specific semantic cues under the trusted R2 base', () => {
-    vi.stubEnv('VITE_ASSET_BASE_URL', 'https://assets.example/');
+  it('keeps the reviewed browser-voice fallback while recorded voice is pending', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'true');
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.help-mimi-down', 'en'),
-    ).toBe(
-      'https://assets.example/audio/voice/en/missions/garden-kitten-tree/step-help-mimi-down.ogg',
-    );
+    ).toBeNull();
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.place-ladder', 'hu'),
-    ).toBe(
-      'https://assets.example/audio/voice/hu/missions/garden-kitten-tree/step-place-ladder.ogg',
-    );
+    ).toBeNull();
   });
 
-  it('reads the exact localized fallback from the authoritative voice manifest', () => {
+  it('fails closed instead of treating a configured value as a remote asset base', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'https://assets.example');
+    expect(() =>
+      resolveFirstRescueNarration('voice.mission.garden-kitten-tree.success', 'hu'),
+    ).toThrow(/must be exactly true/u);
+  });
+
+  it('reads the exact localized fallback from the runtime copy contract', () => {
     expect(
       getFirstRescueNarrationText('voice.mission.garden-kitten-tree.step.place-ladder', 'en'),
     ).toBe('Drag the ladder to the tree!');

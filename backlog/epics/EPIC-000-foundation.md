@@ -3,6 +3,7 @@
 - Status: Done
 - Milestone: M0
 - Target version: `0.1.0`
+- Inspection journeys: `foundation-shell`
 - Dependencies: none
 - ADRs: ADR-0001, ADR-0009
 

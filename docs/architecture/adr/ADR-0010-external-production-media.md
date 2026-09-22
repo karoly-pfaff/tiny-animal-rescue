@@ -1,7 +1,11 @@
 # ADR-0010: External delivery for production media
 
-- Status: Accepted
+- Status: Superseded by ADR-0011
 - Date: 2026-09-21
+
+ADR-0011 retains external R2 storage and the no-binaries-in-Git rule, but replaces direct runtime
+remote resolution with verified materialization into the ignored local content asset tree before the
+application is built or inspected.
 
 ## Context
 

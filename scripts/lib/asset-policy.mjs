@@ -1,10 +1,12 @@
 const acceptedValues = Object.freeze({
   classification: 'production-safe',
-  delivery: 'r2-pending',
   licenseStatus: 'approved',
   ownership: 'base',
   qaStatus: 'approved',
 });
+
+const digestPattern = /^sha256:[0-9a-f]{64}$/u;
+const acceptedDelivery = new Set(['r2-locked', 'r2-pending']);
 
 function isSafeObjectKey(value) {
   return (
@@ -30,9 +32,30 @@ function validateIdentity(record) {
 }
 
 function validateMetadata(record) {
-  return Object.entries(acceptedValues)
+  const findings = Object.entries(acceptedValues)
     .filter(([field, expected]) => record[field] !== expected)
     .map(([field, expected]) => `${field} must be ${expected}.`);
+  if (!acceptedDelivery.has(record.delivery)) {
+    findings.push('delivery must be r2-pending or r2-locked.');
+  }
+  if (record.delivery === 'r2-locked') {
+    if (record.provenanceStatus !== 'approved') {
+      findings.push('provenanceStatus must be approved for a locked asset.');
+    }
+    if (record.mediaType !== 'image/png') {
+      findings.push('Locked visual assets must declare image/png.');
+    }
+    if (!Number.isInteger(record.bytes) || record.bytes <= 0) {
+      findings.push('Locked visual assets must declare a positive byte count.');
+    }
+    if (!digestPattern.test(record.digest ?? '')) {
+      findings.push('Locked visual assets must declare a sha256 digest.');
+    }
+    if (typeof record.transparent !== 'boolean') {
+      findings.push('Locked visual assets must declare transparency.');
+    }
+  }
+  return findings;
 }
 
 function validatePrompt(record, promptText) {
@@ -49,21 +72,32 @@ function validatePrompt(record, promptText) {
   return findings;
 }
 
-function validateDimensions(record, dimensions) {
-  if (
-    dimensions !== null &&
-    (dimensions.width !== record.width || dimensions.height !== record.height)
-  ) {
-    return ['Local working asset dimensions do not match the inventory.'];
+function validateObservedMedia(record, observed) {
+  if (observed === null) return [];
+  const findings = [];
+  if (observed.width !== record.width || observed.height !== record.height) {
+    findings.push('Local working asset dimensions do not match the inventory.');
   }
-  return [];
+  if (record.delivery === 'r2-locked') {
+    if (observed.bytes !== record.bytes || observed.digest !== record.digest) {
+      findings.push('Local working asset bytes or digest do not match the inventory.');
+    }
+    if (observed.transparent !== record.transparent) {
+      findings.push('Local working asset transparency does not match the inventory.');
+    }
+  }
+  return findings;
 }
 
-export function validateAssetRecord(record, promptText, dimensions) {
+export function validateAssetRecord(record, promptText, observed) {
   return [
     ...validateIdentity(record),
     ...validateMetadata(record),
     ...validatePrompt(record, promptText),
-    ...validateDimensions(record, dimensions),
+    ...validateObservedMedia(record, observed),
   ];
+}
+
+export function validateRequiredAssetDelivery(record) {
+  return record.delivery === 'r2-locked' ? [] : ['Required first-rescue assets must be r2-locked.'];
 }
