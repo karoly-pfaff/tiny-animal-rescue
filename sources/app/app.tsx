@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { createBrowserNarrationService, type NarrationService } from '../audio/narration-service';
+import { bundledContentRegistry } from '../content/bundled-content-registry';
+import type { ContentRegistry } from '../content/content-registry';
 import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
@@ -96,6 +98,7 @@ function navigate(nextPath: string): void {
 }
 
 type AppProps = Readonly<{
+  contentRegistry?: ContentRegistry;
   firstRescueProgressStore?: FirstRescueProgressStore;
   localeRepository?: LocaleBootstrapRepository;
   narrationService?: NarrationService;
@@ -132,6 +135,7 @@ function ProgressBoundary({
 export function App(props: AppProps) {
   return (
     <AppWithDependencies
+      contentRegistry={props.contentRegistry ?? bundledContentRegistry}
       firstRescueProgressStore={props.firstRescueProgressStore ?? browserProgressStore}
       localeRepository={props.localeRepository ?? browserLocaleRepository}
       narrationService={props.narrationService ?? browserNarrationService}
@@ -140,10 +144,12 @@ export function App(props: AppProps) {
 }
 
 function AppWithDependencies({
+  contentRegistry,
   firstRescueProgressStore,
   localeRepository,
   narrationService,
 }: Required<AppProps>) {
+  assertContentAvailable(contentRegistry);
   const path = useHashPath();
   const { locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
@@ -198,4 +204,10 @@ function AppWithDependencies({
       <SaveRecoveryNotice locale={activeLocale} status={progressBootstrap.status} />
     </>
   );
+}
+
+function assertContentAvailable(registry: ContentRegistry): void {
+  if (registry.packOrder.length === 0) {
+    throw new Error('The application requires at least one validated content pack.');
+  }
 }

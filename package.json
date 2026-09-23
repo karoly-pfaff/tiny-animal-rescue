@@ -41,7 +41,7 @@
     "test": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:content": "node scripts/test-content-policy-fixtures.mjs && node scripts/validate-content.mjs",
+    "test:content": "node scripts/test-content-policy-fixtures.mjs && node scripts/test-content-discovery-fixtures.mjs && node scripts/validate-content.mjs",
     "test:content:release": "node scripts/validate-release-content.mjs",
     "test:assets": "node scripts/test-asset-policy-fixtures.mjs && node scripts/validate-assets.mjs",
     "test:assets:materialized": "node scripts/test-asset-policy-fixtures.mjs && node scripts/validate-assets.mjs --materialized",

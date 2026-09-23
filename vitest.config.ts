@@ -26,6 +26,18 @@ export default defineConfig({
           lines: 100,
           statements: 100,
         },
+        'sources/content/content-registry.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/content/pack-dependency-order.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
         'sources/persistence/save-game-schema.ts': {
           branches: 100,
           functions: 100,

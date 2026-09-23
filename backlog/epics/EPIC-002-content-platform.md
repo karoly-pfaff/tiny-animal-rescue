@@ -24,13 +24,13 @@ parent audio settings remain owned by EPIC-006.
 
 ### E002-S02 — Discover and assemble packs
 
-- [ ] Build tooling discovers declared pack manifests deterministically.
-- [ ] Content-directory declarations reject empty, absolute POSIX/Windows, URL, traversal, dot-segment,
+- [x] Build tooling discovers declared pack manifests deterministically.
+- [x] Content-directory declarations reject empty, absolute POSIX/Windows, URL, traversal, dot-segment,
       backslash, and malformed paths before filesystem discovery.
-- [ ] Dependency order is resolved and cycles fail clearly.
-- [ ] Duplicate global IDs fail validation.
-- [ ] Base pack cannot depend on an expansion pack.
-- [ ] Runtime consumes an immutable normalized registry.
+- [x] Dependency order is resolved and cycles fail clearly.
+- [x] Duplicate global IDs fail validation.
+- [x] Base pack cannot depend on an expansion pack.
+- [x] Runtime consumes an immutable normalized registry.
 
 ### E002-S03 — Add semantic validation
 

@@ -1,13 +1,15 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import { discoverContentPacks } from './lib/content-pack-discovery.mjs';
 import { validateBasePackRelease } from './lib/content-release-policy.mjs';
 import { listRepositoryFiles, readJson, repositoryPath } from './lib/repository-files.mjs';
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 
+const packSchemaName = 'schemas/pack.schema.json';
 const contracts = [
-  ['content/examples/pack.json', 'schemas/pack.schema.json'],
+  ['content/examples/pack.example.json', packSchemaName],
   ['content/examples/mimi-kitten.json', 'schemas/animal.schema.json'],
   ['content/examples/garden-kitten-tree.json', 'schemas/mission.schema.json'],
   ['content/examples/garden.json', 'schemas/location.schema.json'],
@@ -20,16 +22,33 @@ const contracts = [
 const findings = [];
 const validators = new Map();
 
+for (const schemaName of new Set(contracts.map(([, schemaName]) => schemaName))) {
+  validators.set(schemaName, ajv.compile(await readJson(schemaName)));
+}
+
 for (const [documentName, schemaName] of contracts) {
-  let validate = validators.get(schemaName);
-  if (validate === undefined) {
-    validate = ajv.compile(await readJson(schemaName));
-    validators.set(schemaName, validate);
-  }
   const value = await readJson(documentName);
-  if (!validate(value)) {
-    findings.push(`${documentName}: ${ajv.errorsText(validate.errors, { separator: '; ' })}`);
+  validateDocument(documentName, schemaName, value);
+}
+
+const recordSchemas = {
+  animals: 'schemas/animal.schema.json',
+  locations: 'schemas/location.schema.json',
+  missions: 'schemas/mission.schema.json',
+  shelterAreas: 'schemas/shelter-area.schema.json',
+};
+
+try {
+  const discoveredPacks = await discoverContentPacks('content', {
+    validateManifest: (manifest, path) => validateDocumentOrThrow(path, packSchemaName, manifest),
+    validateRecord: (kind, record, path) =>
+      validateDocumentOrThrow(path, recordSchemas[kind], record),
+  });
+  if (discoveredPacks.length === 0) {
+    findings.push('Production content discovery found no pack manifests.');
   }
+} catch (error) {
+  findings.push(error instanceof Error ? error.message : String(error));
 }
 
 const basePack = await readJson('content/base/pack.json');
@@ -62,3 +81,25 @@ if (findings.length > 0) {
 console.log(
   `Validated ${contracts.length} schema document(s) and ${contentFiles.length} content file(s).`,
 );
+
+function validatorFor(schemaName) {
+  let validate = validators.get(schemaName);
+  if (validate === undefined) {
+    throw new Error(`Schema validator was not compiled before use: ${schemaName}`);
+  }
+  return validate;
+}
+
+function validateDocument(documentName, schemaName, value) {
+  const validate = validatorFor(schemaName);
+  if (!validate(value)) {
+    findings.push(`${documentName}: ${ajv.errorsText(validate.errors, { separator: '; ' })}`);
+  }
+}
+
+function validateDocumentOrThrow(documentName, schemaName, value) {
+  const validate = validatorFor(schemaName);
+  if (!validate(value)) {
+    throw new Error(`${documentName}: ${ajv.errorsText(validate.errors, { separator: '; ' })}`);
+  }
+}
