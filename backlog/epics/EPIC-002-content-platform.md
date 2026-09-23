@@ -34,11 +34,11 @@ parent audio settings remain owned by EPIC-006.
 
 ### E002-S03 — Add semantic validation
 
-- [ ] All cross-record references resolve.
-- [ ] mission/reward/category rules are enforced.
-- [ ] shelter capacity and resident uniqueness are enforced.
-- [ ] prerequisites are acyclic and Help resident dependencies are correct.
-- [ ] exact v1 catalog validation can be enabled for release mode.
+- [x] All cross-record references resolve.
+- [x] mission/reward/category rules are enforced.
+- [x] shelter capacity and resident uniqueness are enforced.
+- [x] prerequisites are acyclic and Help resident dependencies are correct.
+- [x] exact v1 catalog validation can be enabled for release mode.
 
 ### E002-S04 — Add asset ownership and metadata validation
 

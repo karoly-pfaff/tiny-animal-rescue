@@ -42,20 +42,38 @@ describe('localization boundary', () => {
     expect(result.status).toBe(0);
   });
 
-  it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink', 'aria-label', 'style-copy'])(
-    'rejects the %s negative fixture',
-    (fixtureName) => {
-      const fixture = resolve(
-        cwd(),
-        'tests',
-        'fixtures',
-        'localization',
-        `${fixtureName}.fixture.txt`,
-      );
-      const result = runValidator(fixture);
+  it('accepts explicitly typed content data and developer diagnostics', () => {
+    const fixture = resolve(
+      cwd(),
+      'tests',
+      'fixtures',
+      'localization',
+      'technical-content-data.fixture.txt',
+    );
+    const result = runValidator(fixture);
 
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain('Player-facing text must come from sources/i18n');
-    },
-  );
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
+  it.each([
+    'indirect-jsx',
+    'conditional-jsx',
+    'browser-sink',
+    'aria-label',
+    'style-copy',
+    'technical-content-leak',
+  ])('rejects the %s negative fixture', (fixtureName) => {
+    const fixture = resolve(
+      cwd(),
+      'tests',
+      'fixtures',
+      'localization',
+      `${fixtureName}.fixture.txt`,
+    );
+    const result = runValidator(fixture);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Player-facing text must come from sources/i18n');
+  });
 });

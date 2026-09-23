@@ -1,0 +1,11 @@
+type V1CatalogDefinition = Readonly<{ id: string; types: readonly string[] }>;
+
+const catalog = {
+  id: 'technical-record-id',
+  types: ['tap', 'drag'],
+} satisfies V1CatalogDefinition;
+
+const finding = diagnostic('Developer-only validation diagnostic.');
+
+void catalog;
+void finding;

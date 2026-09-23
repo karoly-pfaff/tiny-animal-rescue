@@ -32,6 +32,24 @@ export default defineConfig({
           lines: 100,
           statements: 100,
         },
+        'sources/content/content-semantic-validator.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/content/mission-graph-validator.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/content/v1-content-catalog-validator.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
         'sources/content/pack-dependency-order.ts': {
           branches: 100,
           functions: 100,

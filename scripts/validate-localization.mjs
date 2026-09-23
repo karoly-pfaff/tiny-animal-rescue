@@ -96,12 +96,30 @@ function isComparisonValue(node) {
 
 function isTechnicalCallArgument(node) {
   const parent = node.parent;
-  if (!ts.isCallExpression(parent) || !parent.arguments.includes(node)) {
-    return false;
+  if (
+    ts.isCallExpression(parent) &&
+    parent.arguments.includes(node) &&
+    ts.isPropertyAccessExpression(parent.expression) &&
+    technicalCalls.has(parent.expression.name.text)
+  ) {
+    return true;
   }
-  return ts.isPropertyAccessExpression(parent.expression)
-    ? technicalCalls.has(parent.expression.name.text)
-    : false;
+  return isWithinDiagnosticCall(node);
+}
+
+function isWithinDiagnosticCall(node) {
+  let parent = node.parent;
+  while (parent !== undefined && !ts.isFunctionLike(parent)) {
+    if (
+      ts.isCallExpression(parent) &&
+      ts.isIdentifier(parent.expression) &&
+      parent.expression.text === 'diagnostic'
+    ) {
+      return true;
+    }
+    parent = parent.parent;
+  }
+  return false;
 }
 
 function isGlobOption(node) {
@@ -132,32 +150,41 @@ function isDeveloperError(node) {
 }
 
 function isConstrainedTechnicalLiteral(node) {
-  const parent = node.parent;
-  return (
-    ts.isSatisfiesExpression(parent) &&
-    ts.isTypeReferenceNode(parent.type) &&
-    ts.isIdentifier(parent.type.typeName) &&
-    [
-      'DragPhase',
-      'BrowserCapability',
-      'FirstRescueAssetRole',
-      'FirstRescueMissionId',
-      'FirstRescueNarrationCue',
-      'FirstRescueProgressLoadStatus',
-      'FirstRescueResidentId',
-      'FirstRescueWorldFlag',
-      'IDBTransactionMode',
-      'LanguageTag',
-      'Locale',
-      'MissionPhase',
-      'NarrationCue',
-      'NarrationFilename',
-      'NarrationObjectKey',
-      'PersistenceKey',
-      'ProgressBootstrapStatus',
-      'SaveGameLoadStatus',
-    ].includes(parent.type.typeName.text)
-  );
+  let parent = node.parent;
+  while (parent !== undefined) {
+    if (
+      ts.isSatisfiesExpression(parent) &&
+      ts.isTypeReferenceNode(parent.type) &&
+      ts.isIdentifier(parent.type.typeName) &&
+      [
+        'DragPhase',
+        'BrowserCapability',
+        'FirstRescueAssetRole',
+        'FirstRescueMissionId',
+        'FirstRescueNarrationCue',
+        'FirstRescueProgressLoadStatus',
+        'FirstRescueResidentId',
+        'FirstRescueWorldFlag',
+        'IDBTransactionMode',
+        'LanguageTag',
+        'Locale',
+        'MissionPhase',
+        'NarrationCue',
+        'NarrationFilename',
+        'NarrationObjectKey',
+        'PersistenceKey',
+        'ProgressBootstrapStatus',
+        'SaveGameLoadStatus',
+        'V1CatalogDefinition',
+        'V1Locale',
+        'V1RecordLabel',
+      ].includes(parent.type.typeName.text)
+    ) {
+      return true;
+    }
+    parent = parent.parent;
+  }
+  return false;
 }
 
 function isBasicAllowedLiteral(node) {

@@ -1,0 +1,7 @@
+type V1CatalogDefinition = Readonly<{ id: string }>;
+
+const catalog = { id: 'technical-record-id' } satisfies V1CatalogDefinition;
+const playerFacingLeak = 'Tap the animal to continue!';
+
+void catalog;
+void playerFacingLeak;

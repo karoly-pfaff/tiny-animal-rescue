@@ -1,7 +1,9 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import { validateContentSemantics } from '../sources/content/content-semantic-validator.ts';
 import { discoverContentPacks } from './lib/content-pack-discovery.mjs';
 import { validateBasePackRelease } from './lib/content-release-policy.mjs';
+import { semanticPacksFromDiscovery } from './lib/content-semantic-input.mjs';
 import { listRepositoryFiles, readJson, repositoryPath } from './lib/repository-files.mjs';
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
@@ -47,6 +49,7 @@ try {
   if (discoveredPacks.length === 0) {
     findings.push('Production content discovery found no pack manifests.');
   }
+  findings.push(...validateContentSemantics(semanticPacksFromDiscovery(discoveredPacks)));
 } catch (error) {
   findings.push(error instanceof Error ? error.message : String(error));
 }
