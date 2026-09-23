@@ -18,6 +18,7 @@ const technicalProperties = new Set(['id', 'path', 'titleKey']);
 const technicalCalls = new Set([
   'addEventListener',
   'getElementById',
+  'glob',
   'querySelector',
   'querySelectorAll',
   'removeEventListener',
@@ -103,6 +104,24 @@ function isTechnicalCallArgument(node) {
     : false;
 }
 
+function isGlobOption(node) {
+  const property = node.parent;
+  if (
+    !ts.isPropertyAssignment(property) ||
+    property.initializer !== node ||
+    propertyName(property) !== 'import' ||
+    !ts.isObjectLiteralExpression(property.parent)
+  ) {
+    return false;
+  }
+  const call = property.parent.parent;
+  return (
+    ts.isCallExpression(call) &&
+    ts.isPropertyAccessExpression(call.expression) &&
+    call.expression.name.text === 'glob'
+  );
+}
+
 function isDeveloperError(node) {
   const parent = node.parent;
   return (
@@ -165,6 +184,7 @@ function isAllowedLiteral(node) {
     isStructuralAttribute(node) ||
     isElementAccessKey(node) ||
     isTechnicalPropertyValue(node) ||
+    isGlobOption(node) ||
     isComparisonValue(node) ||
     isTechnicalCallArgument(node) ||
     isDeveloperError(node) ||

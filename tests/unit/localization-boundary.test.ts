@@ -28,6 +28,20 @@ describe('localization boundary', () => {
     expect(result.status).toBe(0);
   });
 
+  it('accepts build-time content glob paths as technical literals', () => {
+    const fixture = resolve(
+      cwd(),
+      'tests',
+      'fixtures',
+      'localization',
+      'import-meta-glob.fixture.txt',
+    );
+    const result = runValidator(fixture);
+
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
   it.each(['indirect-jsx', 'conditional-jsx', 'browser-sink', 'aria-label', 'style-copy'])(
     'rejects the %s negative fixture',
     (fixtureName) => {

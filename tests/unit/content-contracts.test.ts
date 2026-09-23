@@ -8,7 +8,7 @@ import audioAssetExample from '../../content/examples/drag-snap.asset.json';
 import localizationExample from '../../content/examples/hu.json';
 import locationExample from '../../content/examples/garden.json';
 import missionExample from '../../content/examples/garden-kitten-tree.json';
-import packExample from '../../content/examples/pack.json';
+import packExample from '../../content/examples/pack.example.json';
 import shelterAreaExample from '../../content/examples/indoor-room.json';
 import animalSchema from '../../schemas/animal.schema.json';
 import assetSchema from '../../schemas/asset-metadata.schema.json';
