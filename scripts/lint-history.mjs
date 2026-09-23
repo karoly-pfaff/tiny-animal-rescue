@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { validateHistoryPolicy } from './lib/history-policy.mjs';
-import { commitsBetween, epicFromBranch, git } from './lib/history-repository.mjs';
+import { commitsBetween, git, workItemFromBranch } from './lib/history-repository.mjs';
 
 function argumentValue(name) {
   const index = process.argv.indexOf(name);
@@ -12,7 +12,7 @@ function branchInput(base) {
   return {
     mode: 'branch',
     branch,
-    epic: epicFromBranch(branch),
+    item: workItemFromBranch(branch),
     commits: commitsBetween(base),
     mergeCommitCount: Number(git(['rev-list', '--count', '--merges', `${base}..HEAD`])),
     requireComplete: process.argv.includes('--require-complete'),

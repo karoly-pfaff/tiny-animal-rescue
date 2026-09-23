@@ -79,14 +79,16 @@ Renders content-declared areas and unlocked residents. It uses resident behavior
 
 ## Data flow
 
-1. Build validation discovers pack manifests and content records.
-2. A generated registry references validated content and assets.
-3. The app loads settings and migrates the local save if necessary.
-4. The progression selector derives visible locations and missions.
-5. A selected mission is normalized into a runtime plan.
-6. Each completed step emits an event and updates resumable state.
-7. Mission completion commits rewards idempotently before celebration.
-8. Shelter selectors derive visible residents from unlocked IDs.
+1. Asset synchronization verifies versioned R2 objects and materializes them into each ignored local
+   pack asset tree.
+2. Build validation discovers pack manifests, content records, and materialized assets.
+3. A generated registry references validated content and packaged local assets.
+4. The app loads settings and migrates the local save if necessary.
+5. The progression selector derives visible locations and missions.
+6. A selected mission is normalized into a runtime plan.
+7. Each completed step emits an event and updates resumable state.
+8. Mission completion commits rewards idempotently before celebration.
+9. Shelter selectors derive visible residents from unlocked IDs.
 
 ## Boundary rules
 
@@ -94,6 +96,7 @@ Renders content-declared areas and unlocked residents. It uses resident behavior
 - Content records never import application code.
 - Interaction components do not know mission IDs.
 - Persistence does not know asset URLs.
+- The browser runtime resolves packaged local media and never downloads production assets from R2.
 - Audio code consumes semantic cues and resolved assets, not content paths.
 - A mission reward can only perform actions allowed by the reward union.
 - Failed optional asset loading degrades gracefully; missing required assets fail validation before release.

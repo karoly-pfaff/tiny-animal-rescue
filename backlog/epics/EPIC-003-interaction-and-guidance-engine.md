@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M3
 - Target version: `0.4.0`
+- Inspection journeys: `interaction-primitives,guidance`
 - Dependencies: EPIC-001, EPIC-002
 - ADRs: ADR-0001, ADR-0003, ADR-0007
 

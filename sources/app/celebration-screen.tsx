@@ -2,6 +2,10 @@ import { useEffect } from 'react';
 
 import { rescueSuccessNarrationCue, type NarrationService } from '../audio/narration-service';
 import { getFirstRescueNarrationText } from '../content/first-rescue-narration';
+import {
+  resolveGardenMissionBackground,
+  resolveMimiCelebration,
+} from '../content/first-rescue-assets';
 import { getStrings, type Locale } from '../i18n/localization';
 
 type CelebrationScreenProps = Readonly<{
@@ -19,6 +23,8 @@ export function CelebrationScreen({
 }: CelebrationScreenProps) {
   const strings = getStrings(locale);
   const narrationText = getFirstRescueNarrationText(rescueSuccessNarrationCue, locale);
+  const backgroundUrl = resolveGardenMissionBackground();
+  const mimiUrl = resolveMimiCelebration();
 
   useEffect(() => {
     narrationService.speak({
@@ -32,9 +38,19 @@ export function CelebrationScreen({
   return (
     <main className="game-shell" data-route="celebration">
       <section className="game-surface celebration-screen" aria-labelledby="celebration-title">
+        {backgroundUrl === null ? null : (
+          <img className="scene-background" src={backgroundUrl} alt="" aria-hidden="true" />
+        )}
         <div className="celebration-rays" aria-hidden="true" />
-        <div className="celebration-mimi" aria-hidden="true">
-          <span className="celebration-mimi-tail" />
+        <div
+          className={`celebration-mimi${mimiUrl === null ? '' : ' celebration-mimi-production'}`}
+          aria-hidden="true"
+        >
+          {mimiUrl === null ? (
+            <span className="celebration-mimi-tail" />
+          ) : (
+            <img src={mimiUrl} alt="" />
+          )}
         </div>
         <header className="celebration-title-plaque">
           <h1 id="celebration-title">{strings.celebrationTitle}</h1>

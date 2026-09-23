@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "generated": true,
+  "generatedFrom": "content/base/assets/voice-manifest.json",
+  "delivery": "browser-fallback",
+  "assets": [
+    {
+      "cue": "voice.mission.garden-kitten-tree.step.place-ladder",
+      "fallbackText": {
+        "hu": "Húzd a létrát a fához!",
+        "en": "Drag the ladder to the tree!"
+      }
+    },
+    {
+      "cue": "voice.mission.garden-kitten-tree.step.help-mimi-down",
+      "fallbackText": {
+        "hu": "Koppints Mimire!",
+        "en": "Tap Mimi!"
+      }
+    },
+    {
+      "cue": "voice.mission.garden-kitten-tree.success",
+      "fallbackText": {
+        "hu": "Mimi biztonságban van!",
+        "en": "Mimi is safe!"
+      }
+    }
+  ]
+}

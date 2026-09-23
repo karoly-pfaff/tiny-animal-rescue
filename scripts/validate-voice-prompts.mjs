@@ -6,6 +6,7 @@ import {
   validateVoiceInventoryPair,
   validateVoicePolicyDocuments,
 } from './lib/voice-prompt-policy.mjs';
+import { createFirstRescueRuntimeVoiceCopy } from './lib/voice-runtime-copy.mjs';
 
 const inventoryFiles = {
   en: 'prompts/voice/scripts/voice-lines.en.json',
@@ -39,6 +40,10 @@ findings.push(...validateVoiceInventoryPair(inventories, canonicalContract));
 
 const manifest = await readJson('content/base/assets/voice-manifest.json');
 findings.push(...validateRuntimeVoiceManifest(manifest, inventories));
+const runtimeCopy = await readJson('content/base/assets/first-rescue-voice-copy.json');
+if (JSON.stringify(runtimeCopy) !== JSON.stringify(createFirstRescueRuntimeVoiceCopy(manifest))) {
+  findings.push('Generated first-rescue runtime voice projection is stale.');
+}
 
 const example = await readJson('prompts/voice/manifest.example.json');
 for (const locale of ['hu', 'en']) {

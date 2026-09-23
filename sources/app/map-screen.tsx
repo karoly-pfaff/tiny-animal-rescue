@@ -1,4 +1,4 @@
-import { resolveGardenMapBackground } from '../content/first-rescue-assets';
+import { resolveGardenMapBackground, resolveMimiCanonical } from '../content/first-rescue-assets';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 
@@ -11,6 +11,7 @@ type MapScreenProps = Readonly<{
 export function MapScreen({ locale, onOpenGardenMission, onOpenShelter }: MapScreenProps) {
   const strings = getStrings(locale);
   const backgroundUrl = resolveGardenMapBackground();
+  const mimiUrl = resolveMimiCanonical();
 
   return (
     <main className="game-shell" data-route="map">
@@ -39,7 +40,11 @@ export function MapScreen({ locale, onOpenGardenMission, onOpenShelter }: MapScr
           <span className="garden-marker-icon" aria-hidden="true">
             <span className="tree-crown" />
             <span className="tree-trunk" />
-            <span className="kitten-portrait" />
+            {mimiUrl === null ? (
+              <span className="kitten-portrait" />
+            ) : (
+              <img className="kitten-portrait kitten-portrait-art" src={mimiUrl} alt="" />
+            )}
           </span>
           <span>{strings.garden}</span>
         </button>

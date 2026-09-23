@@ -14,6 +14,15 @@ const backlogScopes = readdirSync('backlog/epics')
     ];
   })
   .filter((scope) => scope !== undefined);
+const maintenanceScopes = readdirSync('backlog/maintenance')
+  .filter((name) => /^(?:DOC|PATCH)-\d{3}-.+\.md$/u.test(name))
+  .map(
+    (name) =>
+      /^# (?<scope>(?:DOC|PATCH)-\d{3}): /mu.exec(
+        readFileSync(`backlog/maintenance/${name}`, 'utf8'),
+      )?.groups?.scope,
+  )
+  .filter((scope) => scope !== undefined);
 
 export default {
   extends: ['@commitlint/config-conventional'],
@@ -27,7 +36,7 @@ export default {
   rules: {
     'header-max-length': [2, 'always', 72],
     'scope-case': [2, 'always', ['upper-case']],
-    'scope-enum': [2, 'always', ['SPEC-BASELINE', ...backlogScopes]],
+    'scope-enum': [2, 'always', ['SPEC-BASELINE', ...backlogScopes, ...maintenanceScopes]],
     'scope-empty': [2, 'never'],
     'subject-case': [0],
     'subject-empty': [2, 'never'],

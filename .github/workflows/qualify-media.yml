@@ -1,0 +1,159 @@
+name: qualify media-complete candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Canonical inspected work-item pull-request number
+        required: true
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: media-qualification
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/heads/main
+          path: policy
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: candidate
+          ref: refs/pull/${{ inputs.pull_request }}/head
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: policy/.node-version
+          cache: npm
+          cache-dependency-path: policy/package-lock.json
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+        working-directory: policy
+      - name: materialize with trusted policy only
+        run: >-
+          node policy/scripts/materialize-assets.mjs
+          --candidate candidate
+          --output materialized
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: materialized-assets-${{ github.run_id }}
+          path: materialized
+          retention-days: 1
+          if-no-files-found: error
+
+  build:
+    if: github.ref == 'refs/heads/main'
+    needs: materialize
+    runs-on: ubuntu-latest
+    env:
+      VITE_MATERIALIZED_ASSETS: 'true'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/heads/main
+          path: policy
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: candidate
+          ref: refs/pull/${{ inputs.pull_request }}/head
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: policy/.node-version
+          cache: npm
+          cache-dependency-path: policy/package-lock.json
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+        working-directory: policy
+      - uses: actions/download-artifact@v8
+        with:
+          name: materialized-assets-${{ github.run_id }}
+          path: materialized
+      - run: >-
+          node policy/scripts/hydrate-materialized-assets.mjs
+          --source candidate
+          --materialized materialized
+          --destination candidate
+      - run: >-
+          node policy/scripts/validate-materialized-assets.mjs
+          --source candidate
+          --materialized candidate
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: candidate/.node-version
+          cache: npm
+          cache-dependency-path: candidate/package-lock.json
+      - run: npm install --global npm@11.16.0
+      - run: npm ci
+        working-directory: candidate
+      - run: npx playwright install --with-deps chromium
+        working-directory: candidate
+      - run: npm run test:visual
+        working-directory: candidate
+      - run: npm run build
+        working-directory: candidate
+      - run: node ../policy/scripts/validate-artifact.mjs
+        working-directory: candidate
+      - uses: actions/upload-artifact@v7
+        with:
+          name: candidate-product-${{ github.run_id }}
+          path: candidate/build
+          retention-days: 1
+          if-no-files-found: error
+
+  qualify:
+    if: github.ref == 'refs/heads/main'
+    needs: [materialize, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/heads/main
+          path: policy
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: candidate-source
+          ref: refs/pull/${{ inputs.pull_request }}/head
+      - uses: actions/download-artifact@v8
+        with:
+          name: materialized-assets-${{ github.run_id }}
+          path: materialized
+      - uses: actions/download-artifact@v8
+        with:
+          name: candidate-product-${{ github.run_id }}
+          path: candidate-product/build
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: policy/.node-version
+          cache: npm
+          cache-dependency-path: policy/package-lock.json
+      - run: npm install --global npm@11.16.0
+      - run: npm ci --ignore-scripts
+        working-directory: policy
+      - id: evidence
+        run: >-
+          node policy/scripts/prepare-qualified-media.mjs
+          --source candidate-source
+          --product candidate-product
+          --materialized materialized
+          --policy policy
+          --output qualified-media
+          --artifact-prefix media-qualified-
+          --github-output "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.evidence.outputs.artifact_name }}
+          path: qualified-media
+          retention-days: 30
+          if-no-files-found: error

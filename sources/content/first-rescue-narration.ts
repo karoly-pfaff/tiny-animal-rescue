@@ -1,4 +1,4 @@
-import voiceManifest from '../../content/base/assets/voice-manifest.json';
+import voiceCopy from '../../content/base/assets/first-rescue-voice-copy.json';
 import type { Locale } from '../i18n/localization';
 
 export type FirstRescueNarrationCue =
@@ -9,14 +9,13 @@ export type FirstRescueNarrationCue =
 type VoiceAsset = Readonly<{
   cue: string;
   fallbackText: Readonly<Record<Locale, string>>;
-  objectKeys: Readonly<Record<Locale, string>>;
 }>;
 
 type VoiceManifest = Readonly<{
   assets: readonly VoiceAsset[];
 }>;
 
-const firstRescueVoiceManifest = voiceManifest satisfies VoiceManifest;
+const firstRescueVoiceManifest = voiceCopy satisfies VoiceManifest;
 
 export function getFirstRescueNarrationText(cue: FirstRescueNarrationCue, locale: Locale): string {
   return findVoiceAsset(cue).fallbackText[locale];
@@ -26,12 +25,15 @@ export function resolveFirstRescueNarration(
   cue: FirstRescueNarrationCue,
   locale: Locale,
 ): string | null {
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
-  if (assetBaseUrl === undefined) {
+  const materialized = import.meta.env.VITE_MATERIALIZED_ASSETS;
+  if (materialized === undefined) {
     return null;
   }
-  const objectKey = findVoiceAsset(cue).objectKeys[locale];
-  return `${assetBaseUrl.replace(/\/$/u, '')}/${objectKey}`;
+  if (materialized !== 'true') {
+    throw new Error('VITE_MATERIALIZED_ASSETS must be exactly true when it is defined.');
+  }
+  getFirstRescueNarrationText(cue, locale);
+  return null;
 }
 
 function findVoiceAsset(cue: FirstRescueNarrationCue): VoiceAsset {

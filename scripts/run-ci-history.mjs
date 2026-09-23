@@ -1,12 +1,15 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { approvalRecordFromGithub } from './lib/approval-policy.mjs';
 import {
   createGithubHistoryClient,
   deriveMainEvidence,
   deriveQueueEvidence,
   deriveTagEvidence,
 } from './lib/github-history.mjs';
-import { commitsBetween, git, isAncestor } from './lib/history-repository.mjs';
+import { commitsBetween, git, isAncestor, tagRevisions } from './lib/history-repository.mjs';
 import { validateHistoryPolicy } from './lib/history-policy.mjs';
+import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
+import { verifyQualifiedMedia } from './lib/media-qualification.mjs';
 
 function requiredEnvironment(name) {
   const value = process.env[name];
@@ -20,6 +23,8 @@ const token = requiredEnvironment('GITHUB_TOKEN');
 const eventName = requiredEnvironment('GITHUB_EVENT_NAME');
 const event = JSON.parse(await readFile(requiredEnvironment('GITHUB_EVENT_PATH'), 'utf8'));
 const { github, pullRequestInput } = createGithubHistoryClient(repository, token);
+const approvalPolicy = JSON.parse(await readFile('deploy/github/approval-policy.json', 'utf8'));
+const inspectionPolicy = JSON.parse(await readFile('deploy/github/inspection-policy.json', 'utf8'));
 
 async function pullRequestMode() {
   if (event.pull_request === undefined)
@@ -83,21 +88,66 @@ async function mainMode() {
   return input;
 }
 
+function requiredTaggedNumber(message, label) {
+  const value = Number(new RegExp(`^${label}: #(?<id>\\d+)$`, 'mu').exec(message)?.groups?.id);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`Annotated tag crosswalk has no ${label.toLowerCase()} identity.`);
+  }
+  return value;
+}
+
 async function tagMode() {
   const tagName = event.ref.replace('refs/tags/', '');
   const message = git(['for-each-ref', `refs/tags/${tagName}`, '--format=%(contents)']).trim();
-  const pullNumber = Number(/^Pull-Request: #(?<number>\d+)$/mu.exec(message)?.groups?.number);
-  if (!Number.isInteger(pullNumber))
-    throw new Error('Annotated tag crosswalk has no pull-request identity.');
+  const pullNumber = requiredTaggedNumber(message, 'Pull-Request');
   const pullRequest = await github(`/pulls/${pullNumber}`);
   const input = await pullRequestInput(pullRequest, 'tag');
-  const artifact = JSON.parse(await readFile('build/reports/artifact-integrity.json', 'utf8'));
+  const approvalCommentId = requiredTaggedNumber(message, 'Approval-Comment');
+  const mergeApprovalCommentId = requiredTaggedNumber(message, 'Merge-Approval-Comment');
+  const inspectionCommentId = requiredTaggedNumber(message, 'Inspection-Comment');
+  const [approval, mergeApproval, inspection] = await Promise.all([
+    github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
+    github(`/issues/comments/${mergeApprovalCommentId}`).then(approvalRecordFromGithub),
+    github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
+      inspectionRecordFromGithub(comment, { github, repository }),
+    ),
+  ]);
+  const { targetSha, policySha } = tagRevisions(tagName);
+  const evidence = await verifyQualifiedMedia({
+    source: '.',
+    qualification: 'build/tag-qualification',
+    expectedHeadSha: pullRequest.head.sha,
+    expectedPolicySha: policySha,
+    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
+  });
+  if (inspection.artifact?.name !== evidence.artifactName) {
+    throw new Error('Downloaded tag qualification differs from the inspection provider artifact.');
+  }
+  const [inspectedCommit, tagCommit] = await Promise.all([
+    github(`/commits/${pullRequest.head.sha}`),
+    github(`/commits/${targetSha}`),
+  ]);
   input.tag = deriveTagEvidence({
     annotated: git(['cat-file', '-t', `refs/tags/${tagName}`]) === 'tag',
     tagName,
     message,
-    targetSha: git(['rev-list', '-n', '1', `refs/tags/${tagName}`]),
-    observedArtifactDigest: `sha256:${artifact.digest}`,
+    targetSha,
+    observedArtifactDigest: evidence.artifactDigest,
+    observedAssetInventoryDigest: evidence.assetInventoryDigest,
+    approval,
+    mergeApproval,
+    inspection,
+    approver: approvalPolicy.approver,
+    treeMatchesInspectedHead: inspectedCommit.commit.tree.sha === tagCommit.commit.tree.sha,
+    repository,
+    requiredLocales: inspectionPolicy.requiredLocales,
+    requiredInputs: inspectionPolicy.requiredInputs,
+    requiredViewports: inspectionPolicy.requiredViewports,
+    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
+    artifactWorkflowPath: inspectionPolicy.artifactWorkflowPath,
+    artifactWorkflowEvent: inspectionPolicy.artifactWorkflowEvent,
+    artifactWorkflowBranch: inspectionPolicy.artifactWorkflowBranch,
+    artifactWorkflowHeadSha: policySha,
   });
   return input;
 }

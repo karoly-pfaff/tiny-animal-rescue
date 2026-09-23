@@ -48,7 +48,7 @@ describe('browser narration service', () => {
     }).not.toThrow();
   });
 
-  it('plays a resolved R2 narration asset and stops the active media', async () => {
+  it('plays a resolved narration asset and stops the active media', async () => {
     const pause = vi.fn();
     const play = vi.fn(() => Promise.resolve());
     class FakeAudio {

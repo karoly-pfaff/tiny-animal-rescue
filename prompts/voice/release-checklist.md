@@ -41,7 +41,9 @@
 - [ ] Runtime encoding was checked for artifacts.
 - [ ] No audible watermark, generator tag, spoken brand or service name, promotional tag, sonic
       signature, or automated-authorship credit is present.
-- [ ] No voice media binary is tracked in Git; approved runtime files are delivered through R2.
+- [ ] No voice media binary is tracked in Git; approved runtime files are stored in R2, digest-verified,
+      and materialized into the ignored local pack asset tree before the release build.
+- [ ] The browser resolves the packaged local voice file and performs no direct R2 fetch.
 
 ## Runtime
 

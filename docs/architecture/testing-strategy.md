@@ -55,6 +55,11 @@ Keep a narrow, valuable suite:
 
 Reference screenshots cover Start, Map, each location style, every interaction primitive, Celebration, and all shelter areas in HU and EN. Mask deliberately animated regions where needed, but never mask primary controls or targets.
 
+At every epic and every player-visible patch closure, the implementer also opens the exact production
+preview in a real browser and walks through the affected assembled journeys under ADR-0012. This live
+inspection verifies real materialized media and visual coherence; screenshot comparison alone cannot
+approve the product.
+
 ## Input coverage
 
 Every interaction primitive is tested using Pointer Events. E2E includes touch emulation and mouse fallback. Tests cover cancellation, pointer leaving bounds, secondary pointer input, and navigation/background pause.
@@ -97,6 +102,9 @@ repository scripts, with the documented provider-hosted CodeQL exception.
   reports, approved screenshot baselines/playthrough evidence, and the production artifact. If a
   required run failed before passing, retain its trace, failure screenshots/video/diffs, and recorded
   disposition as diagnostic evidence.
+- After the aggregate gate passes, epic completion synchronizes required production assets, rebuilds
+  the exact candidate, opens the production preview, performs the recorded live walkthrough, and fixes
+  or explicitly blocks on every visual finding before merge approval is requested.
 - A gate that collected no applicable tests or files fails rather than reporting a vacuous success.
 - Scheduled or release runs may add browsers/hardware and longer journeys; they never replace the
   pull-request matrix.

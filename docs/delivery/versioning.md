@@ -89,12 +89,24 @@ breaking even when a field becomes "more optional."
 - The root `package.json` is the product-version source of truth once EPIC-000 creates it. Parent
   Settings reads that value through build metadata rather than duplicating a literal.
 - The bundled base pack version and release notes change in the same release pull request.
-- A milestone tag is annotated and named `v<MAJOR>.<MINOR>.<PATCH>`, for example `v0.4.0`.
+- A milestone tag is annotated and named `v<MAJOR>.<MINOR>.<PATCH>`, for example `v0.4.0`. Protected
+  `v*` tags are created only by the validated tag-publication workflow after a separate owner approval
+  tied to the squash SHA, live-inspection comment, version, artifact digest, and asset-inventory
+  digest.
 - Tags are immutable. A bad release is superseded by a new patch; tags and published artifacts are
   never replaced in place.
 - The release change includes the epic exit evidence, successful applicable aggregate gate
   (`validate:full`, or `validate:release` from M7), relevant screenshots/playthrough record,
-  migration notes, dependency/license changes, and known limitations.
+  verified asset-materialization receipt where production media is in scope, the ADR-0012 live
+  production-preview inspection record, migration notes, dependency/license changes, and known
+  limitations.
+- Tag preparation consumes the exact retained media-qualified artifact named for the inspected head
+  and both digests, proves its trusted workflow/receipt identity, validates the squash message/tree,
+  and waits for the newest canonical exact-squash `main` workflow run. Tag-triggered CI downloads and
+  independently verifies the same retained qualification artifact; it never substitutes a clean
+  source-only fallback build. It is confirmation, never the first enforcement of those conditions.
+- Passing checks and inspection qualify a candidate but do not authorize publication. The user must
+  explicitly approve the merge and immutable tag before either action occurs.
 - Version numbers are not bumped speculatively at epic start. Development builds derive the upcoming
   target from the backlog. After every story is behaviorally qualified, the metadata-only closure
   commit may stage the target as a candidate for final-head validation; this does not advance the

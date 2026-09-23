@@ -35,6 +35,9 @@ belongs under the matching `assets/audio/voice/hu/` or `assets/audio/voice/en/` 
 stored in `shared/`. An authored candidate's pack-relative source path begins with `assets/audio/`.
 The R2 object key stored in a runtime manifest is the path relative to `content/<pack-id>/assets/`, so
 it begins with `audio/`; neither form includes a repository-relative `content/<pack-id>/` prefix.
+Repository tooling downloads that key from R2, verifies it against the versioned inventory, and
+materializes it under the corresponding ignored local asset tree before build. The browser consumes
+the packaged local result and never fetches the R2 object directly.
 
 ## IDs
 

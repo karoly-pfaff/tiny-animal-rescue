@@ -3,6 +3,7 @@
 - Status: Planned
 - Milestone: M6
 - Target version: `0.7.0`
+- Inspection journeys: `localization,audio,parent-settings`
 - Dependencies: EPIC-001, EPIC-002
 - ADRs: ADR-0005, ADR-0006
 

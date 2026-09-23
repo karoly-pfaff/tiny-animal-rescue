@@ -3,6 +3,10 @@
 - Status: Accepted
 - Date: 2026-09-20
 
+ADR-0012 amends this decision by adding a mandatory live production-preview inspection before epic
+closure and merge approval. Automated gates and independent audit remain required but are not visual
+product sign-off.
+
 ## Context
 
 Tiny Rescue is deliberately small, but its child-facing input, audio/localization parity, declarative
