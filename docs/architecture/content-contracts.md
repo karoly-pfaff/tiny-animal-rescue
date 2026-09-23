@@ -42,6 +42,20 @@ bundled `base` pack follows the product version at release. `contractVersion` is
 for breaking schema/normalization compatibility; compatible optional additions inside one contract
 version require deterministic normalization defaults.
 
+### Contract-version behavior
+
+The runtime supports exactly the contract versions it names; contract version 1 is the only supported
+version for M2. Structural validation runs before normalization. The normalizer rejects an unknown
+version with a parent-readable diagnostic and never guesses, coerces, or silently falls back.
+
+Within one contract version, a newly optional field is compatible only when the runtime applies one
+documented deterministic default and tests the omitted form. Removing or renaming a field, changing
+its meaning or default, making an optional field required, or changing an enum member's semantics
+requires the next integer contract version and a deliberate migration/compatibility decision. Pack
+SemVer records content releases; it does not replace the integer format contract.
+
+In contract version 1, an omitted pack `dependencies` field normalizes to an immutable empty list.
+
 The base pack ID is `base`. Cross-pack references require an explicit dependency and use qualified IDs. Base content is not allowed to depend on expansion content.
 In v1 the dependency list contains pack IDs only: every pack is bundled and validated in one build,
 so there is no remote version-range resolver. Adding dependency ranges or remote resolution is a new
