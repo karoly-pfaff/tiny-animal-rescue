@@ -1,24 +1,26 @@
 # EPIC-002: Declarative content platform
 
-- Status: Planned
+- Status: In progress
 - Milestone: M2
 - Target version: `0.3.0`
 - Inspection journeys: `start,map,content-loading`
 - Dependencies: EPIC-001
-- ADRs: ADR-0002, ADR-0007, ADR-0008
+- ADRs: ADR-0002, ADR-0005, ADR-0007, ADR-0008, ADR-0011, ADR-0012
 
 ## Outcome
 
 Replace vertical-slice-specific declarations with a versioned, validated content registry capable of loading the base pack and future build-time packs without executing content code.
+Finish the bounded production audio set that the M2 journeys actually exercise; full-game audio and
+parent audio settings remain owned by EPIC-006.
 
 ## Stories
 
 ### E002-S01 — Define runtime types and JSON Schemas
 
-- [ ] Pack, animal, mission, location, shelter-area, localization, and asset metadata types exist.
-- [ ] JSON Schemas reject unknown properties and invalid enum values.
-- [ ] Schema examples compile into the runtime types through tested normalization.
-- [ ] Contract versioning behavior is documented and tested.
+- [x] Pack, animal, mission, location, shelter-area, localization, and asset metadata types exist.
+- [x] JSON Schemas reject unknown properties and invalid enum values.
+- [x] Schema examples compile into the runtime types through tested normalization.
+- [x] Contract versioning behavior is documented and tested.
 
 ### E002-S02 — Discover and assemble packs
 
@@ -58,11 +60,29 @@ Replace vertical-slice-specific declarations with a versioned, validated content
 - [ ] Removing the test pack restores the exact base registry.
 - [ ] No pack manager UI, remote loading, or arbitrary script support is introduced.
 
+### E002-S07 — Produce and integrate the epic audio set
+
+- [ ] A generated inventory lists every music, effect, and HU/EN voice runtime ID exercised by the
+      EPIC-002 product journeys, with no unrelated full-game audio scope.
+- [ ] The owner produces, edits, and approves every inventoried file using the repository prompt pack;
+      production exports contain no audible watermark, branding, signature, or authorship credit.
+- [ ] Every asset has approved prompt, provenance/license, mastering, duration/format, channel, and
+      repeated/overlapping playback QA evidence plus an exact R2 object key and digest lock.
+- [ ] Verified R2 media materializes only into the ignored `content/base/assets/audio/` tree and the
+      packaged product resolves local pack paths without a browser-time R2 request.
+- [ ] Music, effects, and voice use separate channels; narration replaces the current line and ducks
+      music without depending on wall-clock audio duration for mission progression.
+- [ ] HU and EN voice coverage is equivalent, code-native speech is absent from the media-complete
+      candidate, and mute/replay/background-resume behavior passes integration and browser checks.
+- [ ] The exact candidate passes asset/audio gates, the complete supported viewport/input journey
+      matrix, listening QA, and ADR-0012 live production-preview inspection.
+
 ## Exit criteria
 
 - Content validation is part of `validate:quick`.
 - The first rescue is entirely declared by content plus reusable engine behavior.
 - A test pack proves extension without becoming shipped scope.
+- Every sound exercised by the M2 inspection journeys is production media with complete evidence.
 
 ## Verification
 
@@ -70,6 +90,7 @@ Replace vertical-slice-specific declarations with a versioned, validated content
 npm run test:unit
 npm run test:integration
 npm run test:content
+npm run test:assets:materialized
 npm run validate:full
 ```
 

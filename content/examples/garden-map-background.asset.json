@@ -1,0 +1,15 @@
+{
+  "id": "garden-map-background",
+  "category": "image",
+  "objectKey": "images/map/garden-map.png",
+  "role": "garden-map-background",
+  "ownership": "base",
+  "mediaType": "image/png",
+  "qaStatus": "approved",
+  "licenseStatus": "approved",
+  "provenanceStatus": "approved",
+  "promptRecord": "prompts/images/approved/epic-001/garden-map-background.md",
+  "width": 1448,
+  "height": 1086,
+  "transparent": false
+}

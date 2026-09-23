@@ -5,7 +5,7 @@
   "subjectAnimalId": "mimi-kitten",
   "prerequisites": [],
   "scene": {
-    "background": "assets/images/missions/garden-kitten-tree/background.webp",
+    "background": "images/missions/garden-kitten-tree/background.png",
     "designWidth": 1024,
     "designHeight": 768
   },
@@ -14,6 +14,8 @@
       "id": "place-ladder",
       "type": "drag",
       "promptKey": "mission.garden-kitten-tree.step.place-ladder",
+      "successCue": "effects.interaction.drag-snap",
+      "hint": { "type": "pulse-after-delay", "delayMs": 5000 },
       "sourceId": "ladder",
       "targetId": "tree-ladder-target",
       "snapTolerance": 0.55
@@ -22,6 +24,8 @@
       "id": "help-mimi-down",
       "type": "tap",
       "promptKey": "mission.garden-kitten-tree.step.help-mimi-down",
+      "successCue": "effects.interaction.tap-remove",
+      "hint": { "type": "pulse-after-delay", "delayMs": 5000 },
       "targetIds": ["mimi"]
     }
   ],
@@ -34,5 +38,12 @@
     "titleKey": "mission.garden-kitten-tree.title",
     "introKey": "mission.garden-kitten-tree.intro",
     "successKey": "mission.garden-kitten-tree.success"
+  },
+  "assets": {
+    "required": [
+      "images/missions/garden-kitten-tree/background.png",
+      "images/missions/garden-kitten-tree/ladder.png",
+      "images/residents/mimi/mission.png"
+    ]
   }
 }

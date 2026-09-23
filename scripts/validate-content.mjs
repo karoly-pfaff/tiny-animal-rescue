@@ -10,6 +10,11 @@ const contracts = [
   ['content/examples/pack.json', 'schemas/pack.schema.json'],
   ['content/examples/mimi-kitten.json', 'schemas/animal.schema.json'],
   ['content/examples/garden-kitten-tree.json', 'schemas/mission.schema.json'],
+  ['content/examples/garden.json', 'schemas/location.schema.json'],
+  ['content/examples/indoor-room.json', 'schemas/shelter-area.schema.json'],
+  ['content/examples/hu.json', 'schemas/localization.schema.json'],
+  ['content/examples/garden-map-background.asset.json', 'schemas/asset-metadata.schema.json'],
+  ['content/examples/drag-snap.asset.json', 'schemas/asset-metadata.schema.json'],
   ['content/base/pack.json', 'schemas/pack.schema.json'],
 ];
 const findings = [];
