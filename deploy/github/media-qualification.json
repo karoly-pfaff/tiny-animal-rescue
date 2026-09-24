@@ -2,7 +2,7 @@
   "environment": "media-qualification",
   "requiredReviewer": "karoly-pfaff",
   "preventSelfReview": false,
-  "endpointSecretName": "R2_ENDPOINT",
+  "accountIdSecretName": "R2_ACCOUNT_ID",
   "bucketSecretName": "R2_BUCKET",
   "accessKeyIdSecretName": "R2_ACCESS_KEY_ID",
   "secretAccessKeySecretName": "R2_SECRET_ACCESS_KEY",

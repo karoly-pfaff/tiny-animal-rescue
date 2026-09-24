@@ -16,6 +16,11 @@ describe('bundled content bootstrap', () => {
       locations: 'locations',
       shelterAreas: 'shelter-areas',
     });
+    expect(Object.keys(bundledContentRegistry.assets)).toHaveLength(9);
+    expect(bundledContentRegistry.assets['start-background']?.objectKey).toBe(
+      'images/start/welcome-garden.png',
+    );
+    expect(Object.isFrozen(bundledContentRegistry.assets['start-background'])).toBe(true);
     expect(Object.isFrozen(bundledContentRegistry)).toBe(true);
     expect(Object.isFrozen(bundledContentRegistry.packs['base'])).toBe(true);
   });
@@ -46,6 +51,7 @@ describe('bundled content bootstrap', () => {
 
     const registry = assembleBundledContentRegistry({
       manifests: { '../../content/nested-pack/pack.json': manifest },
+      assetInventories: {},
       animals: {},
       locations: {
         '../../content/nested-pack/records/locations/nested-garden.json': location,

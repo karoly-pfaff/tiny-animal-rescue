@@ -18,11 +18,13 @@ content/<pack-id>/
   locales/hu.json
   locales/en.json
   assets/
+    manifest.json
     images/
     audio/
       shared/
-      hu/
-      en/
+      voice/
+        hu/
+        en/
 ```
 
 ## Pack manifest
@@ -141,12 +143,19 @@ Positions use normalized coordinates relative to a 1024×768 design surface. The
 
 ## Asset references
 
-Asset references are pack-relative logical object keys governed by
-[ADR-0011](adr/ADR-0011-local-content-asset-materialization.md). Production media binaries live
-outside Git and are distributed from R2; pack inventories, prompt provenance, QA, ownership, and
-delivery metadata remain versioned. A repository-owned sync step verifies and materializes them into
-the ignored local pack tree before build. The runtime resolver maps logical keys to packaged local
-URLs and rejects:
+Asset references are logical object keys governed by
+[ADR-0011](adr/ADR-0011-local-content-asset-materialization.md). An unqualified reference such as
+`images/residents/mimi/canonical.png` resolves only inside the declaring pack. A reference owned by a
+declared dependency uses `<pack-id>:<object-key>`, for example
+`base:images/residents/mimi/canonical.png`. Inventory `objectKey` values are always unqualified,
+lower-case, pack-relative paths; a pack prefix belongs only in a content-record reference. A
+qualified reference does not grant access by itself: the consumer must declare that pack in
+`dependencies`, and the referenced inventory record must be owned by that dependency.
+
+Production media binaries live outside Git and are distributed from R2; pack inventories, prompt
+provenance, QA, ownership, and delivery metadata remain versioned. A repository-owned sync step
+verifies and materializes them into the ignored local pack tree before build. The runtime resolver
+maps logical keys to packaged local URLs and rejects:
 
 - absolute URLs
 - parent-directory traversal
@@ -155,15 +164,30 @@ URLs and rejects:
 - wrong media types
 - locale audio stored in a shared directory
 
-Run `npm run assets:sync` from a clean checkout after setting the trusted `R2_ENDPOINT`, `R2_BUCKET`,
-`R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` environment variables. The command reads only tracked
-materialization locks, downloads each exact object, and writes verified media plus the secret-free
-receipt under the ignored candidate tree. `npm run test:assets:materialized` then checks lock,
-inventory, byte, digest, media-type, dimension/transparency, ownership, provenance, license, and QA
-parity before a media-complete build. Neither the downloaded binaries nor the receipt may be added to
-Git.
+For local synchronization, copy `.env.example` to the ignored `.env.local` and set the trusted
+`R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` values, then run
+`npm run assets:sync` from a clean checkout. The S3 origin is derived from the account ID;
+`R2_ENDPOINT` is an optional credential-free override. Existing process environment values take
+precedence over the local file, including the protected secrets injected by hosted qualification. The
+command reads only tracked materialization locks, downloads each exact object, and writes verified
+media plus the secret-free receipt under the ignored candidate tree.
+`npm run test:assets:materialized` then checks lock, inventory, byte, digest, media-type,
+dimension/transparency, ownership, provenance, license, and QA parity before a media-complete build.
+Neither the downloaded binaries, `.env.local`, nor the receipt may be added to Git.
 
-Required image metadata includes intended role, dimensions, and whether transparency is expected. Required audio metadata includes role, locale where applicable, and duration bounds where narration timing matters.
+Required image metadata includes category, intended role, media type, positive dimensions, and
+whether transparency is expected. Required audio metadata includes category, role, media type,
+positive duration bounds, and a locale for voice only. Voice objects live under
+`audio/voice/<locale>/`; shared music and effects live under `audio/shared/` and may not claim a
+locale. Every referenced key must have exactly one inventory record. A media-complete check also
+requires the file itself and verifies its detected media type, byte count, digest, dimensions or
+duration, and transparency against the inventory and materialization lock.
+
+Release validation rejects a referenced record unless QA, license, and provenance are approved; its
+classification is `production-safe`; delivery is `r2-locked`; positive byte count and a valid SHA-256
+digest are present; and its ID, role, and object key do not identify a draft, fallback, placeholder,
+or temporary asset. Source-only CI may omit external bytes, but `test:assets:materialized` is
+mandatory for any epic or patch that claims the affected production media complete.
 
 Ignored local working media may satisfy dimension and visual QA during development. A code-native
 fallback may cover an `r2-pending` decorative asset, but it does not make that asset epic- or

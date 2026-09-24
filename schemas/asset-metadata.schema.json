@@ -5,7 +5,16 @@
   "oneOf": [{ "$ref": "#/$defs/image" }, { "$ref": "#/$defs/audio" }],
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+" },
+    "path": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?![A-Za-z][A-Za-z0-9+.-]*:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    },
+    "deliveryProperties": {
+      "classification": { "enum": ["production-safe", "presentation-only"] },
+      "delivery": { "enum": ["r2-locked", "r2-pending"] },
+      "bytes": { "type": "integer", "minimum": 1 },
+      "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+    },
     "image": {
       "type": "object",
       "additionalProperties": false,
@@ -37,7 +46,11 @@
         "promptRecord": { "$ref": "#/$defs/path" },
         "width": { "type": "integer", "minimum": 1 },
         "height": { "type": "integer", "minimum": 1 },
-        "transparent": { "type": "boolean" }
+        "transparent": { "type": "boolean" },
+        "classification": { "$ref": "#/$defs/deliveryProperties/classification" },
+        "delivery": { "$ref": "#/$defs/deliveryProperties/delivery" },
+        "bytes": { "$ref": "#/$defs/deliveryProperties/bytes" },
+        "digest": { "$ref": "#/$defs/deliveryProperties/digest" }
       }
     },
     "audio": {
@@ -76,8 +89,19 @@
             "min": { "type": "number", "exclusiveMinimum": 0 },
             "max": { "type": "number", "exclusiveMinimum": 0 }
           }
+        },
+        "classification": { "$ref": "#/$defs/deliveryProperties/classification" },
+        "delivery": { "$ref": "#/$defs/deliveryProperties/delivery" },
+        "bytes": { "$ref": "#/$defs/deliveryProperties/bytes" },
+        "digest": { "$ref": "#/$defs/deliveryProperties/digest" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "category": { "const": "voice" } } },
+          "then": { "properties": { "locale": true }, "required": ["locale"] },
+          "else": { "not": { "required": ["locale"] } }
         }
-      }
+      ]
     }
   }
 }

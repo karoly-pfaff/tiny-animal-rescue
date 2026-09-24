@@ -891,7 +891,7 @@ function hostedMediaFindings(fixture) {
       ],
     },
     secrets: [
-      { name: mediaQualification.endpointSecretName },
+      { name: mediaQualification.accountIdSecretName },
       { name: mediaQualification.bucketSecretName },
       { name: mediaQualification.accessKeyIdSecretName },
       { name: mediaQualification.secretAccessKeySecretName },

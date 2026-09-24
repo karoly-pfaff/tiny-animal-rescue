@@ -3,7 +3,7 @@ export function semanticPacksFromDiscovery(discoveredPacks) {
     ...manifest,
     records: {
       ...records,
-      assets: [],
+      assets: records.assets ?? [],
       localizations: {},
     },
   }));

@@ -16,7 +16,7 @@ const workflowSemanticFingerprints = {
   ci: '157484f95ae90aeb69776861a06e8acf6f1d7d704e7f8655161dc4d00ac2a90c',
   merge: 'd707bb99a685f9796505a8f34a85274ab63a47f15838e31db61febf20810f0ab',
   publish: '5e6b78b9209f48c95743d97de6643945070abc5af93524faad6dabdf5c67c20a',
-  qualify: '67160593507dcc98a5c78bac7dbf67227589a8503b39be6c547ab273997662f5',
+  qualify: '43d4f1b8ecfad622f28a684012332a9310113f8a8a325aa95695c8e297d571ea',
 };
 
 function visitWorkflow(value, callback) {
@@ -408,7 +408,7 @@ function validatePublishWorkflow(workflow, releasePublisher) {
 
 function validateMediaQualificationPolicy(policy, approvalPolicy, inspectionPolicy) {
   const secretNames = [
-    policy.endpointSecretName,
+    policy.accountIdSecretName,
     policy.bucketSecretName,
     policy.accessKeyIdSecretName,
     policy.secretAccessKeySecretName,
@@ -440,7 +440,7 @@ function validateQualifyMediaWorkflow(workflow, policy) {
     'ref: refs/heads/main',
     'ref: refs/pull/${{ inputs.pull_request }}/head',
     'node policy/scripts/materialize-assets.mjs',
-    `R2_ENDPOINT: \${{ secrets.${policy.endpointSecretName} }}`,
+    `R2_ACCOUNT_ID: \${{ secrets.${policy.accountIdSecretName} }}`,
     `R2_BUCKET: \${{ secrets.${policy.bucketSecretName} }}`,
     `R2_ACCESS_KEY_ID: \${{ secrets.${policy.accessKeyIdSecretName} }}`,
     `R2_SECRET_ACCESS_KEY: \${{ secrets.${policy.secretAccessKeySecretName} }}`,
@@ -539,7 +539,7 @@ export function validateHostedMediaQualification({ environment, secrets, policy 
   if (!validDeploymentBranchPolicy(environment))
     findings.push('Media-qualification environment must accept protected branches only.');
   for (const name of [
-    policy.endpointSecretName,
+    policy.accountIdSecretName,
     policy.bucketSecretName,
     policy.accessKeyIdSecretName,
     policy.secretAccessKeySecretName,
@@ -583,7 +583,7 @@ export function validateHostedSecretIsolation({
     authorizationPublisher.appIdSecretName,
     authorizationPublisher.privateKeySecretName,
     releasePublisher.secretName,
-    mediaQualification.endpointSecretName,
+    mediaQualification.accountIdSecretName,
     mediaQualification.bucketSecretName,
     mediaQualification.accessKeyIdSecretName,
     mediaQualification.secretAccessKeySecretName,

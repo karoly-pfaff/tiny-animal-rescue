@@ -30,6 +30,13 @@ boundary owns R2 endpoint configuration and credentials; neither is exposed to t
 Runtime content records continue to use pack-relative logical keys. The content resolver maps those
 keys to packaged local URLs produced from the materialized tree and never constructs a public R2 URL.
 
+Local synchronization may read the required R2 account ID, bucket, access-key ID, and secret access
+key from an ignored `.env.local` file whose tracked, value-free contract is `.env.example`. The S3
+origin is derived from the account ID; `R2_ENDPOINT` is an optional credential-free override for
+account-level or bucket-scoped R2 URLs. Existing process environment values take precedence, so hosted
+qualification continues to receive credentials only from its protected GitHub environment; the local
+file is never a substitute for provider-side secrets.
+
 Synchronization is deterministic, idempotent, and fail-closed:
 
 - inventories record an immutable digest plus required media metadata for every delivered object;

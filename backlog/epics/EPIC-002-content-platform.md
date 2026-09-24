@@ -42,10 +42,10 @@ parent audio settings remain owned by EPIC-006.
 
 ### E002-S04 — Add asset ownership and metadata validation
 
-- [ ] Pack-relative paths reject traversal and absolute URLs.
-- [ ] Required files, media types, transparency/dimension metadata, and locale ownership are checked.
-- [ ] Cross-pack references require declared dependencies.
-- [ ] Missing required and placeholder assets fail release validation.
+- [x] Pack-relative paths reject traversal and absolute URLs.
+- [x] Required files, media types, transparency/dimension metadata, and locale ownership are checked.
+- [x] Cross-pack references require declared dependencies.
+- [x] Missing required and placeholder assets fail release validation.
 
 ### E002-S05 — Migrate first rescue to content
 

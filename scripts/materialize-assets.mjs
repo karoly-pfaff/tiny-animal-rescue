@@ -9,7 +9,7 @@ import {
   verifyCandidateAssetContract,
 } from './lib/media-qualification.mjs';
 import { verifyMeasuredMedia } from './lib/media-file-policy.mjs';
-import { requiredEnvironment } from './lib/workflow-input.mjs';
+import { r2MaterializationEnvironment } from './lib/r2-environment.mjs';
 
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -78,23 +78,7 @@ async function fetchObject(endpoint, bucket, object, credentials) {
 
 const candidate = path.resolve(argument('--candidate'));
 const output = path.resolve(argument('--output'));
-const endpoint = new URL(requiredEnvironment('R2_ENDPOINT'));
-if (
-  endpoint.protocol !== 'https:' ||
-  endpoint.username.length > 0 ||
-  endpoint.password.length > 0 ||
-  endpoint.search.length > 0 ||
-  endpoint.hash.length > 0 ||
-  !['', '/'].includes(endpoint.pathname)
-) {
-  throw new Error('R2_ENDPOINT must be a credential-free HTTPS origin.');
-}
-const bucket = requiredEnvironment('R2_BUCKET');
-if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/u.test(bucket)) throw new Error('R2_BUCKET is invalid.');
-const credentials = {
-  accessKeyId: requiredEnvironment('R2_ACCESS_KEY_ID'),
-  secretAccessKey: requiredEnvironment('R2_SECRET_ACCESS_KEY'),
-};
+const { bucket, credentials, endpoint } = r2MaterializationEnvironment();
 const headSha = repositoryGit(candidate, ['rev-parse', 'HEAD']);
 const inventoryDigest = await assetInventoryDigest(candidate);
 const plan = await materializationPlan(candidate);

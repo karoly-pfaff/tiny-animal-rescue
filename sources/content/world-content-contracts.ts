@@ -38,6 +38,7 @@ export type LocalizationDocument = Readonly<Record<string, string>>;
 type AssetCategory = 'image' | 'music' | 'effect' | 'voice';
 type AssetQaStatus = 'approved' | 'not-produced' | 'rejected';
 type AssetProductionStatus = 'approved' | 'pending-production';
+type AssetDelivery = 'r2-locked' | 'r2-pending';
 
 type AssetMetadataBase = Readonly<{
   id: string;
@@ -48,6 +49,10 @@ type AssetMetadataBase = Readonly<{
   qaStatus: AssetQaStatus;
   licenseStatus: AssetProductionStatus;
   provenanceStatus: AssetProductionStatus;
+  classification?: 'production-safe' | 'presentation-only';
+  delivery?: AssetDelivery;
+  bytes?: number;
+  digest?: `sha256:${string}`;
 }>;
 
 type ImageAssetMetadata = AssetMetadataBase &
@@ -70,3 +75,8 @@ type AudioAssetMetadata = AssetMetadataBase &
   }>;
 
 export type AssetMetadata = ImageAssetMetadata | AudioAssetMetadata;
+
+export type AssetInventory = Readonly<{
+  schemaVersion: 1;
+  assets: readonly AssetMetadata[];
+}>;

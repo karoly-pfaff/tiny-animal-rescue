@@ -66,7 +66,11 @@ function pngHasTransparency(data) {
   return false;
 }
 
-function manifestRecordMatchesObject(record, object) {
+function qualifiedAssetKey(packId, value) {
+  return `${packId}:${value}`;
+}
+
+function manifestRecordMatchesObject(record, object, packId) {
   const measuredMatches = object.mediaType.startsWith('image/')
     ? record.width === object.measured.width &&
       record.height === object.measured.height &&
@@ -79,6 +83,7 @@ function manifestRecordMatchesObject(record, object) {
     record.digest === object.digest,
     record.bytes === object.bytes,
     record.mediaType === object.mediaType,
+    record.ownership === packId,
     record.ownership === object.ownership,
     record.licenseStatus === object.licenseStatus,
     record.provenanceStatus === object.provenanceStatus,
@@ -92,23 +97,33 @@ function validateManifestRecords(records, plan, requiredRoles) {
   const ids = new Set();
   const roles = new Set();
   const keys = new Set();
-  const objectsByKey = new Map(plan.map((object) => [object.objectKey, object]));
-  for (const record of records) {
-    if (ids.has(record.id) || roles.has(record.role) || keys.has(record.objectKey)) {
+  const declaredRoles = new Set();
+  const objectsByKey = new Map(
+    plan.map((object) => [qualifiedAssetKey(object.packId, object.objectKey), object]),
+  );
+  for (const { packId, record } of records) {
+    const scopedRole = qualifiedAssetKey(packId, record.role);
+    const scopedKey = qualifiedAssetKey(packId, record.objectKey);
+    if (ids.has(record.id) || roles.has(scopedRole) || keys.has(scopedKey)) {
       findings.push('Production asset manifest contains a duplicate ID, role, or object key.');
     }
     ids.add(record.id);
-    roles.add(record.role);
-    keys.add(record.objectKey);
-    const object = objectsByKey.get(record.objectKey);
-    if (object === undefined || !manifestRecordMatchesObject(record, object)) {
+    roles.add(scopedRole);
+    declaredRoles.add(record.role);
+    keys.add(scopedKey);
+    const object = objectsByKey.get(scopedKey);
+    if (object === undefined || !manifestRecordMatchesObject(record, object, packId)) {
       findings.push(`Production asset manifest differs from its lock: ${record.objectKey ?? '?'}.`);
     }
   }
   for (const role of requiredRoles) {
-    if (!roles.has(role)) findings.push(`Required production asset role is absent: ${role}.`);
+    if (!declaredRoles.has(role))
+      findings.push(`Required production asset role is absent: ${role}.`);
   }
-  if (records.length !== plan.length || plan.some((object) => !keys.has(object.objectKey))) {
+  if (
+    records.length !== plan.length ||
+    plan.some((object) => !keys.has(qualifiedAssetKey(object.packId, object.objectKey)))
+  ) {
     findings.push('Production asset manifest and materialization locks are not one-to-one.');
   }
   return findings;
@@ -138,16 +153,26 @@ export async function verifyCandidateAssetContract({ sourceRoot, assetRoot, requ
   const version = await candidateVersion(sourceRoot);
   const enforcedRoles = requiredRoles ?? (version === '0.2.0' ? [] : requiredFirstRescueAssetRoles);
   const plan = await materializationPlan(sourceRoot);
-  const packIds = [...new Set(plan.map(({ packId }) => packId))];
+  const inventoryFiles = repositoryGit(sourceRoot, [
+    'ls-files',
+    '--',
+    'content/*/assets/manifest.json',
+  ])
+    .split('\n')
+    .filter(Boolean)
+    .sort();
+  if (inventoryFiles.length === 0) throw new Error('Candidate has no tracked asset manifest.');
+  const packIds = inventoryFiles.map((file) => file.split('/')[1]);
   const manifests = await Promise.all(
-    packIds.map((packId) =>
-      readFile(path.join(sourceRoot, `content/${packId}/assets/manifest.json`), 'utf8').then(
-        JSON.parse,
-      ),
-    ),
+    inventoryFiles.map(async (file) => ({
+      packId: file.split('/')[1],
+      manifest: JSON.parse(await readFile(path.join(sourceRoot, file), 'utf8')),
+    })),
   );
-  const records = manifests.flatMap((manifest) =>
-    manifest.schemaVersion === 1 && Array.isArray(manifest.assets) ? manifest.assets : [],
+  const records = manifests.flatMap(({ packId, manifest }) =>
+    manifest.schemaVersion === 1 && Array.isArray(manifest.assets)
+      ? manifest.assets.map((record) => ({ packId, record }))
+      : [],
   );
   const findings = validateManifestRecords(records, plan, enforcedRoles);
   const observed = await observedPackMedia(assetRoot, packIds);
@@ -155,10 +180,12 @@ export async function verifyCandidateAssetContract({ sourceRoot, assetRoot, requ
   if (observed.size !== allowed.size || [...observed].some((file) => !allowed.has(file))) {
     findings.push('Materialized asset tree contains missing or unexpected media.');
   }
-  for (const record of records) {
-    const data = await readFile(
-      path.join(assetRoot, `content/${record.ownership}/assets`, record.objectKey),
-    );
+  for (const object of plan) {
+    const data = await readFile(path.join(assetRoot, object.path));
+    await verifyObjectBytes(data, object, object.path);
+  }
+  for (const { packId, record } of records) {
+    const data = await readFile(path.join(assetRoot, `content/${packId}/assets`, record.objectKey));
     if (record.mediaType === 'image/png' && pngHasTransparency(data) !== record.transparent) {
       findings.push(
         `Materialized PNG transparency differs from the manifest: ${record.objectKey}.`,

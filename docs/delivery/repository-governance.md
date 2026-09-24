@@ -76,10 +76,11 @@ any other write scope. Store its App ID and private key only as
 `governance:apply`; it is never sent to GitHub as a literal ruleset value.
 
 Create bucket-scoped, object-read-only Cloudflare R2 S3 credentials for the production-media bucket.
-Store the HTTPS S3 origin, bucket, access-key ID, and secret access key only as `R2_ENDPOINT`,
+Store the account ID, bucket, access-key ID, and secret access key only as `R2_ACCOUNT_ID`,
 `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` secrets of the `media-qualification`
-environment. They are never repository secrets. The trusted materializer signs direct S3 GETs for
-region `auto`, rejects redirects, and never emits credentials or signed URLs.
+environment. They are never repository secrets. The trusted materializer derives the HTTPS S3 origin
+from the account ID, signs direct S3 GETs for region `auto`, rejects redirects, and never emits
+credentials or signed URLs.
 
 None of these protected secret names may also exist as a repository secret or as an organization
 secret exposed to this repository. Environment scoping is the authorization boundary, not merely a

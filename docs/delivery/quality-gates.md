@@ -273,9 +273,11 @@ product inspection; that separately recorded gate must also pass before an epic 
 patch is presented for merge approval.
 
 `validate:release` is the M7, M8, M9, and GA-promotion gate: `validate:full` plus
-`test:content:release`, final asset/provenance rules, SBOM, release metadata, artifact digest, and the
-applicable release checklist. All aggregate commands call the same underlying repository scripts as
-CI. Provider-hosted CodeQL is the explicit additional exception: it uses checked-in configuration,
+`test:content:release`, `test:assets:materialized`, SBOM, release metadata, artifact digest, and the
+applicable release checklist. The materialized asset gate validates every tracked pack inventory
+one-to-one against its lock and locally measured bytes; declarations alone cannot satisfy release
+qualification. All aggregate commands call the same underlying repository scripts as CI.
+Provider-hosted CodeQL is the explicit additional exception: it uses checked-in configuration,
 publishes SARIF, and does not replace `scan:static`.
 
 `lint:history` has the offline `branch` mode and provider-backed `pull-request`, `merge-queue`, `main`,

@@ -51,6 +51,34 @@ await withFixtureRoot(async (root) => {
 });
 
 await withFixtureRoot(async (root) => {
+  await writePack(root, 'asset-pack', validManifest('asset-pack'));
+  await writeAssetInventory(root, 'asset-pack', {
+    schemaVersion: 1,
+    assets: [{ id: 'asset-record' }],
+  });
+  const validatedRecords = [];
+  const [pack] = await discoverContentPacks(root, {
+    validateManifest: () => undefined,
+    validateRecord: (kind, record, path) => validatedRecords.push({ kind, record, path }),
+  });
+  assert.deepEqual(pack.records.assets, [{ id: 'asset-record' }]);
+  assert.equal(Object.isFrozen(pack.records.assets), true);
+  assert.equal(validatedRecords.length, 1);
+  assert.equal(validatedRecords[0].kind, 'assets');
+  assert.equal(validatedRecords[0].record.id, 'asset-record');
+  assert.match(validatedRecords[0].path, /assets[\\/]manifest\.json#assets\/0$/u);
+});
+
+await withFixtureRoot(async (root) => {
+  await writePack(root, 'broken-assets', validManifest('broken-assets'));
+  await writeAssetInventory(root, 'broken-assets', { schemaVersion: 2, assets: [] });
+  await assert.rejects(
+    discoverContentPacks(root, validators),
+    /must contain a schemaVersion 1 asset inventory/u,
+  );
+});
+
+await withFixtureRoot(async (root) => {
   await writePack(root, 'broken-pack', {
     ...validManifest('broken-pack'),
     content: { ...validManifest('broken-pack').content, missions: '../outside' },
@@ -114,4 +142,10 @@ async function writeRecord(rootDirectory, pack, kind, record) {
   const directory = join(rootDirectory, pack, kind);
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, 'record.json'), JSON.stringify(record), 'utf8');
+}
+
+async function writeAssetInventory(rootDirectory, pack, inventory) {
+  const directory = join(rootDirectory, pack, 'assets');
+  await mkdir(directory, { recursive: true });
+  await writeFile(join(directory, 'manifest.json'), JSON.stringify(inventory), 'utf8');
 }

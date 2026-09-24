@@ -7,6 +7,11 @@ test-results/
 .DS_Store
 *.log
 
+# Local environment files may contain credentials and never belong in Git.
+.env
+.env.local
+.env.*.local
+
 # Production media is delivered from object storage, never from Git.
 content/**/assets/**/*.png
 content/**/assets/**/*.jpg

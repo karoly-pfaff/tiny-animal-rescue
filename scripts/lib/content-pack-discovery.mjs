@@ -81,7 +81,26 @@ async function loadPackRecords(candidate, validateRecord) {
     const directory = join(candidate.directory, candidate.manifest.content[name]);
     records[name] = await loadRecordDirectory(directory, name, validateRecord);
   }
+  records.assets = await loadAssetInventory(
+    join(candidate.directory, 'assets', 'manifest.json'),
+    validateRecord,
+  );
   return { ...candidate, records };
+}
+
+async function loadAssetInventory(path, validateRecord) {
+  const source = await readOptionalFile(path);
+  if (source === undefined) {
+    return [];
+  }
+  const inventory = JSON.parse(source);
+  if (!isObject(inventory) || inventory.schemaVersion !== 1 || !Array.isArray(inventory.assets)) {
+    throw new Error(`${path} must contain a schemaVersion 1 asset inventory.`);
+  }
+  for (const [index, record] of inventory.assets.entries()) {
+    validateRecord('assets', record, `${path}#assets/${String(index)}`);
+  }
+  return inventory.assets;
 }
 
 async function loadRecordDirectory(directory, kind, validateRecord) {
