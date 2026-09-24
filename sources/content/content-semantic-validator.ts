@@ -1,6 +1,7 @@
 import { validateContentAssets } from './content-asset-validator.ts';
 import type { ContentPackSource } from './content-registry';
 import { diagnostic } from './content-validation-diagnostic.ts';
+import { isSupportedInitialRescueMission } from './initial-rescue-contract.ts';
 import type { MissionRecord } from './mission-contract';
 import { validateMissionGraph } from './mission-graph-validator.ts';
 import { validateV1Catalog } from './v1-content-catalog-validator.ts';
@@ -37,7 +38,66 @@ export function validateContentSemantics(
   const assetFindings = validateContentAssets(packs, {
     release: options.releaseCatalog === 'v1',
   });
-  return Object.freeze([...generalFindings, ...assetFindings, ...releaseFindings]);
+  const localizationFindings = packs.flatMap(validatePackLocalizations);
+  const initialMissionFindings = validateInitialMission(packs);
+  return Object.freeze([
+    ...generalFindings,
+    ...assetFindings,
+    ...localizationFindings,
+    ...initialMissionFindings,
+    ...releaseFindings,
+  ]);
+}
+
+function validateInitialMission(packs: readonly ContentPackSource[]): readonly string[] {
+  const declaringPacks = packs.filter(({ initialMissionId }) => initialMissionId !== undefined);
+  const declarationFindings =
+    declaringPacks.length === 0
+      ? [diagnostic('Content packs must declare exactly one initial Rescue mission.')]
+      : declaringPacks.length > 1
+        ? [diagnostic('Content packs declare more than one initial Rescue mission.')]
+        : [];
+  const shapeFindings = declaringPacks.flatMap((pack) => {
+    const mission = pack.records.missions.find(({ id }) => id === pack.initialMissionId);
+    return mission !== undefined && isSupportedInitialRescueMission(mission)
+      ? []
+      : [
+          diagnostic(
+            `Pack ${pack.id} initial mission must be its own two-step drag-then-tap Rescue with no prerequisites and a drag source asset.`,
+          ),
+        ];
+  });
+  return [...declarationFindings, ...shapeFindings];
+}
+
+function validatePackLocalizations(pack: ContentPackSource): readonly string[] {
+  const requiredKeys = packLocalizationKeys(pack);
+  return pack.locales.flatMap((locale) => {
+    const document = pack.records.localizations[locale];
+    if (document === undefined) {
+      return [diagnostic(`Pack ${pack.id} is missing localization document ${locale}.`)];
+    }
+    return requiredKeys.flatMap((key) =>
+      document[key] === undefined
+        ? [diagnostic(`Pack ${pack.id} locale ${locale} is missing key ${key}.`)]
+        : [],
+    );
+  });
+}
+
+function packLocalizationKeys(pack: ContentPackSource): readonly string[] {
+  return [
+    pack.titleKey,
+    ...pack.records.animals.map(({ nameKey }) => nameKey),
+    ...pack.records.locations.flatMap(({ mapLabelKey, nameKey }) => [mapLabelKey, nameKey]),
+    ...pack.records.shelterAreas.map(({ nameKey }) => nameKey),
+    ...pack.records.missions.flatMap(({ localization, steps }) => [
+      localization.titleKey,
+      localization.introKey,
+      localization.successKey,
+      ...steps.map(({ promptKey }) => promptKey),
+    ]),
+  ];
 }
 
 function createIndex(packs: readonly ContentPackSource[]): SemanticIndex {

@@ -9,6 +9,7 @@ export type AnimalRecord = Readonly<{
     portrait: string;
     idle: string;
     happy: string;
+    mission?: string;
     sleeping?: string;
   }>;
   shelterReactions: readonly ShelterReactionId[];

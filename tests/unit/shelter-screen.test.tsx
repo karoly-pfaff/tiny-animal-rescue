@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ShelterScreen } from '../../sources/app/shelter-screen';
+import { testFirstRescueContent } from '../support/first-rescue-content';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -11,6 +12,7 @@ describe('ShelterScreen', () => {
   it('shows Mimi only after her resident unlock', () => {
     const { rerender } = render(
       <ShelterScreen
+        content={testFirstRescueContent}
         locale="en"
         onMap={vi.fn()}
         progress={{ completedMissionIds: [], unlockedResidentIds: [], worldFlags: [] }}
@@ -22,6 +24,7 @@ describe('ShelterScreen', () => {
 
     rerender(
       <ShelterScreen
+        content={testFirstRescueContent}
         locale="en"
         onMap={vi.fn()}
         progress={{
@@ -38,6 +41,7 @@ describe('ShelterScreen', () => {
     vi.useFakeTimers();
     render(
       <ShelterScreen
+        content={testFirstRescueContent}
         locale="hu"
         onMap={vi.fn()}
         progress={{

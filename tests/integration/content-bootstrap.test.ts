@@ -21,6 +21,15 @@ describe('bundled content bootstrap', () => {
       'images/start/welcome-garden.png',
     );
     expect(Object.isFrozen(bundledContentRegistry.assets['start-background'])).toBe(true);
+    expect(bundledContentRegistry.animals['mimi-kitten']?.species).toBe('kitten');
+    expect(bundledContentRegistry.locations['garden']?.nameKey).toBe('location.garden.name');
+    expect(bundledContentRegistry.missions['garden-kitten-tree']?.type).toBe('rescue');
+    expect(bundledContentRegistry.shelterAreas['indoor-room']?.capacity).toBe(4);
+    expect(
+      bundledContentRegistry.packs['base']?.records.localizations['en']?.[
+        'animal.mimi-kitten.name'
+      ],
+    ).toBe('Mimi');
     expect(Object.isFrozen(bundledContentRegistry)).toBe(true);
     expect(Object.isFrozen(bundledContentRegistry.packs['base'])).toBe(true);
   });
@@ -53,6 +62,10 @@ describe('bundled content bootstrap', () => {
       manifests: { '../../content/nested-pack/pack.json': manifest },
       assetInventories: {},
       animals: {},
+      localizations: {
+        '../../content/nested-pack/locales/en.json': { 'pack.nested-pack.title': 'Nested' },
+        '../../content/nested-pack/locales/hu.json': { 'pack.nested-pack.title': 'Beágyazott' },
+      },
       locations: {
         '../../content/nested-pack/records/locations/nested-garden.json': location,
       },
@@ -61,6 +74,9 @@ describe('bundled content bootstrap', () => {
     });
 
     expect(registry.locations['nested-garden']).toEqual(location);
+    expect(
+      registry.packs['nested-pack']?.records.localizations['hu']?.['pack.nested-pack.title'],
+    ).toBe('Beágyazott');
     expect(registry.packs['nested-pack']?.dependencies).toEqual([]);
   });
 });

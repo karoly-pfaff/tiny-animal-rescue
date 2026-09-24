@@ -4,7 +4,7 @@ export function semanticPacksFromDiscovery(discoveredPacks) {
     records: {
       ...records,
       assets: records.assets ?? [],
-      localizations: {},
+      localizations: records.localizations ?? {},
     },
   }));
 }

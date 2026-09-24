@@ -18,6 +18,7 @@
         "portrait": { "$ref": "#/$defs/path" },
         "idle": { "$ref": "#/$defs/path" },
         "happy": { "$ref": "#/$defs/path" },
+        "mission": { "$ref": "#/$defs/path" },
         "sleeping": { "$ref": "#/$defs/path" }
       }
     },

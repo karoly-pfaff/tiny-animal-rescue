@@ -85,7 +85,33 @@ async function loadPackRecords(candidate, validateRecord) {
     join(candidate.directory, 'assets', 'manifest.json'),
     validateRecord,
   );
+  records.localizations = await loadLocalizations(
+    candidate.directory,
+    candidate.manifest.locales,
+    validateRecord,
+  );
   return { ...candidate, records };
+}
+
+async function loadLocalizations(packDirectory, locales, validateRecord) {
+  const entries = await Promise.all(
+    [...locales].sort().map(async (locale) => {
+      const path = join(packDirectory, 'locales', `${locale}.json`);
+      let source;
+      try {
+        source = await readFile(path, 'utf8');
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+          throw new Error(`${path} is missing for declared locale ${locale}.`, { cause: error });
+        }
+        throw error;
+      }
+      const document = JSON.parse(source);
+      validateRecord('localizations', document, path);
+      return [locale, document];
+    }),
+  );
+  return Object.fromEntries(entries);
 }
 
 async function loadAssetInventory(path, validateRecord) {
@@ -165,7 +191,13 @@ function visitPack(pack, trail, context) {
 function validateGlobalRecordIds(packs) {
   const owners = new Map();
   for (const pack of packs) {
-    for (const records of Object.values(pack.records)) {
+    for (const records of [
+      pack.records.animals,
+      pack.records.assets,
+      pack.records.locations,
+      pack.records.missions,
+      pack.records.shelterAreas,
+    ]) {
       for (const record of records) {
         const owner = owners.get(record.id);
         if (owner !== undefined) {

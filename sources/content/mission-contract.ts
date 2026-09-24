@@ -19,7 +19,7 @@ type HintStrategy = Readonly<{
   delayMs: number;
 }>;
 
-type StepSuccessCue =
+export type StepSuccessCue =
   | 'effects.interaction.tap-remove'
   | 'effects.interaction.obstacle-cleared'
   | 'effects.interaction.drag-snap'
@@ -35,16 +35,17 @@ type MissionStepBase = Readonly<{
   hint: HintStrategy;
 }>;
 
-type TapStep = MissionStepBase &
+export type TapStep = MissionStepBase &
   Readonly<{
     type: 'tap';
     targetIds: readonly string[];
   }>;
 
-type DragStep = MissionStepBase &
+export type DragStep = MissionStepBase &
   Readonly<{
     type: 'drag';
     sourceId: string;
+    sourceAsset?: string;
     targetId: string;
     snapTolerance: number;
   }>;

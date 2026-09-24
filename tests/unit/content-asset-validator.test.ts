@@ -19,6 +19,7 @@ describe('content asset validation', () => {
       'images/shelter.png',
       'images/scene.png',
       'images/required.png',
+      'images/drag-source.png',
     ] as const;
     const pack = makePack({
       assets: references.map((objectKey, index) =>
@@ -58,7 +59,7 @@ describe('content asset validation', () => {
           assets: { background: references[6] },
         },
       ],
-      missions: [missionWithAssets(references[7], [references[8]])],
+      missions: [missionWithAssets(references[7], [references[8]], references[9])],
     });
 
     expect(validateContentAssets([pack])).toEqual([]);
@@ -232,7 +233,8 @@ describe('content asset validation', () => {
       [makePack({ assets: [asset], locations: [locationWithAssets(asset.objectKey)] })],
       { release: true },
     );
-    expect(findings).toHaveLength(2);
+    expect(findings).toHaveLength(1);
+    expect(findings.join('\n')).toMatch(/pending, unverified, or a placeholder/u);
   });
 });
 
@@ -330,6 +332,7 @@ function locationWithAssets(
 function missionWithAssets(
   background: string,
   required: readonly string[],
+  dragSource: string,
 ): ContentPackSource['records']['missions'][number] {
   return {
     id: 'mission',
@@ -340,16 +343,29 @@ function missionWithAssets(
     steps: [
       {
         id: 'first',
-        type: 'tap',
+        type: 'drag',
         promptKey: 'mission.step.first',
         successCue: 'effects.progress.step-complete',
         hint: { type: 'pulse-after-delay', delayMs: 5000 },
-        targetIds: ['target'],
+        sourceId: 'source',
+        sourceAsset: dragSource,
+        targetId: 'target',
+        snapTolerance: 0.5,
       },
       {
         id: 'second',
-        type: 'tap',
+        type: 'drag',
         promptKey: 'mission.step.second',
+        successCue: 'effects.progress.step-complete',
+        hint: { type: 'pulse-after-delay', delayMs: 5000 },
+        sourceId: 'source-with-code-art',
+        targetId: 'target',
+        snapTolerance: 0.5,
+      },
+      {
+        id: 'third',
+        type: 'tap',
+        promptKey: 'mission.step.third',
         successCue: 'effects.progress.step-complete',
         hint: { type: 'pulse-after-delay', delayMs: 5000 },
         targetIds: ['target'],

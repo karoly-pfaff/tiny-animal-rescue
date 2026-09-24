@@ -1,0 +1,8 @@
+{
+  "id": "indoor-room",
+  "nameKey": "shelter-area.indoor-room.name",
+  "capacity": 4,
+  "assets": {
+    "background": "images/shelter/indoor-room.png"
+  }
+}

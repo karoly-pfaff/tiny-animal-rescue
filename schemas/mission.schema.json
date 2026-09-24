@@ -171,6 +171,7 @@
                 "successCue": { "$ref": "#/$defs/successCue" },
                 "hint": { "$ref": "#/$defs/hint" },
                 "sourceId": { "$ref": "#/$defs/id" },
+                "sourceAsset": { "$ref": "#/$defs/path" },
                 "targetId": { "$ref": "#/$defs/id" },
                 "snapTolerance": { "type": "number", "minimum": 0.1, "maximum": 1 }
               }

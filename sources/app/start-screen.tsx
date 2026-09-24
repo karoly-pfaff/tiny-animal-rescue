@@ -1,9 +1,11 @@
-import { resolveStartBackground } from '../content/first-rescue-assets';
+import { resolveStartBackground } from '../content/content-asset-resolver';
+import type { ContentRegistry } from '../content/content-registry';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 import { LanguageGate } from './language-gate';
 
 type StartScreenProps = Readonly<{
+  contentRegistry: ContentRegistry;
   locale: Locale;
   loading: boolean;
   localeSaveFailed: boolean;
@@ -34,7 +36,7 @@ export function StartScreen(props: StartScreenProps) {
     onSelectLocale,
   } = props;
   const strings = getStrings(locale);
-  const backgroundUrl = resolveStartBackground();
+  const backgroundUrl = resolveStartBackground(props.contentRegistry);
 
   return (
     <main className="game-shell" data-route="start">

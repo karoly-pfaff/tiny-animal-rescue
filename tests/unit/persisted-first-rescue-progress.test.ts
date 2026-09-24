@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createPersistedFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
 import { createEmptySave, type SaveGameV1 } from '../../sources/persistence/save-game-schema';
+import { testFirstRescueReward } from '../support/first-rescue-content';
 
 describe('persisted first rescue progress adapter', () => {
   it('loads saved Mimi progress and keeps replay rewards idempotent', async () => {
@@ -21,8 +22,8 @@ describe('persisted first rescue progress adapter', () => {
     });
 
     expect(await store.load('en')).toBe('ready');
-    await store.commitReward('en');
-    await store.commitReward('en');
+    await store.commitReward('en', testFirstRescueReward);
+    await store.commitReward('en', testFirstRescueReward);
 
     expect(save.completedMissionIds).toEqual(['garden-kitten-tree']);
     expect(save.unlockedResidentIds).toEqual(['mimi-kitten']);

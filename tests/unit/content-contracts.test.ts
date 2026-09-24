@@ -42,6 +42,7 @@ const expectedPackSource = {
   version: '0.2.0',
   contractVersion: 1,
   titleKey: 'pack.base.title',
+  initialMissionId: 'garden-kitten-tree',
   locales: ['hu', 'en'],
   dependencies: [],
   content: {
@@ -59,6 +60,7 @@ const expectedAnimal = {
   shelterAreaId: 'indoor-room',
   assets: {
     portrait: 'images/residents/mimi/canonical.png',
+    mission: 'images/residents/mimi/mission.png',
     idle: 'images/residents/mimi/shelter-idle.png',
     happy: 'images/residents/mimi/celebration.png',
   },
@@ -144,6 +146,7 @@ const expectedMission = {
       successCue: 'effects.interaction.drag-snap',
       hint: { type: 'pulse-after-delay', delayMs: 5000 },
       sourceId: 'ladder',
+      sourceAsset: 'images/missions/garden-kitten-tree/ladder.png',
       targetId: 'tree-ladder-target',
       snapTolerance: 0.55,
     },

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
+import { testFirstRescueContent } from '../support/first-rescue-content';
 
 describe('CelebrationScreen', () => {
   it('narrates Mimi by semantic cue and offers both destinations', () => {
@@ -11,6 +12,7 @@ describe('CelebrationScreen', () => {
     const onShelter = vi.fn();
     const { unmount } = render(
       <CelebrationScreen
+        content={testFirstRescueContent}
         locale="hu"
         narrationService={{ speak, stop }}
         onMap={onMap}

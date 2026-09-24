@@ -35,6 +35,7 @@ Required fields:
 - semantic `version`
 - supported contract version
 - localized pack title keys
+- optional `initialMissionId` for the one pack that owns the application entry mission
 - declared locale list
 - content directory declarations
 - optional dependency list
@@ -56,7 +57,17 @@ its meaning or default, making an optional field required, or changing an enum m
 requires the next integer contract version and a deliberate migration/compatibility decision. Pack
 SemVer records content releases; it does not replace the integer format contract.
 
-In contract version 1, an omitted pack `dependencies` field normalizes to an immutable empty list.
+In contract version 1, an omitted pack `dependencies` field normalizes to an immutable empty list. An
+omitted `initialMissionId` means that the pack does not own the application entry mission. The bundled
+application requires exactly one declaration across its assembled packs; ambiguity is an error, never
+a pack- or filename-order choice. The declared mission must belong to that pack and be a
+prerequisite-free two-step Rescue whose ordered steps are authored drag then tap.
+
+Every locale named by the manifest must have exactly one `locales/<locale>.json` document. Discovery
+fails when a declared document is absent, and semantic validation requires the pack title plus every
+animal, location, shelter-area, mission, and step key referenced by that pack in every declared
+locale. The assembled registry exposes immutable localization documents; runtime content selects text
+from those documents rather than duplicating content copy in application code.
 
 The base pack ID is `base`. Cross-pack references require an explicit dependency and use qualified IDs. Base content is not allowed to depend on expansion content.
 In v1 the dependency list contains pack IDs only: every pack is bundled and validated in one build,
@@ -81,7 +92,8 @@ An animal declares:
 
 - `id`, `species`, and localization keys
 - one `shelterAreaId`
-- portrait and scene/shelter animation assets
+- portrait and scene/shelter animation assets; `assets.mission` optionally selects a dedicated mission
+  cutout and otherwise falls back to the portrait
 - allowed shelter reactions from a fixed enum
 - language-neutral effect cues
 - optional tags used only for selection and validation
@@ -112,6 +124,13 @@ type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
 ```
 
 Every step has a stable step ID, prompt key, visual targets, success cue, and hint strategy. Per-type settings are constrained and defaulted during normalization.
+A drag step may declare a `sourceAsset` logical key when its movable source is authored media. The
+reference follows the same ownership rules as every other content asset and must exist in the owning
+inventory; omitting it means the reusable interaction supplies code-native presentation.
+`snapTolerance` scales the authored target hit region from `0.1` through `1` relative to the contract
+version 1 baseline of `0.55`; larger values are more forgiving. The runtime consumes each step's
+ordered prompt, hint delay, source/target identifiers, and success cue. Production sound playback for
+those semantic cues is integrated only when its asset set has passed the audio workflow.
 
 ## Reward rules
 

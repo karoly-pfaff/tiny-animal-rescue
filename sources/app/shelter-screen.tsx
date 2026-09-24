@@ -1,19 +1,27 @@
-import { resolveIndoorShelterBackground } from '../content/first-rescue-assets';
-import { type FirstRescueProgress, hasMimiResident } from './first-rescue-progress';
+import {
+  firstRescueText,
+  type FirstRescueContent,
+  resolveFirstRescueAssets,
+} from '../content/first-rescue-content';
+import { type FirstRescueProgress, hasResident } from './first-rescue-progress';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 import { ShelterResident } from './shelter-resident';
 
 type ShelterScreenProps = Readonly<{
+  content: FirstRescueContent;
   locale: Locale;
   onMap: () => void;
   progress: FirstRescueProgress;
 }>;
 
-export function ShelterScreen({ locale, onMap, progress }: ShelterScreenProps) {
+export function ShelterScreen({ content, locale, onMap, progress }: ShelterScreenProps) {
   const strings = getStrings(locale);
-  const mimiUnlocked = hasMimiResident(progress);
-  const backgroundUrl = resolveIndoorShelterBackground();
+  const residentUnlocked = hasResident(progress, content.animal.id);
+  const assets = resolveFirstRescueAssets(content);
+  const backgroundUrl = assets.shelterBackground;
+  const residentName = firstRescueText(content, locale, content.animal.nameKey);
+  const shelterName = firstRescueText(content, locale, content.shelterArea.nameKey);
 
   return (
     <main className="game-shell" data-route="shelter">
@@ -25,12 +33,13 @@ export function ShelterScreen({ locale, onMap, progress }: ShelterScreenProps) {
           <img className="scene-background" src={backgroundUrl} alt="" aria-hidden="true" />
         )}
         <header className="shelter-title-plaque">
-          <h1 id="shelter-title">{strings.indoorRoom}</h1>
+          <h1 id="shelter-title">{shelterName}</h1>
         </header>
-        {mimiUnlocked ? (
+        {residentUnlocked ? (
           <ShelterResident
+            assetUrl={assets.residentShelter}
             happyText={strings.mimiHappy}
-            name={strings.mimiName}
+            name={residentName}
             tapLabel={strings.mimiTapLabel}
           />
         ) : (

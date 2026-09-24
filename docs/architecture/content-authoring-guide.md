@@ -87,7 +87,10 @@ remain separate runtime categories and channels.
 ## Localization checklist
 
 - Names and prompts use keys, not inline text.
-- HU and EN keys are added together.
+- Every locale declared by `pack.json` has a matching `locales/<locale>.json`; a missing file is a
+  discovery failure.
+- HU and EN keys are added together, including the pack title and every referenced animal, location,
+  shelter-area, mission, and step key.
 - Spoken lines are short, warm, direct, and avoid multi-step instructions.
 - The prompt describes only the active action.
 - The success line names the animal where appropriate.
@@ -98,6 +101,9 @@ remain separate runtime categories and channels.
 - Manifest contract version is supported.
 - Dependencies are explicit and acyclic.
 - IDs are unique in the assembled registry.
+- At most one pack declares `initialMissionId`; an application bundle has exactly one, and that ID
+  resolves inside its declaring pack to the supported ordered drag-then-tap Rescue shape.
+- Every declared locale file exists and resolves every localization key referenced by its pack.
 - Own asset references use unqualified pack-relative object keys. Dependency assets use
   `<pack-id>:<object-key>`, and that pack is declared in `dependencies`; inventory keys are never
   qualified.

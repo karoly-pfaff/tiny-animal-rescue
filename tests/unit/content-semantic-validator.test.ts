@@ -19,8 +19,12 @@ describe('content semantic validation', () => {
       validateContentSemantics(
         validPacks({
           missions: [
+            makeMission(),
             makeMission({
               id: 'pond-turtle-find-water',
+              type: 'world',
+              subjectAnimalId: undefined,
+              unlockResidentId: undefined,
               steps: [makeStep('trace-only', 'trace')],
             }),
           ],
@@ -122,6 +126,66 @@ describe('content semantic validation', () => {
       missions: [makeMission(), makeMission({ id: 'second-rescue' })],
     });
     expect(validateContentSemantics(packs).join('\n')).toMatch(/unlocked by both/u);
+  });
+
+  it('requires every declared locale document and referenced localization key', () => {
+    const pack = validPacks()[0];
+    if (pack === undefined) {
+      throw new Error('The valid-pack fixture must contain one pack.');
+    }
+    const hungarian = pack.records.localizations['hu'] ?? {};
+    expect(
+      validateContentSemantics([withRecords(pack, { localizations: { hu: hungarian } })]).join(
+        '\n',
+      ),
+    ).toMatch(/missing localization document en/u);
+
+    const english = { ...(pack.records.localizations['en'] ?? {}) };
+    delete english['animal.mimi-kitten.name'];
+    expect(
+      validateContentSemantics([
+        withRecords(pack, { localizations: { en: english, hu: hungarian } }),
+      ]).join('\n'),
+    ).toMatch(/locale en is missing key animal\.mimi-kitten\.name/u);
+  });
+
+  it('validates a single explicit initial Rescue declaration and rejects ambiguity', () => {
+    const dragStep = makeStep('place-object', 'drag');
+    const initialMission = makeMission({
+      steps: [
+        dragStep.type === 'drag'
+          ? { ...dragStep, sourceAsset: 'images/missions/initial/source.png' }
+          : dragStep,
+        makeStep('help-subject'),
+      ],
+    });
+    const base = validPacks({ missions: [initialMission] })[0];
+    if (base === undefined) {
+      throw new Error('The valid-pack fixture must contain one pack.');
+    }
+    const declared = { ...base, initialMissionId: 'garden-kitten-tree' };
+    expect(validateContentSemantics([declared])).toEqual([]);
+
+    const second = {
+      ...makePack({}),
+      id: 'second-pack',
+      initialMissionId: 'missing-mission',
+    };
+    const findings = validateContentSemantics([declared, second]).join('\n');
+    expect(findings).toMatch(/more than one initial Rescue mission/u);
+    expect(findings).toMatch(/initial mission must be its own two-step drag-then-tap Rescue/u);
+  });
+
+  it('rejects an assembled pack set without an initial Rescue declaration', () => {
+    const declared = validPacks()[0];
+    if (declared === undefined) {
+      throw new Error('The valid-pack fixture must contain one pack.');
+    }
+    const { initialMissionId, ...withoutInitial } = declared;
+    expect(initialMissionId).toBe('garden-kitten-tree');
+    expect(validateContentSemantics([withoutInitial]).join('\n')).toMatch(
+      /must declare exactly one initial Rescue mission/u,
+    );
   });
 
   it('rejects prerequisite cycles while accepting shared completed dependencies', () => {
@@ -362,25 +426,30 @@ type RecordOverrides = Partial<ContentPackSource['records']>;
 
 function validPacks(overrides: RecordOverrides = {}): readonly ContentPackSource[] {
   return [
-    makePack({
-      animals: [makeAnimal()],
-      locations: [makeLocation()],
-      missions: [makeMission()],
-      shelterAreas: [makeShelterArea()],
-      ...overrides,
-    }),
+    {
+      ...makePack({
+        animals: [makeAnimal()],
+        locations: [makeLocation()],
+        missions: [makeMission()],
+        shelterAreas: [makeShelterArea()],
+        ...overrides,
+      }),
+      initialMissionId: 'garden-kitten-tree',
+    },
   ];
 }
 
 function makePack(records: RecordOverrides, releaseAssets = false): ContentPackSource {
-  const completeRecords = {
-    animals: [],
-    assets: [],
-    localizations: {},
-    locations: [],
-    missions: [],
-    shelterAreas: [],
-    ...records,
+  const authoredRecords = {
+    animals: records.animals ?? [],
+    locations: records.locations ?? [],
+    missions: records.missions ?? [],
+    shelterAreas: records.shelterAreas ?? [],
+  };
+  const completeRecords: ContentPackSource['records'] = {
+    ...authoredRecords,
+    assets: records.assets ?? [],
+    localizations: records.localizations ?? makeLocalizationDocuments(authoredRecords),
   };
   const assets =
     records.assets ?? makeAssetRecords(referencedPaths(completeRecords), releaseAssets, 'base');
@@ -402,6 +471,28 @@ function makePack(records: RecordOverrides, releaseAssets = false): ContentPackS
       assets,
     },
   };
+}
+
+function makeLocalizationDocuments(
+  records: Pick<
+    ContentPackSource['records'],
+    'animals' | 'locations' | 'missions' | 'shelterAreas'
+  >,
+): ContentPackSource['records']['localizations'] {
+  const keys = [
+    'pack.base.title',
+    ...records.animals.map(({ nameKey }) => nameKey),
+    ...records.locations.flatMap(({ mapLabelKey, nameKey }) => [mapLabelKey, nameKey]),
+    ...records.shelterAreas.map(({ nameKey }) => nameKey),
+    ...records.missions.flatMap(({ localization, steps }) => [
+      localization.titleKey,
+      localization.introKey,
+      localization.successKey,
+      ...steps.map(({ promptKey }) => promptKey),
+    ]),
+  ];
+  const document = Object.fromEntries(keys.map((key) => [key, key]));
+  return { en: document, hu: document };
 }
 
 function makeAnimal(overrides: Partial<AnimalRecord> = {}): AnimalRecord {
@@ -476,7 +567,7 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
       designWidth: 1024 as const,
       designHeight: 768 as const,
     },
-    steps: options.steps ?? [makeStep('first'), makeStep('second')],
+    steps: options.steps ?? [makeStep('first', 'drag'), makeStep('second')],
     reward,
     localization: {
       titleKey: `mission.${id}.title`,
@@ -506,6 +597,7 @@ function makeStep(
       ...common,
       type,
       sourceId: `${id}-source`,
+      sourceAsset: `images/missions/fixture/${id}-source.png`,
       targetId: `${id}-target`,
       snapTolerance: 0.5,
     };
@@ -554,7 +646,10 @@ function makeV1Pack(): ContentPackSource {
       steps: stepTypes.map((stepType, index) => makeStep(`step-${String(index + 1)}`, stepType)),
     });
   });
-  return makePack({ animals, locations, missions, shelterAreas }, true);
+  return {
+    ...makePack({ animals, locations, missions, shelterAreas }, true),
+    initialMissionId: 'garden-kitten-tree',
+  };
 }
 
 function referencedPaths(records: ContentPackSource['records']): readonly string[] {
@@ -562,7 +657,13 @@ function referencedPaths(records: ContentPackSource['records']): readonly string
     ...records.animals.flatMap(({ assets }) => Object.values(assets)),
     ...records.locations.flatMap(({ assets }) => Object.values(assets)),
     ...records.shelterAreas.map(({ assets }) => assets.background),
-    ...records.missions.flatMap(({ scene, assets }) => [scene.background, ...assets.required]),
+    ...records.missions.flatMap(({ scene, assets, steps }) => [
+      scene.background,
+      ...assets.required,
+      ...steps.flatMap((step) =>
+        step.type === 'drag' && step.sourceAsset !== undefined ? [step.sourceAsset] : [],
+      ),
+    ]),
   ].filter((value): value is string => typeof value === 'string');
 }
 

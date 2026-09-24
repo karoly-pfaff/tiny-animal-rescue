@@ -1,0 +1,9 @@
+{
+  "id": "garden",
+  "nameKey": "location.garden.name",
+  "mapLabelKey": "location.garden.map-label",
+  "assets": {
+    "mapBackground": "images/map/garden-map.png",
+    "missionBackground": "images/missions/garden-kitten-tree/background.png"
+  }
+}
