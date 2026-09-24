@@ -42,6 +42,7 @@ const expectedPackSource = {
   version: '0.2.0',
   contractVersion: 1,
   titleKey: 'pack.base.title',
+  initialMissionId: 'garden-kitten-tree',
   locales: ['hu', 'en'],
   dependencies: [],
   content: {
@@ -57,8 +58,13 @@ const expectedAnimal = {
   species: 'kitten',
   nameKey: 'animal.mimi-kitten.name',
   shelterAreaId: 'indoor-room',
+  shelterLocalization: {
+    happyKey: 'animal.mimi-kitten.shelter.happy',
+    tapLabelKey: 'animal.mimi-kitten.shelter.tap-label',
+  },
   assets: {
     portrait: 'images/residents/mimi/canonical.png',
+    mission: 'images/residents/mimi/mission.png',
     idle: 'images/residents/mimi/shelter-idle.png',
     happy: 'images/residents/mimi/celebration.png',
   },
@@ -114,7 +120,9 @@ const expectedAudioAsset = {
 
 const expectedLocalization = {
   'animal.mimi-kitten.name': 'Mimi',
-  'location.garden.map-label': 'Kert',
+  'animal.mimi-kitten.shelter.happy': 'Mimi boldogan dorombol.',
+  'animal.mimi-kitten.shelter.tap-label': 'Simogasd meg Mimit',
+  'location.garden.map-label': 'Kerti mentés: Mimi',
   'location.garden.name': 'Kert',
   'mission.garden-kitten-tree.intro': 'Mimi segítségre vár.',
   'mission.garden-kitten-tree.step.help-mimi-down': 'Koppints Mimire!',
@@ -144,7 +152,19 @@ const expectedMission = {
       successCue: 'effects.interaction.drag-snap',
       hint: { type: 'pulse-after-delay', delayMs: 5000 },
       sourceId: 'ladder',
+      sourceAsset: 'images/missions/garden-kitten-tree/ladder.png',
+      sourcePosition: { x: 0.2, y: 0.72 },
       targetId: 'tree-ladder-target',
+      targetBounds: {
+        center: { x: 0.65, y: 0.61 },
+        height: 0.42,
+        width: 0.24,
+      },
+      fallbackTargetBounds: {
+        center: { x: 0.65, y: 0.68 },
+        height: 0.42,
+        width: 0.24,
+      },
       snapTolerance: 0.55,
     },
     {
@@ -296,6 +316,21 @@ describe('content contracts', () => {
       }),
     ).toBe(true);
     expect(validate(assetSchema, { ...assetExample, objectKey: qualified })).toBe(false);
+  });
+
+  it('accepts dependency-qualified record references', () => {
+    expect(validate(animalSchema, { ...animalExample, shelterAreaId: 'base:indoor-room' })).toBe(
+      true,
+    );
+    expect(
+      validate(missionSchema, {
+        ...missionExample,
+        locationId: 'base:garden',
+        subjectAnimalId: 'base:mimi-kitten',
+        prerequisites: [{ completedMissionId: 'base:garden-kitten-tree' }],
+        reward: { ...missionExample.reward, unlockResidentId: 'base:mimi-kitten' },
+      }),
+    ).toBe(true);
   });
 
   it('requires locale ownership only for voice assets', () => {

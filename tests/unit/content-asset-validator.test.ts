@@ -19,6 +19,7 @@ describe('content asset validation', () => {
       'images/shelter.png',
       'images/scene.png',
       'images/required.png',
+      'images/drag-source.png',
     ] as const;
     const pack = makePack({
       assets: references.map((objectKey, index) =>
@@ -30,6 +31,10 @@ describe('content asset validation', () => {
           species: 'animal',
           nameKey: 'animal.name',
           shelterAreaId: 'area',
+          shelterLocalization: {
+            happyKey: 'animal.shelter.happy',
+            tapLabelKey: 'animal.shelter.tap-label',
+          },
           assets: {
             portrait: references[0],
             idle: references[1],
@@ -58,7 +63,7 @@ describe('content asset validation', () => {
           assets: { background: references[6] },
         },
       ],
-      missions: [missionWithAssets(references[7], [references[8]])],
+      missions: [missionWithAssets(references[7], [references[8]], references[9])],
     });
 
     expect(validateContentAssets([pack])).toEqual([]);
@@ -232,7 +237,39 @@ describe('content asset validation', () => {
       [makePack({ assets: [asset], locations: [locationWithAssets(asset.objectKey)] })],
       { release: true },
     );
-    expect(findings).toHaveLength(2);
+    expect(findings).toHaveLength(1);
+    expect(findings.join('\n')).toMatch(/pending, unverified, or a placeholder/u);
+  });
+
+  it('requires exactly one image start background in the assembled registry', () => {
+    const base = makePack({});
+    const duplicate = makePack(
+      {
+        assets: [
+          imageAsset({
+            id: 'second-start',
+            objectKey: 'images/second-start.png',
+            ownership: 'expansion',
+            role: 'start-background',
+          }),
+        ],
+      },
+      { id: 'expansion', dependencies: ['base'] },
+    );
+    expect(validateContentAssets([base, duplicate]).join('\n')).toMatch(
+      /exactly one start-background asset; found 2/u,
+    );
+
+    const withoutStart = {
+      ...base,
+      records: {
+        ...base.records,
+        assets: base.records.assets.filter(({ role }) => role !== 'start-background'),
+      },
+    };
+    expect(validateContentAssets([withoutStart]).join('\n')).toMatch(
+      /exactly one start-background asset; found 0/u,
+    );
   });
 });
 
@@ -241,6 +278,11 @@ type PackOptions = Readonly<{ id?: string; dependencies?: readonly string[] }>;
 
 function makePack(records: RecordOverrides, options: PackOptions = {}): ContentPackSource {
   const id = options.id ?? 'base';
+  const declaredAssets = records.assets ?? [];
+  const assets =
+    id === 'base' && !declaredAssets.some(({ role }) => role === 'start-background')
+      ? [startBackgroundAsset(), ...declaredAssets]
+      : declaredAssets;
   return {
     id,
     version: '0.3.0',
@@ -256,12 +298,12 @@ function makePack(records: RecordOverrides, options: PackOptions = {}): ContentP
     },
     records: {
       animals: [],
-      assets: [],
       localizations: {},
       locations: [],
       missions: [],
       shelterAreas: [],
       ...records,
+      assets,
     },
   };
 }
@@ -285,12 +327,21 @@ function imageAsset(overrides: Partial<ImageAsset> = {}): ImageAsset {
   };
 }
 
-function releaseImage(): ImageAsset {
+function releaseImage(overrides: Partial<ImageAsset> = {}): ImageAsset {
   return imageAsset({
     classification: 'production-safe',
     delivery: 'r2-locked',
     bytes: 100,
     digest: `sha256:${'0'.repeat(64)}`,
+    ...overrides,
+  });
+}
+
+function startBackgroundAsset(): ImageAsset {
+  return releaseImage({
+    id: 'start-background',
+    objectKey: 'images/shell/start-background.png',
+    role: 'start-background',
   });
 }
 
@@ -330,6 +381,7 @@ function locationWithAssets(
 function missionWithAssets(
   background: string,
   required: readonly string[],
+  dragSource: string,
 ): ContentPackSource['records']['missions'][number] {
   return {
     id: 'mission',
@@ -340,16 +392,51 @@ function missionWithAssets(
     steps: [
       {
         id: 'first',
-        type: 'tap',
+        type: 'drag',
         promptKey: 'mission.step.first',
         successCue: 'effects.progress.step-complete',
         hint: { type: 'pulse-after-delay', delayMs: 5000 },
-        targetIds: ['target'],
+        sourceId: 'source',
+        sourceAsset: dragSource,
+        sourcePosition: { x: 0.2, y: 0.7 },
+        targetId: 'target',
+        targetBounds: {
+          center: { x: 0.7, y: 0.6 },
+          height: 0.3,
+          width: 0.2,
+        },
+        fallbackTargetBounds: {
+          center: { x: 0.7, y: 0.65 },
+          height: 0.3,
+          width: 0.2,
+        },
+        snapTolerance: 0.5,
       },
       {
         id: 'second',
-        type: 'tap',
+        type: 'drag',
         promptKey: 'mission.step.second',
+        successCue: 'effects.progress.step-complete',
+        hint: { type: 'pulse-after-delay', delayMs: 5000 },
+        sourceId: 'source-with-code-art',
+        sourcePosition: { x: 0.15, y: 0.75 },
+        targetId: 'target',
+        targetBounds: {
+          center: { x: 0.65, y: 0.55 },
+          height: 0.25,
+          width: 0.25,
+        },
+        fallbackTargetBounds: {
+          center: { x: 0.65, y: 0.6 },
+          height: 0.25,
+          width: 0.25,
+        },
+        snapTolerance: 0.5,
+      },
+      {
+        id: 'third',
+        type: 'tap',
+        promptKey: 'mission.step.third',
         successCue: 'effects.progress.step-complete',
         hint: { type: 'pulse-after-delay', delayMs: 5000 },
         targetIds: ['target'],

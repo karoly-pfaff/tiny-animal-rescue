@@ -125,24 +125,24 @@ describe('App', () => {
     await screen.findByRole('button', { name: 'Garden rescue: Mimi' });
     fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
     await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
 
     expect(progressStore.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: ['mimi-kitten'],
       worldFlags: ['mimi-rescued'],
     });
-    expect(screen.queryByRole('heading', { name: 'Mimi is rescued!' })).not.toBeInTheDocument();
-    await screen.findByRole('heading', { name: 'Mimi is rescued!' });
+    expect(screen.queryByRole('heading', { name: 'Mimi is safe!' })).not.toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Mimi is safe!' });
     await act(() => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       return Promise.resolve();
     });
 
-    expect(screen.getByRole('heading', { name: 'Mimi is rescued!' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Mimi is safe!' })).toBeVisible();
     expect(narrationService.speak).toHaveBeenCalledWith({
       cue: 'voice.mission.garden-kitten-tree.success',
       locale: 'en',
@@ -161,7 +161,9 @@ describe('App', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
-    expect(screen.queryByRole('heading', { name: 'Mimi megmenekült!' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Mimi biztonságban van!' }),
+    ).not.toBeInTheDocument();
   });
 
   it('blocks play and retries after a transient save load failure', async () => {

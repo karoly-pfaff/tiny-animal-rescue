@@ -1,4 +1,11 @@
 import type { MissionRecord } from './mission-contract';
+import {
+  animalRecords,
+  locationRecords,
+  missionRecords,
+  shelterAreaRecords,
+  type ContentRecordKind,
+} from './content-record-kind';
 import { orderPacksByDependencies } from './pack-dependency-order';
 import type { PackManifest } from './pack-contract';
 import type {
@@ -18,6 +25,11 @@ type ContentPackRecords = Readonly<{
   shelterAreas: readonly ShelterAreaRecord[];
 }>;
 
+type RegistryRecordKind = 'assets' | ContentRecordKind;
+const assetRecords = 'assets' satisfies RegistryRecordKind;
+
+type ContentRecordOwners = Readonly<Record<RegistryRecordKind, Readonly<Record<string, string>>>>;
+
 export type ContentPackSource = PackManifest &
   Readonly<{
     records: ContentPackRecords;
@@ -30,6 +42,7 @@ export type ContentRegistry = Readonly<{
   assets: Readonly<Record<string, AssetMetadata>>;
   locations: Readonly<Record<string, LocationRecord>>;
   missions: Readonly<Record<string, MissionRecord>>;
+  recordOwners: ContentRecordOwners;
   shelterAreas: Readonly<Record<string, ShelterAreaRecord>>;
 }>;
 
@@ -44,6 +57,13 @@ export function assembleContentRegistry(sources: readonly ContentPackSource[]): 
     assets: indexRecords(orderedSources.flatMap(({ records }) => records.assets)),
     locations: indexRecords(orderedSources.flatMap(({ records }) => records.locations)),
     missions: indexRecords(orderedSources.flatMap(({ records }) => records.missions)),
+    recordOwners: {
+      animals: indexOwners(orderedSources, animalRecords),
+      assets: indexOwners(orderedSources, assetRecords),
+      locations: indexOwners(orderedSources, locationRecords),
+      missions: indexOwners(orderedSources, missionRecords),
+      shelterAreas: indexOwners(orderedSources, shelterAreaRecords),
+    },
     shelterAreas: indexRecords(orderedSources.flatMap(({ records }) => records.shelterAreas)),
   });
 }
@@ -54,6 +74,15 @@ function indexRecords<Entry extends IdentifiedRecord>(
   records: readonly Entry[],
 ): Readonly<Record<string, Entry>> {
   return Object.fromEntries(records.map((record) => [record.id, record]));
+}
+
+function indexOwners(
+  sources: readonly ContentPackSource[],
+  kind: RegistryRecordKind,
+): Readonly<Record<string, string>> {
+  return Object.fromEntries(
+    sources.flatMap((source) => source.records[kind].map((record) => [record.id, source.id])),
+  );
 }
 
 function rejectDuplicateGlobalIds(sources: readonly ContentPackSource[]): void {

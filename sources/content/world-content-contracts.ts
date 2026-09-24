@@ -5,10 +5,15 @@ export type AnimalRecord = Readonly<{
   species: string;
   nameKey: string;
   shelterAreaId: string;
+  shelterLocalization: Readonly<{
+    happyKey: string;
+    tapLabelKey: string;
+  }>;
   assets: Readonly<{
     portrait: string;
     idle: string;
     happy: string;
+    mission?: string;
     sleeping?: string;
   }>;
   shelterReactions: readonly ShelterReactionId[];

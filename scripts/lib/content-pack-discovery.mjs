@@ -12,6 +12,7 @@ export async function discoverContentPacks(contentRoot, validators) {
   const packs = [];
   for (const candidate of candidates.filter((value) => value !== undefined)) {
     validators.validateManifest(candidate.manifest, candidate.packPath);
+    validatePackDirectoryIdentity(candidate);
     packs.push(await loadPackRecords(normalizeCandidate(candidate), validators.validateRecord));
   }
   validatePackGraph(packs);
@@ -52,7 +53,20 @@ async function readPackManifest(contentRoot, directory) {
   }
   const manifest = JSON.parse(source);
   validateManifestDirectories(manifest, packPath);
-  return { directory: resolve(contentRoot, directory), manifest, packPath };
+  return {
+    directory: resolve(contentRoot, directory),
+    directoryName: directory,
+    manifest,
+    packPath,
+  };
+}
+
+function validatePackDirectoryIdentity(candidate) {
+  if (candidate.manifest.id !== candidate.directoryName) {
+    throw new Error(
+      `${candidate.packPath} declares pack ID ${String(candidate.manifest.id)} but its directory is ${candidate.directoryName}.`,
+    );
+  }
 }
 
 async function readOptionalFile(path) {
@@ -85,7 +99,33 @@ async function loadPackRecords(candidate, validateRecord) {
     join(candidate.directory, 'assets', 'manifest.json'),
     validateRecord,
   );
+  records.localizations = await loadLocalizations(
+    candidate.directory,
+    candidate.manifest.locales,
+    validateRecord,
+  );
   return { ...candidate, records };
+}
+
+async function loadLocalizations(packDirectory, locales, validateRecord) {
+  const entries = await Promise.all(
+    [...locales].sort().map(async (locale) => {
+      const path = join(packDirectory, 'locales', `${locale}.json`);
+      let source;
+      try {
+        source = await readFile(path, 'utf8');
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+          throw new Error(`${path} is missing for declared locale ${locale}.`, { cause: error });
+        }
+        throw error;
+      }
+      const document = JSON.parse(source);
+      validateRecord('localizations', document, path);
+      return [locale, document];
+    }),
+  );
+  return Object.fromEntries(entries);
 }
 
 async function loadAssetInventory(path, validateRecord) {
@@ -165,7 +205,13 @@ function visitPack(pack, trail, context) {
 function validateGlobalRecordIds(packs) {
   const owners = new Map();
   for (const pack of packs) {
-    for (const records of Object.values(pack.records)) {
+    for (const records of [
+      pack.records.animals,
+      pack.records.assets,
+      pack.records.locations,
+      pack.records.missions,
+      pack.records.shelterAreas,
+    ]) {
       for (const record of records) {
         const owner = owners.get(record.id);
         if (owner !== undefined) {

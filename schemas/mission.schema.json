@@ -18,8 +18,8 @@
   "properties": {
     "id": { "$ref": "#/$defs/id" },
     "type": { "enum": ["rescue", "help", "world"] },
-    "locationId": { "$ref": "#/$defs/id" },
-    "subjectAnimalId": { "$ref": "#/$defs/id" },
+    "locationId": { "$ref": "#/$defs/reference" },
+    "subjectAnimalId": { "$ref": "#/$defs/reference" },
     "prerequisites": {
       "type": "array",
       "uniqueItems": true,
@@ -27,7 +27,7 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["completedMissionId"],
-        "properties": { "completedMissionId": { "$ref": "#/$defs/id" } }
+        "properties": { "completedMissionId": { "$ref": "#/$defs/reference" } }
       }
     },
     "scene": {
@@ -52,7 +52,7 @@
       "required": ["completeMission"],
       "properties": {
         "completeMission": { "const": true },
-        "unlockResidentId": { "$ref": "#/$defs/id" },
+        "unlockResidentId": { "$ref": "#/$defs/reference" },
         "worldFlags": {
           "type": "array",
           "uniqueItems": true,
@@ -86,6 +86,10 @@
   },
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "reference": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
     "path": {
       "type": "string",
       "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
@@ -97,6 +101,16 @@
       "properties": {
         "x": { "type": "number", "minimum": 0, "maximum": 1 },
         "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "targetBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["center", "height", "width"],
+      "properties": {
+        "center": { "$ref": "#/$defs/position" },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
       }
     },
     "hint": {
@@ -161,7 +175,10 @@
                 "successCue",
                 "hint",
                 "sourceId",
+                "sourcePosition",
                 "targetId",
+                "targetBounds",
+                "fallbackTargetBounds",
                 "snapTolerance"
               ],
               "properties": {
@@ -171,7 +188,11 @@
                 "successCue": { "$ref": "#/$defs/successCue" },
                 "hint": { "$ref": "#/$defs/hint" },
                 "sourceId": { "$ref": "#/$defs/id" },
+                "sourceAsset": { "$ref": "#/$defs/path" },
+                "sourcePosition": { "$ref": "#/$defs/position" },
                 "targetId": { "$ref": "#/$defs/id" },
+                "targetBounds": { "$ref": "#/$defs/targetBounds" },
+                "fallbackTargetBounds": { "$ref": "#/$defs/targetBounds" },
                 "snapTolerance": { "type": "number", "minimum": 0.1, "maximum": 1 }
               }
             }

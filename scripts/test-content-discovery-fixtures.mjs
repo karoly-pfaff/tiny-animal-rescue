@@ -51,6 +51,15 @@ await withFixtureRoot(async (root) => {
 });
 
 await withFixtureRoot(async (root) => {
+  await writePack(root, 'missing-locale', validManifest('missing-locale'));
+  await rm(join(root, 'missing-locale', 'locales', 'en.json'));
+  await assert.rejects(
+    discoverContentPacks(root, validators),
+    /is missing for declared locale en/u,
+  );
+});
+
+await withFixtureRoot(async (root) => {
   await writePack(root, 'asset-pack', validManifest('asset-pack'));
   await writeAssetInventory(root, 'asset-pack', {
     schemaVersion: 1,
@@ -61,12 +70,13 @@ await withFixtureRoot(async (root) => {
     validateManifest: () => undefined,
     validateRecord: (kind, record, path) => validatedRecords.push({ kind, record, path }),
   });
+  const assetValidations = validatedRecords.filter(({ kind }) => kind === 'assets');
   assert.deepEqual(pack.records.assets, [{ id: 'asset-record' }]);
+  assert.deepEqual(Object.keys(pack.records.localizations), ['en', 'hu']);
   assert.equal(Object.isFrozen(pack.records.assets), true);
-  assert.equal(validatedRecords.length, 1);
-  assert.equal(validatedRecords[0].kind, 'assets');
-  assert.equal(validatedRecords[0].record.id, 'asset-record');
-  assert.match(validatedRecords[0].path, /assets[\\/]manifest\.json#assets\/0$/u);
+  assert.equal(assetValidations.length, 1);
+  assert.equal(assetValidations[0].record.id, 'asset-record');
+  assert.match(assetValidations[0].path, /assets[\\/]manifest\.json#assets\/0$/u);
 });
 
 await withFixtureRoot(async (root) => {
@@ -95,6 +105,14 @@ await withFixtureRoot(async (root) => {
 });
 
 await withFixtureRoot(async (root) => {
+  await writePack(root, 'directory-name', validManifest('different-id'));
+  await assert.rejects(
+    discoverContentPacks(root, validators),
+    /declares pack ID different-id but its directory is directory-name/u,
+  );
+});
+
+await withFixtureRoot(async (root) => {
   await writePack(root, 'first-pack', validManifest('first-pack'));
   await writePack(root, 'second-pack', validManifest('second-pack'));
   await writeRecord(root, 'first-pack', 'locations', { id: 'duplicate-record' });
@@ -103,7 +121,7 @@ await withFixtureRoot(async (root) => {
 });
 
 console.log(
-  `Content discovery fixtures rejected ${String(invalidDirectories.length)} unsafe directory form(s), missing dependencies, and duplicate IDs.`,
+  `Content discovery fixtures rejected ${String(invalidDirectories.length)} unsafe directory form(s), directory/manifest drift, missing dependencies, and duplicate IDs.`,
 );
 
 async function withFixtureRoot(run) {
@@ -136,6 +154,12 @@ async function writePack(rootDirectory, directory, manifest) {
   const packDirectory = join(rootDirectory, directory);
   await mkdir(packDirectory, { recursive: true });
   await writeFile(join(packDirectory, 'pack.json'), JSON.stringify(manifest), 'utf8');
+  await mkdir(join(packDirectory, 'locales'), { recursive: true });
+  await Promise.all(
+    manifest.locales.map((locale) =>
+      writeFile(join(packDirectory, 'locales', `${locale}.json`), '{}', 'utf8'),
+    ),
+  );
 }
 
 async function writeRecord(rootDirectory, pack, kind, record) {

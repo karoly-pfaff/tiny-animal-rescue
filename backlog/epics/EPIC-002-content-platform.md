@@ -49,10 +49,10 @@ parent audio settings remain owned by EPIC-006.
 
 ### E002-S05 — Migrate first rescue to content
 
-- [ ] Mimi, Garden, Indoor Room, and kitten mission load from the base pack.
-- [ ] No engine file branches on `garden-kitten-tree` or `mimi-kitten`.
-- [ ] Existing vertical-slice E2E tests still pass.
-- [ ] Invalid content fixtures prove each important validator.
+- [x] Mimi, Garden, Indoor Room, and kitten mission load from the base pack.
+- [x] No engine file branches on `garden-kitten-tree` or `mimi-kitten`.
+- [x] Existing vertical-slice E2E tests still pass.
+- [x] Invalid content fixtures prove each important validator.
 
 ### E002-S06 — Prove the expansion seam
 

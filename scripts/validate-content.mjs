@@ -36,6 +36,7 @@ for (const [documentName, schemaName] of contracts) {
 const recordSchemas = {
   assets: 'schemas/asset-metadata.schema.json',
   animals: 'schemas/animal.schema.json',
+  localizations: 'schemas/localization.schema.json',
   locations: 'schemas/location.schema.json',
   missions: 'schemas/mission.schema.json',
   shelterAreas: 'schemas/shelter-area.schema.json',

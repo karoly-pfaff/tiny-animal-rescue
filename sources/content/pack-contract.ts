@@ -15,6 +15,7 @@ export type PackManifestSource = Readonly<{
   version: string;
   contractVersion: number;
   titleKey: string;
+  initialMissionId?: string;
   locales: readonly ContentLocale[];
   dependencies?: readonly string[];
   content: ContentDirectories;
