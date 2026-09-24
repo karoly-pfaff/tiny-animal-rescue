@@ -267,6 +267,49 @@ describe('content contracts', () => {
     }
   });
 
+  it.each([
+    '',
+    '/absolute.png',
+    'C:/absolute.png',
+    'https://example.test/asset.png',
+    '../outside.png',
+    'images/../outside.png',
+    './image.png',
+    'images\\asset.png',
+    'images//asset.png',
+  ])('rejects unsafe pack asset path %j', (objectKey) => {
+    expect(validate(assetSchema, { ...assetExample, objectKey })).toBe(false);
+    expect(
+      validate(animalSchema, {
+        ...animalExample,
+        assets: { ...animalExample.assets, portrait: objectKey },
+      }),
+    ).toBe(false);
+  });
+
+  it('accepts a dependency-qualified content reference but not a qualified inventory key', () => {
+    const qualified = 'shared-pack:images/residents/shared.png';
+    expect(
+      validate(animalSchema, {
+        ...animalExample,
+        assets: { ...animalExample.assets, portrait: qualified },
+      }),
+    ).toBe(true);
+    expect(validate(assetSchema, { ...assetExample, objectKey: qualified })).toBe(false);
+  });
+
+  it('requires locale ownership only for voice assets', () => {
+    expect(validate(assetSchema, { ...audioAssetExample, category: 'voice' })).toBe(false);
+    expect(validate(assetSchema, { ...audioAssetExample, locale: 'hu' })).toBe(false);
+    expect(
+      validate(assetSchema, {
+        ...audioAssetExample,
+        category: 'voice',
+        locale: 'hu',
+      }),
+    ).toBe(true);
+  });
+
   it('rejects unsupported contract versions instead of guessing', () => {
     expect(() => normalizePackManifest({ ...expectedPackSource, contractVersion: 2 })).toThrow(
       /Unsupported content contract version 2/u,

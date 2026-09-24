@@ -1,7 +1,13 @@
 import { assembleContentRegistry, type ContentRegistry } from './content-registry';
 import type { MissionRecord } from './mission-contract';
 import { normalizePackManifest, type PackManifestSource } from './pack-contract';
-import type { AnimalRecord, LocationRecord, ShelterAreaRecord } from './world-content-contracts';
+import type {
+  AnimalRecord,
+  AssetInventory,
+  AssetMetadata,
+  LocationRecord,
+  ShelterAreaRecord,
+} from './world-content-contracts';
 
 const manifestModules = import.meta.glob<PackManifestSource>('../../content/*/pack.json', {
   eager: true,
@@ -23,9 +29,14 @@ const shelterAreaModules = import.meta.glob<ShelterAreaRecord>('../../content/*/
   eager: true,
   import: 'default',
 });
+const assetInventoryModules = import.meta.glob<AssetInventory>(
+  '../../content/*/assets/manifest.json',
+  { eager: true, import: 'default' },
+);
 
 export type BundledContentModules = Readonly<{
   manifests: Readonly<Record<string, PackManifestSource>>;
+  assetInventories: Readonly<Record<string, AssetInventory>>;
   animals: Readonly<Record<string, AnimalRecord>>;
   locations: Readonly<Record<string, LocationRecord>>;
   missions: Readonly<Record<string, MissionRecord>>;
@@ -42,7 +53,7 @@ export function assembleBundledContentRegistry(modules: BundledContentModules): 
         ...manifest,
         records: {
           animals: recordsWithin(modules.animals, packDirectory, manifest.content.animals),
-          assets: [],
+          assets: assetsWithin(modules.assetInventories, packDirectory),
           localizations: {},
           locations: recordsWithin(modules.locations, packDirectory, manifest.content.locations),
           missions: recordsWithin(modules.missions, packDirectory, manifest.content.missions),
@@ -60,11 +71,19 @@ export function assembleBundledContentRegistry(modules: BundledContentModules): 
 
 export const bundledContentRegistry = assembleBundledContentRegistry({
   manifests: manifestModules,
+  assetInventories: assetInventoryModules,
   animals: animalModules,
   locations: locationModules,
   missions: missionModules,
   shelterAreas: shelterAreaModules,
 });
+
+function assetsWithin(
+  inventories: Readonly<Record<string, AssetInventory>>,
+  packDirectory: string,
+): readonly AssetMetadata[] {
+  return inventories[`${packDirectory}/assets/manifest.json`]?.assets ?? [];
+}
 
 function recordsWithin<Entry>(
   modules: Readonly<Record<string, Entry>>,

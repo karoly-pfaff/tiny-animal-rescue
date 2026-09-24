@@ -372,7 +372,18 @@ function validPacks(overrides: RecordOverrides = {}): readonly ContentPackSource
   ];
 }
 
-function makePack(records: RecordOverrides): ContentPackSource {
+function makePack(records: RecordOverrides, releaseAssets = false): ContentPackSource {
+  const completeRecords = {
+    animals: [],
+    assets: [],
+    localizations: {},
+    locations: [],
+    missions: [],
+    shelterAreas: [],
+    ...records,
+  };
+  const assets =
+    records.assets ?? makeAssetRecords(referencedPaths(completeRecords), releaseAssets, 'base');
   return {
     id: 'base',
     version: '0.3.0',
@@ -387,13 +398,8 @@ function makePack(records: RecordOverrides): ContentPackSource {
       shelterAreas: 'shelter-areas',
     },
     records: {
-      animals: [],
-      assets: [],
-      localizations: {},
-      locations: [],
-      missions: [],
-      shelterAreas: [],
-      ...records,
+      ...completeRecords,
+      assets,
     },
   };
 }
@@ -548,7 +554,46 @@ function makeV1Pack(): ContentPackSource {
       steps: stepTypes.map((stepType, index) => makeStep(`step-${String(index + 1)}`, stepType)),
     });
   });
-  return makePack({ animals, locations, missions, shelterAreas });
+  return makePack({ animals, locations, missions, shelterAreas }, true);
+}
+
+function referencedPaths(records: ContentPackSource['records']): readonly string[] {
+  return [
+    ...records.animals.flatMap(({ assets }) => Object.values(assets)),
+    ...records.locations.flatMap(({ assets }) => Object.values(assets)),
+    ...records.shelterAreas.map(({ assets }) => assets.background),
+    ...records.missions.flatMap(({ scene, assets }) => [scene.background, ...assets.required]),
+  ].filter((value): value is string => typeof value === 'string');
+}
+
+function makeAssetRecords(
+  paths: readonly string[],
+  releaseAssets: boolean,
+  ownership: string,
+): ContentPackSource['records']['assets'] {
+  return [...new Set(paths)].map((objectKey, index) => ({
+    id: `fixture-asset-${String(index + 1)}`,
+    category: 'image' as const,
+    objectKey,
+    role: `fixture-role-${String(index + 1)}`,
+    ownership,
+    mediaType: 'image/png' as const,
+    qaStatus: 'approved' as const,
+    licenseStatus: 'approved' as const,
+    provenanceStatus: 'approved' as const,
+    promptRecord: `prompts/fixture-${String(index + 1)}.md`,
+    width: 100,
+    height: 100,
+    transparent: false,
+    ...(releaseAssets
+      ? {
+          classification: 'production-safe' as const,
+          delivery: 'r2-locked' as const,
+          bytes: 100,
+          digest: `sha256:${'0'.repeat(64)}` as const,
+        }
+      : {}),
+  }));
 }
 
 function withoutRecord(

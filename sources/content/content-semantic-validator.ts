@@ -1,3 +1,4 @@
+import { validateContentAssets } from './content-asset-validator.ts';
 import type { ContentPackSource } from './content-registry';
 import { diagnostic } from './content-validation-diagnostic.ts';
 import type { MissionRecord } from './mission-contract';
@@ -33,7 +34,10 @@ export function validateContentSemantics(
   const content = createIndex(packs);
   const generalFindings = validateGeneralSemantics(content);
   const releaseFindings = options.releaseCatalog === 'v1' ? validateV1Catalog(packs) : [];
-  return Object.freeze([...generalFindings, ...releaseFindings]);
+  const assetFindings = validateContentAssets(packs, {
+    release: options.releaseCatalog === 'v1',
+  });
+  return Object.freeze([...generalFindings, ...assetFindings, ...releaseFindings]);
 }
 
 function createIndex(packs: readonly ContentPackSource[]): SemanticIndex {

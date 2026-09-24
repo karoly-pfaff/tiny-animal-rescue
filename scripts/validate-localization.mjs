@@ -157,6 +157,8 @@ function isConstrainedTechnicalLiteral(node) {
       ts.isTypeReferenceNode(parent.type) &&
       ts.isIdentifier(parent.type.typeName) &&
       [
+        'AssetCategoryToken',
+        'AssetPathToken',
         'DragPhase',
         'BrowserCapability',
         'FirstRescueAssetRole',
