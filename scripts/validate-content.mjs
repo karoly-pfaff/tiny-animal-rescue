@@ -20,6 +20,13 @@ const contracts = [
   ['content/examples/garden-map-background.asset.json', 'schemas/asset-metadata.schema.json'],
   ['content/examples/drag-snap.asset.json', 'schemas/asset-metadata.schema.json'],
   ['content/base/pack.json', 'schemas/pack.schema.json'],
+  ['tests/fixtures/content/sample-expansion/pack.json', 'schemas/pack.schema.json'],
+  [
+    'tests/fixtures/content/sample-expansion/locations/sample-meadow.json',
+    'schemas/location.schema.json',
+  ],
+  ['tests/fixtures/content/sample-expansion/locales/en.json', 'schemas/localization.schema.json'],
+  ['tests/fixtures/content/sample-expansion/locales/hu.json', 'schemas/localization.schema.json'],
 ];
 const findings = [];
 const validators = new Map();

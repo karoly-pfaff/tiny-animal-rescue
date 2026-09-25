@@ -56,9 +56,9 @@ parent audio settings remain owned by EPIC-006.
 
 ### E002-S06 — Prove the expansion seam
 
-- [ ] A test-only sample pack adds one non-release mission or record without engine edits.
-- [ ] Removing the test pack restores the exact base registry.
-- [ ] No pack manager UI, remote loading, or arbitrary script support is introduced.
+- [x] A test-only sample pack adds one non-release mission or record without engine edits.
+- [x] Removing the test pack restores the exact base registry.
+- [x] No pack manager UI, remote loading, or arbitrary script support is introduced.
 
 ### E002-S07 — Produce and integrate the epic audio set
 
