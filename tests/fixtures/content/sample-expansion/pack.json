@@ -1,0 +1,14 @@
+{
+  "id": "sample-expansion",
+  "version": "0.0.0",
+  "contractVersion": 1,
+  "titleKey": "pack.sample-expansion.title",
+  "locales": ["hu", "en"],
+  "dependencies": ["base"],
+  "content": {
+    "animals": "animals",
+    "missions": "missions",
+    "locations": "locations",
+    "shelterAreas": "shelter-areas"
+  }
+}
