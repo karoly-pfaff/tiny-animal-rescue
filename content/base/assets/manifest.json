@@ -3,6 +3,7 @@
   "assets": [
     {
       "id": "start-background",
+      "category": "image",
       "objectKey": "images/start/welcome-garden.png",
       "role": "start-background",
       "width": 1448,
@@ -21,6 +22,7 @@
     },
     {
       "id": "garden-map-background",
+      "category": "image",
       "objectKey": "images/map/garden-map.png",
       "role": "garden-map-background",
       "width": 1448,
@@ -39,6 +41,7 @@
     },
     {
       "id": "garden-kitten-tree-background",
+      "category": "image",
       "objectKey": "images/missions/garden-kitten-tree/background.png",
       "role": "garden-mission-background",
       "width": 1448,
@@ -57,6 +60,7 @@
     },
     {
       "id": "garden-kitten-tree-ladder",
+      "category": "image",
       "objectKey": "images/missions/garden-kitten-tree/ladder.png",
       "role": "garden-ladder",
       "width": 1254,
@@ -75,6 +79,7 @@
     },
     {
       "id": "mimi-canonical",
+      "category": "image",
       "objectKey": "images/residents/mimi/canonical.png",
       "role": "mimi-canonical",
       "width": 1254,
@@ -93,6 +98,7 @@
     },
     {
       "id": "mimi-mission",
+      "category": "image",
       "objectKey": "images/residents/mimi/mission.png",
       "role": "mimi-mission",
       "width": 1254,
@@ -111,6 +117,7 @@
     },
     {
       "id": "mimi-celebration",
+      "category": "image",
       "objectKey": "images/residents/mimi/celebration.png",
       "role": "mimi-celebration",
       "width": 1254,
@@ -129,6 +136,7 @@
     },
     {
       "id": "indoor-shelter-background",
+      "category": "image",
       "objectKey": "images/shelter/indoor-room.png",
       "role": "indoor-shelter-background",
       "width": 1448,
@@ -147,6 +155,7 @@
     },
     {
       "id": "mimi-shelter-idle",
+      "category": "image",
       "objectKey": "images/residents/mimi/shelter-idle.png",
       "role": "mimi-shelter",
       "width": 1254,

@@ -8,14 +8,14 @@ type RescueLocale = 'en' | 'hu';
 const labels = {
   en: {
     celebration: 'Mimi is rescued!',
-    ladder: 'Move the ladder to the tree',
-    mimi: 'Help Mimi come down',
+    ladder: 'Move the ladder to the tree!',
+    mimi: 'Tap Mimi!',
     mission: 'Garden rescue: Mimi',
   },
   hu: {
     celebration: 'Mimi megmenekült!',
-    ladder: 'Tedd a létrát a fához',
-    mimi: 'Segíts Miminek lejönni',
+    ladder: 'Húzd a létrát a fához!',
+    mimi: 'Koppints Mimire!',
     mission: 'Kerti mentés: Mimi',
   },
 } as const;

@@ -13,11 +13,12 @@
     },
     "contractVersion": { "type": "integer", "const": 1 },
     "titleKey": { "type": "string", "minLength": 1 },
+    "initialMissionId": { "$ref": "#/$defs/id" },
     "locales": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" }
+      "items": { "enum": ["hu", "en"] }
     },
     "dependencies": {
       "type": "array",

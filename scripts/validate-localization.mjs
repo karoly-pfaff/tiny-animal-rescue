@@ -18,6 +18,7 @@ const technicalProperties = new Set(['id', 'path', 'titleKey']);
 const technicalCalls = new Set([
   'addEventListener',
   'getElementById',
+  'glob',
   'querySelector',
   'querySelectorAll',
   'removeEventListener',
@@ -95,12 +96,48 @@ function isComparisonValue(node) {
 
 function isTechnicalCallArgument(node) {
   const parent = node.parent;
-  if (!ts.isCallExpression(parent) || !parent.arguments.includes(node)) {
+  if (
+    ts.isCallExpression(parent) &&
+    parent.arguments.includes(node) &&
+    ts.isPropertyAccessExpression(parent.expression) &&
+    technicalCalls.has(parent.expression.name.text)
+  ) {
+    return true;
+  }
+  return isWithinDiagnosticCall(node);
+}
+
+function isWithinDiagnosticCall(node) {
+  let parent = node.parent;
+  while (parent !== undefined && !ts.isFunctionLike(parent)) {
+    if (
+      ts.isCallExpression(parent) &&
+      ts.isIdentifier(parent.expression) &&
+      parent.expression.text === 'diagnostic'
+    ) {
+      return true;
+    }
+    parent = parent.parent;
+  }
+  return false;
+}
+
+function isGlobOption(node) {
+  const property = node.parent;
+  if (
+    !ts.isPropertyAssignment(property) ||
+    property.initializer !== node ||
+    propertyName(property) !== 'import' ||
+    !ts.isObjectLiteralExpression(property.parent)
+  ) {
     return false;
   }
-  return ts.isPropertyAccessExpression(parent.expression)
-    ? technicalCalls.has(parent.expression.name.text)
-    : false;
+  const call = property.parent.parent;
+  return (
+    ts.isCallExpression(call) &&
+    ts.isPropertyAccessExpression(call.expression) &&
+    call.expression.name.text === 'glob'
+  );
 }
 
 function isDeveloperError(node) {
@@ -113,32 +150,46 @@ function isDeveloperError(node) {
 }
 
 function isConstrainedTechnicalLiteral(node) {
-  const parent = node.parent;
-  return (
-    ts.isSatisfiesExpression(parent) &&
-    ts.isTypeReferenceNode(parent.type) &&
-    ts.isIdentifier(parent.type.typeName) &&
-    [
-      'DragPhase',
-      'BrowserCapability',
-      'FirstRescueAssetRole',
-      'FirstRescueMissionId',
-      'FirstRescueNarrationCue',
-      'FirstRescueProgressLoadStatus',
-      'FirstRescueResidentId',
-      'FirstRescueWorldFlag',
-      'IDBTransactionMode',
-      'LanguageTag',
-      'Locale',
-      'MissionPhase',
-      'NarrationCue',
-      'NarrationFilename',
-      'NarrationObjectKey',
-      'PersistenceKey',
-      'ProgressBootstrapStatus',
-      'SaveGameLoadStatus',
-    ].includes(parent.type.typeName.text)
-  );
+  let parent = node.parent;
+  while (parent !== undefined) {
+    if (
+      ts.isSatisfiesExpression(parent) &&
+      ts.isTypeReferenceNode(parent.type) &&
+      ts.isIdentifier(parent.type.typeName) &&
+      [
+        'AssetCategoryToken',
+        'AssetPathToken',
+        'AssetReferenceToken',
+        'DragPhase',
+        'BrowserCapability',
+        'FirstRescueAssetRole',
+        'FirstRescueMissionId',
+        'FirstRescueNarrationCue',
+        'FirstRescueProgressLoadStatus',
+        'FirstRescueRecordLabel',
+        'FirstRescueResidentId',
+        'FirstRescueWorldFlag',
+        'IDBTransactionMode',
+        'LanguageTag',
+        'Locale',
+        'MissionPhase',
+        'NarrationCue',
+        'NarrationFilename',
+        'NarrationObjectKey',
+        'PersistenceKey',
+        'ProgressBootstrapStatus',
+        'SaveGameLoadStatus',
+        'ShellAssetRole',
+        'V1CatalogDefinition',
+        'V1Locale',
+        'V1RecordLabel',
+      ].includes(parent.type.typeName.text)
+    ) {
+      return true;
+    }
+    parent = parent.parent;
+  }
+  return false;
 }
 
 function isBasicAllowedLiteral(node) {
@@ -165,6 +216,7 @@ function isAllowedLiteral(node) {
     isStructuralAttribute(node) ||
     isElementAccessKey(node) ||
     isTechnicalPropertyValue(node) ||
+    isGlobOption(node) ||
     isComparisonValue(node) ||
     isTechnicalCallArgument(node) ||
     isDeveloperError(node) ||

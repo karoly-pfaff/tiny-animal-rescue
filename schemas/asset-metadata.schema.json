@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/asset-metadata.schema.json",
+  "title": "Tiny Rescue asset metadata",
+  "oneOf": [{ "$ref": "#/$defs/image" }, { "$ref": "#/$defs/audio" }],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "path": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?![A-Za-z][A-Za-z0-9+.-]*:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    },
+    "deliveryProperties": {
+      "classification": { "enum": ["production-safe", "presentation-only"] },
+      "delivery": { "enum": ["r2-locked", "r2-pending"] },
+      "bytes": { "type": "integer", "minimum": 1 },
+      "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "objectKey",
+        "role",
+        "ownership",
+        "mediaType",
+        "qaStatus",
+        "licenseStatus",
+        "provenanceStatus",
+        "promptRecord",
+        "width",
+        "height",
+        "transparent"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "category": { "const": "image" },
+        "objectKey": { "$ref": "#/$defs/path" },
+        "role": { "type": "string", "minLength": 1 },
+        "ownership": { "$ref": "#/$defs/id" },
+        "mediaType": { "enum": ["image/png", "image/webp"] },
+        "qaStatus": { "enum": ["approved", "not-produced", "rejected"] },
+        "licenseStatus": { "enum": ["approved", "pending-production"] },
+        "provenanceStatus": { "enum": ["approved", "pending-production"] },
+        "promptRecord": { "$ref": "#/$defs/path" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "transparent": { "type": "boolean" },
+        "classification": { "$ref": "#/$defs/deliveryProperties/classification" },
+        "delivery": { "$ref": "#/$defs/deliveryProperties/delivery" },
+        "bytes": { "$ref": "#/$defs/deliveryProperties/bytes" },
+        "digest": { "$ref": "#/$defs/deliveryProperties/digest" }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "objectKey",
+        "role",
+        "ownership",
+        "mediaType",
+        "qaStatus",
+        "licenseStatus",
+        "provenanceStatus",
+        "promptRecord",
+        "durationBoundsSeconds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "category": { "enum": ["music", "effect", "voice"] },
+        "objectKey": { "$ref": "#/$defs/path" },
+        "role": { "type": "string", "minLength": 1 },
+        "ownership": { "$ref": "#/$defs/id" },
+        "mediaType": { "enum": ["audio/ogg", "audio/mpeg", "audio/wav"] },
+        "qaStatus": { "enum": ["approved", "not-produced", "rejected"] },
+        "licenseStatus": { "enum": ["approved", "pending-production"] },
+        "provenanceStatus": { "enum": ["approved", "pending-production"] },
+        "promptRecord": { "$ref": "#/$defs/path" },
+        "locale": { "enum": ["hu", "en"] },
+        "durationBoundsSeconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "exclusiveMinimum": 0 },
+            "max": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "classification": { "$ref": "#/$defs/deliveryProperties/classification" },
+        "delivery": { "$ref": "#/$defs/deliveryProperties/delivery" },
+        "bytes": { "$ref": "#/$defs/deliveryProperties/bytes" },
+        "digest": { "$ref": "#/$defs/deliveryProperties/digest" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "category": { "const": "voice" } } },
+          "then": { "properties": { "locale": true }, "required": ["locale"] },
+          "else": { "not": { "required": ["locale"] } }
+        }
+      ]
+    }
+  }
+}

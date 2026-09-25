@@ -1,19 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { resolveMimiShelter } from '../content/first-rescue-assets';
-
 const reactionDurationMs = 900;
 
 type ShelterResidentProps = Readonly<{
+  assetUrl: string | null;
   happyText: string;
   name: string;
   tapLabel: string;
 }>;
 
-export function ShelterResident({ happyText, name, tapLabel }: ShelterResidentProps) {
+export function ShelterResident({ assetUrl, happyText, name, tapLabel }: ShelterResidentProps) {
   const [happy, setHappy] = useState(false);
   const reactionTimer = useRef<number | null>(null);
-  const mimiUrl = resolveMimiShelter();
 
   function react(): void {
     if (reactionTimer.current !== null) {
@@ -42,10 +40,10 @@ export function ShelterResident({ happyText, name, tapLabel }: ShelterResidentPr
         onClick={react}
         type="button"
       >
-        {mimiUrl === null ? (
+        {assetUrl === null ? (
           <span className="shelter-mimi-face" aria-hidden="true" />
         ) : (
-          <img className="shelter-mimi-art" src={mimiUrl} alt="" aria-hidden="true" />
+          <img className="shelter-mimi-art" src={assetUrl} alt="" aria-hidden="true" />
         )}
         <span>{name}</span>
       </button>

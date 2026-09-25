@@ -26,8 +26,11 @@ type DragToTargetProps = Readonly<{
   hintDelayMs?: number;
   onComplete: () => void;
   pointerOffsetPx?: number;
+  sourceId?: string;
   start: NormalizedPoint;
+  successCue?: string;
   target: NormalizedTarget;
+  targetId?: string;
 }>;
 
 type DragPhase = 'dragging' | 'idle' | 'placed';
@@ -73,9 +76,15 @@ export function DragToTarget(props: DragToTargetProps) {
       data-guidance={showHint}
       data-phase={phase}
       data-production-art={typeof props.assetUrl === 'string'}
+      data-success-cue={props.successCue}
       ref={interaction}
     >
-      <span className="ladder-target" aria-hidden="true" style={targetStyle} />
+      <span
+        className="ladder-target"
+        data-target-id={props.targetId}
+        aria-hidden="true"
+        style={targetStyle}
+      />
       {showHint && phase === idlePhase ? (
         <span className="drag-ghost-hand" aria-hidden="true" style={hintStyle} />
       ) : null}
@@ -83,6 +92,7 @@ export function DragToTarget(props: DragToTargetProps) {
         aria-label={props.accessibleLabel}
         className="mission-ladder"
         data-phase={phase}
+        data-source-id={props.sourceId}
         onClick={(event) => {
           activateAccessibly(event, context);
         }}

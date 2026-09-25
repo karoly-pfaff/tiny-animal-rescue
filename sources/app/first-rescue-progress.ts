@@ -1,27 +1,21 @@
+import type { RescueRewardDefinition } from '../content/first-rescue-content';
 import type { Locale } from '../i18n/localization';
 import type { SaveGameRepository, SaveGameV1 } from '../persistence/save-game-repository';
 
 export type FirstRescueProgress = Readonly<{
-  completedMissionIds: readonly FirstRescueMissionId[];
-  unlockedResidentIds: readonly FirstRescueResidentId[];
-  worldFlags: readonly FirstRescueWorldFlag[];
+  completedMissionIds: readonly string[];
+  unlockedResidentIds: readonly string[];
+  worldFlags: readonly string[];
 }>;
 
 export type FirstRescueProgressStore = Readonly<{
-  commitReward: (locale: Locale) => Promise<FirstRescueProgress>;
+  commitReward: (locale: Locale, reward: RescueRewardDefinition) => Promise<FirstRescueProgress>;
   load: (locale: Locale) => Promise<FirstRescueProgressLoadStatus>;
   read: () => FirstRescueProgress;
 }>;
 
 export type FirstRescueProgressLoadStatus = 'ready' | 'recovered-corrupt' | 'unsupported-version';
 
-type FirstRescueMissionId = 'garden-kitten-tree';
-type FirstRescueResidentId = 'mimi-kitten';
-type FirstRescueWorldFlag = 'mimi-rescued';
-
-const missionId = 'garden-kitten-tree' satisfies FirstRescueMissionId;
-const residentId = 'mimi-kitten' satisfies FirstRescueResidentId;
-const worldFlag = 'mimi-rescued' satisfies FirstRescueWorldFlag;
 const readyLoadStatus = 'ready' satisfies FirstRescueProgressLoadStatus;
 
 export const emptyFirstRescueProgress: FirstRescueProgress = {
@@ -30,23 +24,29 @@ export const emptyFirstRescueProgress: FirstRescueProgress = {
   worldFlags: [],
 };
 
-export function applyFirstRescueReward(progress: FirstRescueProgress): FirstRescueProgress {
+export function applyFirstRescueReward(
+  progress: FirstRescueProgress,
+  reward: RescueRewardDefinition,
+): FirstRescueProgress {
   return {
-    completedMissionIds: appendUnique(progress.completedMissionIds, missionId),
-    unlockedResidentIds: appendUnique(progress.unlockedResidentIds, residentId),
-    worldFlags: appendUnique(progress.worldFlags, worldFlag),
+    completedMissionIds: appendUnique(progress.completedMissionIds, reward.missionId),
+    unlockedResidentIds: appendUnique(progress.unlockedResidentIds, reward.residentId),
+    worldFlags: reward.worldFlags.reduce(appendUnique, progress.worldFlags),
   };
 }
 
-export function hasFirstRescueReward(progress: FirstRescueProgress): boolean {
+export function hasFirstRescueReward(
+  progress: FirstRescueProgress,
+  reward: RescueRewardDefinition,
+): boolean {
   return (
-    progress.completedMissionIds.includes(missionId) &&
-    progress.unlockedResidentIds.includes(residentId) &&
-    progress.worldFlags.includes(worldFlag)
+    progress.completedMissionIds.includes(reward.missionId) &&
+    progress.unlockedResidentIds.includes(reward.residentId) &&
+    reward.worldFlags.every((flag) => progress.worldFlags.includes(flag))
   );
 }
 
-export function hasMimiResident(progress: FirstRescueProgress): boolean {
+export function hasResident(progress: FirstRescueProgress, residentId: string): boolean {
   return progress.unlockedResidentIds.includes(residentId);
 }
 
@@ -55,8 +55,8 @@ export function createSessionFirstRescueProgressStore(
 ): FirstRescueProgressStore {
   let progress = initialProgress;
   return {
-    commitReward: () => {
-      progress = applyFirstRescueReward(progress);
+    commitReward: (_locale, reward) => {
+      progress = applyFirstRescueReward(progress, reward);
       return Promise.resolve(progress);
     },
     load: () => Promise.resolve(readyLoadStatus),
@@ -69,9 +69,9 @@ export function createPersistedFirstRescueProgressStore(
 ): FirstRescueProgressStore {
   let progress = emptyFirstRescueProgress;
   return {
-    async commitReward(locale) {
+    async commitReward(locale, reward) {
       const save = await repository.update(locale, (currentSave) =>
-        saveWithFirstRescueReward(currentSave),
+        saveWithFirstRescueReward(currentSave, reward),
       );
       progress = progressFromSave(save);
       return progress;
@@ -87,20 +87,20 @@ export function createPersistedFirstRescueProgressStore(
   };
 }
 
-function saveWithFirstRescueReward(save: SaveGameV1): SaveGameV1 {
+function saveWithFirstRescueReward(save: SaveGameV1, reward: RescueRewardDefinition): SaveGameV1 {
   return {
     ...save,
-    completedMissionIds: appendUnique(save.completedMissionIds, missionId),
-    unlockedResidentIds: appendUnique(save.unlockedResidentIds, residentId),
-    worldFlags: appendUnique(save.worldFlags, worldFlag),
+    completedMissionIds: appendUnique(save.completedMissionIds, reward.missionId),
+    unlockedResidentIds: appendUnique(save.unlockedResidentIds, reward.residentId),
+    worldFlags: reward.worldFlags.reduce(appendUnique, save.worldFlags),
   };
 }
 
 function progressFromSave(save: SaveGameV1): FirstRescueProgress {
   return {
-    completedMissionIds: save.completedMissionIds.includes(missionId) ? [missionId] : [],
-    unlockedResidentIds: save.unlockedResidentIds.includes(residentId) ? [residentId] : [],
-    worldFlags: save.worldFlags.includes(worldFlag) ? [worldFlag] : [],
+    completedMissionIds: [...save.completedMissionIds],
+    unlockedResidentIds: [...save.unlockedResidentIds],
+    worldFlags: [...save.worldFlags],
   };
 }
 

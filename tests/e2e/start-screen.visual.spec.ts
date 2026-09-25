@@ -159,7 +159,7 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
@@ -205,14 +205,14 @@ test('@visual matches the reviewed Mimi celebration', async ({ page }, testInfo)
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
   await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
   await settleVisual(page);
 
@@ -226,14 +226,14 @@ test('@visual matches the reviewed Indoor Room with Mimi', async ({ page }, test
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
   await page.getByRole('button', { name: 'Menhely' }).click();
   await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
   await settleVisual(page);

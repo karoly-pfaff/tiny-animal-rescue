@@ -27,7 +27,13 @@ const groups = {
     'test:visual',
     'test:artifact',
   ],
-  release: ['validate:full', 'test:content:release', 'test:assets', 'sbom', 'test:artifact'],
+  release: [
+    'validate:full',
+    'test:content:release',
+    'test:assets:materialized',
+    'sbom',
+    'test:artifact',
+  ],
 };
 
 const groupName = process.argv[2];

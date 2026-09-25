@@ -125,10 +125,10 @@ describe('App', () => {
     await screen.findByRole('button', { name: 'Garden rescue: Mimi' });
     fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
     await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
 
     expect(progressStore.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],

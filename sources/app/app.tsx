@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { deferredBrowserEffectService, type EffectService } from '../audio/effect-service';
 import { createBrowserNarrationService, type NarrationService } from '../audio/narration-service';
+import { bundledContentRegistry } from '../content/bundled-content-registry';
+import type { ContentRegistry } from '../content/content-registry';
+import { selectFirstRescueContent } from '../content/first-rescue-content';
 import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
@@ -96,10 +100,20 @@ function navigate(nextPath: string): void {
 }
 
 type AppProps = Readonly<{
+  contentRegistry?: ContentRegistry;
+  effectService?: EffectService;
   firstRescueProgressStore?: FirstRescueProgressStore;
   localeRepository?: LocaleBootstrapRepository;
   narrationService?: NarrationService;
 }>;
+
+const browserAppDependencies: Required<AppProps> = {
+  contentRegistry: bundledContentRegistry,
+  effectService: deferredBrowserEffectService,
+  firstRescueProgressStore: browserProgressStore,
+  localeRepository: browserLocaleRepository,
+  narrationService: browserNarrationService,
+};
 
 function shouldShowStart(locale: Locale | null | undefined, routeId: string): boolean {
   return locale === undefined || locale === null || routeId === 'start';
@@ -130,20 +144,17 @@ function ProgressBoundary({
 }
 
 export function App(props: AppProps) {
-  return (
-    <AppWithDependencies
-      firstRescueProgressStore={props.firstRescueProgressStore ?? browserProgressStore}
-      localeRepository={props.localeRepository ?? browserLocaleRepository}
-      narrationService={props.narrationService ?? browserNarrationService}
-    />
-  );
+  return <AppWithDependencies {...browserAppDependencies} {...props} />;
 }
 
 function AppWithDependencies({
+  contentRegistry,
+  effectService,
   firstRescueProgressStore,
   localeRepository,
   narrationService,
 }: Required<AppProps>) {
+  const firstRescueContent = requireFirstRescueContent(contentRegistry);
   const path = useHashPath();
   const { locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
@@ -159,6 +170,7 @@ function AppWithDependencies({
   if (shouldShowStart(locale, route.id)) {
     return (
       <StartScreen
+        contentRegistry={contentRegistry}
         locale={activeLocale}
         loading={locale === undefined}
         localeSaveFailed={localeSaveFailed}
@@ -189,6 +201,8 @@ function AppWithDependencies({
   return (
     <>
       <PlayerRoute
+        effectService={effectService}
+        firstRescueContent={firstRescueContent}
         firstRescueProgressStore={firstRescueProgressStore}
         locale={activeLocale}
         narrationService={narrationService}
@@ -198,4 +212,15 @@ function AppWithDependencies({
       <SaveRecoveryNotice locale={activeLocale} status={progressBootstrap.status} />
     </>
   );
+}
+
+function requireFirstRescueContent(contentRegistry: ContentRegistry) {
+  assertContentAvailable(contentRegistry);
+  return selectFirstRescueContent(contentRegistry);
+}
+
+function assertContentAvailable(registry: ContentRegistry): void {
+  if (registry.packOrder.length === 0) {
+    throw new Error('The application requires at least one validated content pack.');
+  }
 }

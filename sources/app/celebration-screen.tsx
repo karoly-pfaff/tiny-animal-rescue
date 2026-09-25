@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 
-import { rescueSuccessNarrationCue, type NarrationService } from '../audio/narration-service';
-import { getFirstRescueNarrationText } from '../content/first-rescue-narration';
+import type { NarrationService } from '../audio/narration-service';
 import {
-  resolveGardenMissionBackground,
-  resolveMimiCelebration,
-} from '../content/first-rescue-assets';
+  firstRescueText,
+  narrationCueForContentKey,
+  type FirstRescueContent,
+  resolveFirstRescueAssets,
+} from '../content/first-rescue-content';
 import { getStrings, type Locale } from '../i18n/localization';
 
 type CelebrationScreenProps = Readonly<{
+  content: FirstRescueContent;
   locale: Locale;
   narrationService: NarrationService;
   onMap: () => void;
@@ -16,24 +18,27 @@ type CelebrationScreenProps = Readonly<{
 }>;
 
 export function CelebrationScreen({
+  content,
   locale,
   narrationService,
   onMap,
   onShelter,
 }: CelebrationScreenProps) {
   const strings = getStrings(locale);
-  const narrationText = getFirstRescueNarrationText(rescueSuccessNarrationCue, locale);
-  const backgroundUrl = resolveGardenMissionBackground();
-  const mimiUrl = resolveMimiCelebration();
+  const narrationText = firstRescueText(content, locale, content.mission.localization.successKey);
+  const narrationCue = narrationCueForContentKey(content.mission.localization.successKey);
+  const assets = resolveFirstRescueAssets(content);
+  const backgroundUrl = assets.missionBackground;
+  const mimiUrl = assets.residentCelebration;
 
   useEffect(() => {
     narrationService.speak({
-      cue: rescueSuccessNarrationCue,
+      cue: narrationCue,
       locale,
       text: narrationText,
     });
     return narrationService.stop;
-  }, [locale, narrationService, narrationText]);
+  }, [locale, narrationCue, narrationService, narrationText]);
 
   return (
     <main className="game-shell" data-route="celebration">

@@ -1,0 +1,12 @@
+{
+  "animal.mimi-kitten.name": "Mimi",
+  "location.garden.map-label": "Garden",
+  "location.garden.name": "Garden",
+  "mission.garden-kitten-tree.intro": "Mimi needs help.",
+  "mission.garden-kitten-tree.step.help-mimi-down": "Tap Mimi!",
+  "mission.garden-kitten-tree.step.place-ladder": "Move the ladder to the tree!",
+  "mission.garden-kitten-tree.success": "Mimi is safe!",
+  "mission.garden-kitten-tree.title": "Mimi in the tree",
+  "pack.base.title": "Tiny Rescue",
+  "shelter-area.indoor-room.name": "Indoor Room"
+}

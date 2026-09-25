@@ -1,31 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 
+import type { EffectService } from '../audio/effect-service';
+import type { NarrationService } from '../audio/narration-service';
 import {
-  helpMimiNarrationCue,
-  placeLadderNarrationCue,
-  type NarrationService,
-} from '../audio/narration-service';
-import { getFirstRescueNarrationText } from '../content/first-rescue-narration';
-import { resolveGardenMissionLadder } from '../content/first-rescue-assets';
+  firstRescueText,
+  narrationCueForContentKey,
+  type FirstRescueContent,
+  resolveFirstRescueAssets,
+} from '../content/first-rescue-content';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
 import { DragToTarget } from '../interactions/drag-to-target';
 import { useHoldToActivate } from '../interactions/hold-to-activate';
 import { FirstMissionArtwork, type MissionPhase } from './first-mission-artwork';
+import { ladderStart, missionTarget } from './first-mission-layout';
 
 const exitHoldDurationMs = 650;
-const ladderStart = { x: 0.2, y: 0.72 } as const;
-const productionLadderTarget = {
-  center: { x: 0.65, y: 0.61 },
-  height: 0.42,
-  width: 0.24,
-} as const;
-const fallbackLadderTarget = {
-  ...productionLadderTarget,
-  center: { x: 0.65, y: 0.68 },
-} as const;
 
 type FirstMissionScreenProps = Readonly<{
+  content: FirstRescueContent;
+  effectService: EffectService;
   locale: Locale;
   onCelebrate: () => void;
   onCommitReward: () => Promise<void>;
@@ -39,41 +33,65 @@ const rescueMotionDurationMs = 650;
 const savingPhase = 'saving' satisfies MissionPhase;
 
 export function FirstMissionScreen({
+  content,
+  effectService,
   locale,
   onCelebrate,
   onCommitReward,
   onExit,
   narrationService,
 }: FirstMissionScreenProps) {
+  const presentation = firstRescuePresentation(content, locale);
   const strings = getStrings(locale),
     rescue = useRescueCompletion({
-      helpMimiText: getFirstRescueNarrationText(helpMimiNarrationCue, locale),
+      dragSuccessCue: content.dragStep.successCue,
+      effectService,
+      helpMimiCue: presentation.tapCue,
+      helpMimiText: presentation.tapPrompt,
+      initialNarrationCue: presentation.dragCue,
+      initialNarrationText: presentation.dragPrompt,
       locale,
       narrationService,
       onCelebrate,
       onCommitReward,
+      tapSuccessCue: content.tapStep.successCue,
     });
-  const ladderUrl = resolveGardenMissionLadder();
+  const ladderUrl = resolveFirstRescueAssets(content).ladder;
   const exit = useHoldToActivate(exitHoldDurationMs, onExit);
 
   return (
-    <main className="game-shell" data-route="mission" data-mission-id="garden-kitten-tree">
-      <section className="game-surface first-mission" aria-labelledby="mission-title">
+    <main className="game-shell" data-route="mission" data-mission-id={content.mission.id}>
+      <section
+        className="game-surface first-mission"
+        aria-describedby="mission-intro"
+        aria-labelledby="mission-title"
+      >
         <FirstMissionArtwork
-          helpMimiLabel={strings.helpMimi}
+          content={content}
+          helpMimiLabel={presentation.tapPrompt}
+          hintDelayMs={content.tapStep.hint.delayMs}
           onFinish={rescue.finish}
           phase={rescue.phase}
         />
         <header className="mission-title-plaque">
-          <h1 id="mission-title">{strings.firstMissionTitle}</h1>
+          <h1 id="mission-title">
+            {firstRescueText(content, locale, content.mission.localization.titleKey)}
+          </h1>
         </header>
+        <p className="visually-hidden" id="mission-intro">
+          {presentation.intro}
+        </p>
         <DragToTarget
-          accessibleLabel={strings.ladderLabel}
+          accessibleLabel={presentation.dragPrompt}
           assetUrl={ladderUrl}
           completionAnnouncement={strings.ladderPlaced}
+          hintDelayMs={content.dragStep.hint.delayMs}
           onComplete={rescue.unlockMimi}
+          sourceId={content.dragStep.sourceId}
           start={ladderStart}
-          target={ladderUrl === null ? fallbackLadderTarget : productionLadderTarget}
+          successCue={content.dragStep.successCue}
+          target={missionTarget(ladderUrl, content.dragStep.snapTolerance)}
+          targetId={content.dragStep.targetId}
         />
         <button
           className={`mission-back${exit.holding ? ' is-holding' : ''}`}
@@ -101,33 +119,58 @@ export function FirstMissionScreen({
   );
 }
 
-function useMissionEntryNarration(locale: Locale, narrationService: NarrationService): void {
+type MissionEntryNarration = Readonly<{
+  cue: string;
+  text: string;
+  locale: Locale;
+  narrationService: NarrationService;
+}>;
+
+function useMissionEntryNarration({
+  cue,
+  text,
+  locale,
+  narrationService,
+}: MissionEntryNarration): void {
   useEffect(() => {
-    narrationService.speak({
-      cue: placeLadderNarrationCue,
-      locale,
-      text: getFirstRescueNarrationText(placeLadderNarrationCue, locale),
-    });
+    narrationService.speak({ cue, locale, text });
     return narrationService.stop;
-  }, [locale, narrationService]);
+  }, [cue, locale, narrationService, text]);
 }
 
 type RescueCompletionOptions = Readonly<{
+  dragSuccessCue: FirstRescueContent['dragStep']['successCue'];
+  effectService: EffectService;
+  helpMimiCue: string;
   helpMimiText: string;
+  initialNarrationCue: string;
+  initialNarrationText: string;
   locale: Locale;
   narrationService: NarrationService;
   onCelebrate: () => void;
   onCommitReward: () => Promise<void>;
+  tapSuccessCue: FirstRescueContent['tapStep']['successCue'];
 }>;
 
 function useRescueCompletion({
+  dragSuccessCue,
+  effectService,
+  helpMimiCue,
   helpMimiText,
+  initialNarrationCue,
+  initialNarrationText,
   locale,
   narrationService,
   onCelebrate,
   onCommitReward,
+  tapSuccessCue,
 }: RescueCompletionOptions) {
-  useMissionEntryNarration(locale, narrationService);
+  useMissionEntryNarration({
+    cue: initialNarrationCue,
+    locale,
+    narrationService,
+    text: initialNarrationText,
+  });
   const [phase, setPhase] = useState<MissionPhase>(ladderPhase);
   const [saveFailed, setSaveFailed] = useState(false);
   const completionStarted = useRef(false);
@@ -165,6 +208,7 @@ function useRescueCompletion({
       return;
     }
     completionStarted.current = true;
+    effectService.play(tapSuccessCue);
     setSaveFailed(false);
     setPhase(savingPhase);
     void finishRescue();
@@ -175,9 +219,20 @@ function useRescueCompletion({
     phase,
     saveFailed,
     unlockMimi: () => {
+      effectService.play(dragSuccessCue);
       setPhase(mimiPhase);
-      narrationService.speak({ cue: helpMimiNarrationCue, locale, text: helpMimiText });
+      narrationService.speak({ cue: helpMimiCue, locale, text: helpMimiText });
     },
+  } as const;
+}
+
+function firstRescuePresentation(content: FirstRescueContent, locale: Locale) {
+  return {
+    dragCue: narrationCueForContentKey(content.dragStep.promptKey),
+    dragPrompt: firstRescueText(content, locale, content.dragStep.promptKey),
+    intro: firstRescueText(content, locale, content.mission.localization.introKey),
+    tapCue: narrationCueForContentKey(content.tapStep.promptKey),
+    tapPrompt: firstRescueText(content, locale, content.tapStep.promptKey),
   } as const;
 }
 

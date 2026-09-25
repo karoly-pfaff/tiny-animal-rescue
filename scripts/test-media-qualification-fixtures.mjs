@@ -653,6 +653,55 @@ try {
   if ((await readFile(path.join(root, 'receipt.json'), 'utf8')).includes('credential')) {
     failures.push('receipt fixture unexpectedly contains credential material');
   }
+
+  const expansionPackId = 'sample-expansion';
+  const expansionObject = { ...lockObject, ownership: expansionPackId };
+  const expansionSourceDirectory = path.join(sourceRoot, `content/${expansionPackId}`);
+  const expansionAssetPath = `content/${expansionPackId}/assets/${expansionObject.objectKey}`;
+  await Promise.all([
+    mkdir(path.join(expansionSourceDirectory, 'assets'), { recursive: true }),
+    mkdir(path.dirname(path.join(assetRoot, expansionAssetPath)), { recursive: true }),
+  ]);
+  await Promise.all([
+    writeFile(
+      path.join(expansionSourceDirectory, 'pack.json'),
+      `${JSON.stringify({ id: expansionPackId, version: '1.0.0' })}\n`,
+    ),
+    writeFile(
+      path.join(expansionSourceDirectory, 'assets/manifest.json'),
+      `${JSON.stringify({
+        schemaVersion: 1,
+        assets: [
+          {
+            ...manifestRecords[0],
+            id: 'expansion-fixture-image',
+            ownership: expansionPackId,
+          },
+        ],
+      })}\n`,
+    ),
+    writeFile(
+      path.join(expansionSourceDirectory, 'assets/materialization-lock.json'),
+      `${JSON.stringify({
+        schemaVersion: 1,
+        packId: expansionPackId,
+        packVersion: '1.0.0',
+        source: 'r2',
+        objects: [expansionObject],
+      })}\n`,
+    ),
+    writeFile(path.join(assetRoot, expansionAssetPath), asset),
+  ]);
+  git(['add', `content/${expansionPackId}`]);
+  try {
+    await verifyFixtureContract();
+  } catch {
+    failures.push('valid expansion materialization was rejected');
+  }
+  await writeFile(path.join(assetRoot, expansionAssetPath), substitutedAsset);
+  if (!(await rejects(verifyFixtureContract))) {
+    failures.push('trusted validator accepted corrupted expansion bytes');
+  }
 } finally {
   await rm(root, { recursive: true, force: true });
 }
@@ -662,5 +711,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  'Media qualification fixtures rejected stale, substituted, duplicate, escaping, mismeasured, watermarked, unreferenced, remote, nested, and unlocked evidence.',
+  'Media qualification fixtures rejected stale, substituted, duplicate, escaping, mismeasured, watermarked, unreferenced, remote, nested, unlocked, and corrupted expansion evidence.',
 );

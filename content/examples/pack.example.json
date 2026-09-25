@@ -1,0 +1,15 @@
+{
+  "id": "base",
+  "version": "0.2.0",
+  "contractVersion": 1,
+  "titleKey": "pack.base.title",
+  "initialMissionId": "garden-kitten-tree",
+  "locales": ["hu", "en"],
+  "dependencies": [],
+  "content": {
+    "animals": "animals",
+    "missions": "missions",
+    "locations": "locations",
+    "shelterAreas": "shelter-areas"
+  }
+}

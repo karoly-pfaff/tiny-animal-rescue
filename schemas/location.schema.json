@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tiny-rescue.local/schemas/location.schema.json",
+  "title": "Tiny Rescue location",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "nameKey", "mapLabelKey", "assets"],
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "nameKey": { "type": "string", "minLength": 1 },
+    "mapLabelKey": { "type": "string", "minLength": 1 },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mapBackground", "missionBackground"],
+      "properties": {
+        "mapBackground": { "$ref": "#/$defs/path" },
+        "missionBackground": { "$ref": "#/$defs/path" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "path": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    }
+  }
+}
