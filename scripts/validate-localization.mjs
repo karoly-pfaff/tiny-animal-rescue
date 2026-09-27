@@ -15,10 +15,18 @@ const structuralAttributes = new Set([
   'sourceClassName',
   'type',
 ]);
-const technicalProperties = new Set(['id', 'path', 'titleKey']);
+const technicalProperties = new Set([
+  'globalCompositeOperation',
+  'id',
+  'lineCap',
+  'lineJoin',
+  'path',
+  'titleKey',
+]);
 const technicalCalls = new Set([
   'addEventListener',
   'getElementById',
+  'getContext',
   'glob',
   'querySelector',
   'querySelectorAll',
@@ -83,10 +91,19 @@ function isElementAccessKey(node) {
 
 function isTechnicalPropertyValue(node) {
   const parent = node.parent;
-  return (
+  if (
     ts.isPropertyAssignment(parent) &&
     parent.initializer === node &&
     technicalProperties.has(propertyName(parent) ?? '')
+  ) {
+    return true;
+  }
+  return (
+    ts.isBinaryExpression(parent) &&
+    parent.right === node &&
+    parent.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+    ts.isPropertyAccessExpression(parent.left) &&
+    technicalProperties.has(parent.left.name.text)
   );
 }
 

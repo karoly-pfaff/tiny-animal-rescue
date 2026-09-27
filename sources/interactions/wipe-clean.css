@@ -1,0 +1,35 @@
+.wipe-clean {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  touch-action: none;
+}
+
+.wipe-clean-underlay,
+.wipe-clean-mask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wipe-clean-underlay {
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.wipe-clean-mask {
+  pointer-events: none;
+}
+
+.wipe-clean:focus-visible {
+  outline: 0.35rem solid #173f65;
+  outline-offset: 0.2rem;
+}

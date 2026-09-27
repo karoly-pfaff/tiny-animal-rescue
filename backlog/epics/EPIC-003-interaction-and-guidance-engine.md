@@ -37,10 +37,10 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S04 — Production wipe/clean
 
-- [ ] Canvas mask supports broad strokes and configurable completion threshold.
-- [ ] Progress calculation is performant and deterministic.
-- [ ] Partial progress survives pause and does not reset on pointer leave.
-- [ ] A non-precision completion path is verified at supported viewports.
+- [x] Canvas mask supports broad strokes and configurable completion threshold.
+- [x] Progress calculation is performant and deterministic.
+- [x] Partial progress survives pause and does not reset on pointer leave.
+- [x] A non-precision completion path is verified at supported viewports.
 
 ### E003-S05 — Production match
 
