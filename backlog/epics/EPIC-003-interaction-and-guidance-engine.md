@@ -30,10 +30,10 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S03 — Production drag-to-target
 
-- [ ] Pointer capture, offset, cancellation, snap tolerance, return animation, and responsive scaling work.
-- [ ] The source remains visible under a finger.
-- [ ] Incorrect targets do not produce harsh feedback.
-- [ ] Touch and mouse test matrices pass.
+- [x] Pointer capture, offset, cancellation, snap tolerance, return animation, and responsive scaling work.
+- [x] The source remains visible under a finger.
+- [x] Incorrect targets do not produce harsh feedback.
+- [x] Touch and mouse test matrices pass.
 
 ### E003-S04 — Production wipe/clean
 

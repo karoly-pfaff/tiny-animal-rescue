@@ -2,6 +2,7 @@ import {
   type Dispatch,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type RefObject,
   type SetStateAction,
   useEffect,
@@ -15,18 +16,24 @@ import {
   type NormalizedPoint,
   type NormalizedTarget,
 } from './drag-geometry';
-import { capturePointer, isPrimaryActivationPointer, releasePointer } from './pointer-capture';
+import {
+  capturePointer,
+  type CapturedPointer,
+  isPrimaryActivationPointer,
+  releaseActivePointer,
+} from './pointer-capture';
 import { createHintStyle, createItemStyle, createTargetStyle } from './drag-to-target-styles';
-import { LadderArt } from './ladder-art';
-
 type DragToTargetProps = Readonly<{
   accessibleLabel: string;
-  assetUrl?: string | null;
   completionAnnouncement: string;
+  hideTargetWhenPlaced?: boolean;
   hintDelayMs?: number;
   onComplete: () => void;
+  paused?: boolean;
   pointerOffsetPx?: number;
+  sourceClassName?: string;
   sourceId?: string;
+  sourceVisual: ReactNode;
   start: NormalizedPoint;
   successCue?: string;
   target: NormalizedTarget;
@@ -36,11 +43,12 @@ type DragToTargetProps = Readonly<{
 type DragPhase = 'dragging' | 'idle' | 'placed';
 
 type DragContext = Readonly<{
-  activePointerId: RefObject<number | null>;
+  activePointer: RefObject<CapturedPointer | null>;
   completed: RefObject<boolean>;
   interaction: RefObject<HTMLDivElement | null>;
   latestPosition: RefObject<NormalizedPoint>;
   onComplete: () => void;
+  paused: boolean;
   pointerOffsetPx: number;
   setPhase: Dispatch<SetStateAction<DragPhase>>;
   setPosition: Dispatch<SetStateAction<NormalizedPoint>>;
@@ -68,14 +76,16 @@ export function DragToTarget(props: DragToTargetProps) {
   const { phase, position, showHint, interaction, context } = controller;
   const itemStyle = createItemStyle(position);
   const targetStyle = createTargetStyle(props.target);
+  const paused = Boolean(props.paused);
   const hintStyle = createHintStyle(props.start, props.target.center);
 
   return (
     <div
       className="drag-interaction"
       data-guidance={showHint}
+      data-hide-target-when-placed={props.hideTargetWhenPlaced}
+      data-paused={paused}
       data-phase={phase}
-      data-production-art={typeof props.assetUrl === 'string'}
       data-success-cue={props.successCue}
       ref={interaction}
     >
@@ -89,8 +99,9 @@ export function DragToTarget(props: DragToTargetProps) {
         <span className="drag-ghost-hand" aria-hidden="true" style={hintStyle} />
       ) : null}
       <button
+        aria-disabled={paused}
         aria-label={props.accessibleLabel}
-        className="mission-ladder"
+        className={['drag-source', props.sourceClassName].filter(Boolean).join(' ')}
         data-phase={phase}
         data-source-id={props.sourceId}
         onClick={(event) => {
@@ -117,7 +128,7 @@ export function DragToTarget(props: DragToTargetProps) {
         style={itemStyle}
         type="button"
       >
-        <LadderArt assetUrl={props.assetUrl} />
+        {props.sourceVisual}
       </button>
       <span className="visually-hidden" aria-live="polite">
         {phase === placedPhase ? props.completionAnnouncement : null}
@@ -129,6 +140,7 @@ export function DragToTarget(props: DragToTargetProps) {
 function useDragController({
   hintDelayMs = defaultHintDelayMs,
   onComplete,
+  paused = false,
   pointerOffsetPx = defaultPointerOffsetPx,
   start,
   target,
@@ -137,16 +149,25 @@ function useDragController({
   const [position, setPosition] = useState(start);
   const [showHint, setShowHint] = useState(false);
   const interaction = useRef<HTMLDivElement>(null);
-  const activePointerId = useRef<number | null>(null);
+  const activePointer = useRef<CapturedPointer | null>(null);
   const completed = useRef(false);
   const latestPosition = useRef(start);
   useIdleHint(phase, hintDelayMs, setShowHint);
+  useEffect(() => {
+    if (paused && activePointer.current !== null) {
+      releaseActivePointer(activePointer);
+      latestPosition.current = start;
+      setPosition(start);
+      setPhase(idlePhase);
+    }
+  }, [paused, start]);
   const context = {
-    activePointerId,
+    activePointer,
     completed,
     interaction,
     latestPosition,
     onComplete,
+    paused,
     pointerOffsetPx,
     setPhase,
     setPosition,
@@ -180,7 +201,7 @@ function beginDrag(event: ReactPointerEvent<HTMLButtonElement>, context: DragCon
     return;
   }
   event.preventDefault();
-  context.activePointerId.current = event.pointerId;
+  context.activePointer.current = { pointerId: event.pointerId, target: event.currentTarget };
   capturePointer(event.currentTarget, event.pointerId);
   context.setShowHint(false);
   context.setPhase(draggingPhase);
@@ -190,13 +211,14 @@ function beginDrag(event: ReactPointerEvent<HTMLButtonElement>, context: DragCon
 function canBeginDrag(event: ReactPointerEvent<HTMLButtonElement>, context: DragContext): boolean {
   return (
     !context.completed.current &&
-    context.activePointerId.current === null &&
+    !context.paused &&
+    context.activePointer.current === null &&
     isPrimaryActivationPointer(event)
   );
 }
 
 function continueDrag(event: ReactPointerEvent<HTMLButtonElement>, context: DragContext): void {
-  if (context.activePointerId.current !== event.pointerId) {
+  if (context.paused || context.activePointer.current?.pointerId !== event.pointerId) {
     return;
   }
   event.preventDefault();
@@ -208,13 +230,17 @@ function finishDrag(
   cancelled: boolean,
   context: DragContext,
 ): void {
-  if (context.activePointerId.current !== event.pointerId) {
+  if (context.activePointer.current?.pointerId !== event.pointerId) {
     return;
   }
   event.preventDefault();
+  if (context.paused) {
+    releaseActivePointer(context.activePointer);
+    returnToStart(context);
+    return;
+  }
   const droppedAt = pointFor(event, context);
-  context.activePointerId.current = null;
-  releasePointer(event.currentTarget, event.pointerId);
+  releaseActivePointer(context.activePointer);
   if (!cancelled && isInsideTarget(droppedAt, context.target)) {
     complete(context);
   } else {
@@ -224,7 +250,7 @@ function finishDrag(
 
 function activateAccessibly(event: ReactMouseEvent<HTMLButtonElement>, context: DragContext): void {
   event.preventDefault();
-  if (event.detail !== 0 || context.completed.current) {
+  if (event.detail !== 0 || context.completed.current || context.paused) {
     return;
   }
   complete(context);

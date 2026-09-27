@@ -12,6 +12,7 @@ const structuralAttributes = new Set([
   'htmlFor',
   'id',
   'role',
+  'sourceClassName',
   'type',
 ]);
 const technicalProperties = new Set(['id', 'path', 'titleKey']);

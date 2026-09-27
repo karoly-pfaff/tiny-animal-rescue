@@ -19,13 +19,16 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function renderInteraction(onComplete = vi.fn()) {
+function renderInteraction(onComplete = vi.fn(), paused = false) {
   const result = render(
     <DragToTarget
       accessibleLabel="Move the ladder"
       completionAnnouncement="Placed"
       hintDelayMs={4_000}
       onComplete={onComplete}
+      paused={paused}
+      sourceClassName="fixture-source"
+      sourceVisual={<span data-testid="source-visual" />}
       start={start}
       target={target}
     />,
@@ -77,6 +80,13 @@ describe('drag-to-target geometry', () => {
 });
 
 describe('DragToTarget', () => {
+  it('keeps interaction behavior independent from the caller-owned source visual', () => {
+    const { ladder } = renderInteraction();
+
+    expect(ladder).toHaveClass('drag-source', 'fixture-source');
+    expect(screen.getByTestId('source-visual')).toBeInTheDocument();
+  });
+
   it('snaps a valid primary-pointer drop and completes exactly once', () => {
     const { ladder, onComplete } = renderInteraction();
     fireEvent.pointerDown(ladder, {
@@ -203,6 +213,54 @@ describe('DragToTarget', () => {
     const { ladder, onComplete } = renderInteraction();
     fireEvent.click(ladder, { detail: 0 });
     expect(ladder).toHaveAttribute('data-phase', 'placed');
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('releases a paused drag, returns gently, and accepts fresh input after resume', () => {
+    const onComplete = vi.fn();
+    const { ladder, pointerCapture, rerender } = renderInteraction(onComplete);
+    fireEvent.pointerDown(ladder, {
+      button: 0,
+      clientX: 205,
+      clientY: 601,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    fireEvent.pointerMove(ladder, { clientX: 420, clientY: 420, pointerId: 1 });
+
+    rerender(
+      <DragToTarget
+        accessibleLabel="Move the ladder"
+        completionAnnouncement="Placed"
+        hintDelayMs={4_000}
+        onComplete={onComplete}
+        paused
+        sourceVisual={<span />}
+        start={start}
+        target={target}
+      />,
+    );
+    fireEvent.pointerUp(ladder, { clientX: 666, clientY: 517, pointerId: 1 });
+    fireEvent.click(ladder, { detail: 0 });
+
+    expect(ladder).toHaveAttribute('data-phase', 'idle');
+    expect(ladder).toHaveStyle({ left: '20%', top: '72%' });
+    expect(pointerCapture.releasePointerCapture).toHaveBeenCalledOnce();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    rerender(
+      <DragToTarget
+        accessibleLabel="Move the ladder"
+        completionAnnouncement="Placed"
+        hintDelayMs={4_000}
+        onComplete={onComplete}
+        sourceVisual={<span />}
+        start={start}
+        target={target}
+      />,
+    );
+    fireEvent.click(ladder, { detail: 0 });
     expect(onComplete).toHaveBeenCalledOnce();
   });
 });

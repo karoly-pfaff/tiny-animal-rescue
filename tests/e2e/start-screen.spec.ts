@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { completeFirstRescue } from './support/complete-first-rescue';
-import { dragLadder } from './support/ladder-drag';
+import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
 
@@ -185,7 +185,41 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
 
-  await dragLadder({ destination: 'invalid', ladder, page, pointerType });
+  const interrupted = await interruptLadderDrag({
+    inspectAfterCancel: async () => {
+      await expect(ladder).toHaveAttribute('data-phase', 'idle');
+      await expect(ladder).toHaveAttribute('style', /left: 20%; top: 72%/);
+      await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toHaveCount(0);
+    },
+    ladder,
+    page,
+    pointerType,
+  });
+  expect(interrupted.afterSecondary).toEqual(interrupted.afterPrimary);
+  await expect(ladder).toHaveAttribute('data-phase', 'idle');
+  await expect(ladder).toHaveAttribute('style', /left: 20%; top: 72%/);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toHaveCount(0);
+
+  await dragLadder({
+    destination: 'invalid',
+    inspectWhileDragging: async (pointer) => {
+      await expect(ladder).toHaveAttribute('data-phase', 'dragging');
+      const [surfaceBox, ladderBox, inlineTop] = await Promise.all([
+        page.locator('.drag-interaction').boundingBox(),
+        ladder.boundingBox(),
+        ladder.evaluate((element) => Number.parseFloat(element.style.top)),
+      ]);
+      if (surfaceBox === null || ladderBox === null) {
+        throw new Error('Active drag geometry must remain measurable.');
+      }
+      const expectedTop = ((pointer.y - surfaceBox.y - 48) / surfaceBox.height) * 100;
+      expect(inlineTop).toBeCloseTo(expectedTop, 3);
+      expect(ladderBox.y + ladderBox.height / 2).toBeLessThan(pointer.y);
+    },
+    ladder,
+    page,
+    pointerType,
+  });
   await expect(ladder).toHaveAttribute('data-phase', 'idle');
   await dragLadder({ destination: 'target', ladder, page, pointerType });
   await expect(ladder).toHaveAttribute('data-phase', 'placed');

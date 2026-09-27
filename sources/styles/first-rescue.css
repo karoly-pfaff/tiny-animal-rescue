@@ -710,31 +710,40 @@
   animation: target-breathe 1.8s ease-in-out infinite;
 }
 
-.drag-interaction[data-production-art='true'][data-phase='placed'] .ladder-target {
+.drag-interaction[data-hide-target-when-placed='true'][data-phase='placed'] .ladder-target {
   opacity: 0;
 }
 
-.mission-ladder {
+.drag-source {
   position: absolute;
-  width: clamp(4.8rem, 9%, 7rem);
-  height: clamp(12rem, 35%, 20rem);
   translate: -50% -50%;
-  rotate: -7deg;
   border: 0;
   background: transparent;
-  filter: drop-shadow(0.35rem 0.5rem 0 rgb(72 45 25 / 28%));
   touch-action: none;
+  transition:
+    left 420ms ease-out,
+    top 420ms ease-out;
+}
+
+.mission-ladder {
+  width: clamp(4.8rem, 9%, 7rem);
+  height: clamp(12rem, 35%, 20rem);
+  rotate: -7deg;
+  filter: drop-shadow(0.35rem 0.5rem 0 rgb(72 45 25 / 28%));
   transition:
     left 420ms ease-out,
     top 420ms ease-out,
     rotate 420ms ease-out;
 }
 
-.mission-ladder[data-phase='dragging'] {
+.drag-source[data-phase='dragging'] {
   z-index: 3;
   cursor: grabbing;
-  rotate: -2deg;
   transition: none;
+}
+
+.mission-ladder[data-phase='dragging'] {
+  rotate: -2deg;
 }
 
 .mission-ladder[data-phase='placed'] {
@@ -1035,7 +1044,7 @@
     animation: none;
   }
 
-  .mission-ladder {
+  .drag-source {
     transition-duration: 1ms;
   }
 

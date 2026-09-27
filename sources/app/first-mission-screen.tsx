@@ -13,6 +13,7 @@ import { getStrings } from '../i18n/localization';
 import { DragToTarget } from '../interactions/drag-to-target';
 import { contentDragStart, contentDragTarget } from '../interactions/content-drag-layout';
 import { useHoldToActivate } from '../interactions/hold-to-activate';
+import { LadderArt } from '../interactions/ladder-art';
 import { FirstMissionArtwork, type MissionPhase } from './first-mission-artwork';
 
 const exitHoldDurationMs = 650;
@@ -83,11 +84,13 @@ export function FirstMissionScreen({
         </p>
         <DragToTarget
           accessibleLabel={presentation.dragPrompt}
-          assetUrl={ladderUrl}
           completionAnnouncement={strings.ladderPlaced}
+          hideTargetWhenPlaced={ladderUrl !== null}
           hintDelayMs={content.dragStep.hint.delayMs}
           onComplete={rescue.unlockMimi}
           sourceId={content.dragStep.sourceId}
+          sourceClassName="mission-ladder"
+          sourceVisual={<LadderArt assetUrl={ladderUrl} />}
           start={contentDragStart(content.dragStep)}
           successCue={content.dragStep.successCue}
           target={contentDragTarget(content.dragStep, ladderUrl)}
