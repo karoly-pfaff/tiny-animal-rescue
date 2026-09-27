@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { MatchFixture } from './match-fixture';
 import { WipeFixture } from './wipe-fixture';
 import './style.css';
 
@@ -10,8 +11,6 @@ if (!(rootElement instanceof HTMLElement)) {
   throw new Error('Fixture root element is missing.');
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <WipeFixture />
-  </StrictMode>,
-);
+const fixture = window.location.search === '?fixture=match' ? <MatchFixture /> : <WipeFixture />;
+
+createRoot(rootElement).render(<StrictMode>{fixture}</StrictMode>);

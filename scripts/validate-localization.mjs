@@ -197,6 +197,7 @@ function isConstrainedTechnicalLiteral(node) {
         'IDBTransactionMode',
         'LanguageTag',
         'Locale',
+        'MatchSide',
         'MissionPhase',
         'MissionStepActionType',
         'MissionStepStatus',

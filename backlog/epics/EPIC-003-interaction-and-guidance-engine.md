@@ -44,10 +44,10 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S05 — Production match
 
-- [ ] Up to three source-target pairs are supported.
-- [ ] Correctness never depends only on color.
-- [ ] Each completed pair locks and contributes once.
-- [ ] Input order may vary without breaking mission state.
+- [x] Up to three source-target pairs are supported.
+- [x] Correctness never depends only on color.
+- [x] Each completed pair locks and contributes once.
+- [x] Input order may vary without breaking mission state.
 
 ### E003-S06 — Production trace
 

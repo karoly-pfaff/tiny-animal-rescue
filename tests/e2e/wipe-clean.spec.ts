@@ -1,11 +1,7 @@
-import { env } from 'node:process';
 import { expect, test, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
-import { resolvePreviewPort } from './support/preview-port';
-
-const fixturePort = resolvePreviewPort(env['TINY_RESCUE_PREVIEW_PORT']) + 1;
-const fixtureUrl = `http://127.0.0.1:${String(fixturePort)}`;
+import { interactionFixtureUrl } from './support/fixture-url';
 
 type ClientPoint = Readonly<{ x: number; y: number }>;
 type WipePathOptions = Readonly<{
@@ -66,7 +62,7 @@ async function followWipePath({ page, points, touch }: WipePathOptions): Promise
 test('@preview completes a broad wipe in the production build', async ({ page }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
   const touch = Boolean(testInfo.project.use.hasTouch);
-  await page.goto(fixtureUrl);
+  await page.goto(interactionFixtureUrl('wipe'));
   const surface = page.getByRole('button', { name: 'Wipe the surface clean' });
   const box = await surface.boundingBox();
   if (box === null) {

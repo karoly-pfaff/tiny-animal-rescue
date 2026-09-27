@@ -33,6 +33,50 @@ body {
     linear-gradient(145deg, #65bd8c, #4fa4b9);
 }
 
+.match-demo-surface {
+  background: linear-gradient(145deg, #d8f0dc, #a9d8dc);
+}
+
+.fixture-match-object {
+  display: block;
+  width: 65%;
+  height: 65%;
+  border: 0.3rem solid #76552e;
+  border-radius: 45% 45% 52% 52%;
+  background: #efac5f;
+}
+
+.match-item[data-side='target'] .fixture-match-object {
+  width: 78%;
+  height: 58%;
+  border-radius: 0.4rem 0.4rem 1.2rem 1.2rem;
+  background: #f7d98f;
+}
+
+.fixture-match-cue {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  background: #173f65;
+}
+
+.fixture-match-cue-round {
+  border-radius: 50%;
+}
+
+.fixture-match-cue-triangle {
+  width: 0;
+  height: 0;
+  border-right: 0.55rem solid transparent;
+  border-bottom: 0.95rem solid #173f65;
+  border-left: 0.55rem solid transparent;
+  background: transparent;
+}
+
+.fixture-match-cue-square {
+  rotate: 45deg;
+}
+
 .interaction-demo-paw {
   position: absolute;
   display: block;
