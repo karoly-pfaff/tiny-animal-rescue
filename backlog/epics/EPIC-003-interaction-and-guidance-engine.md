@@ -15,11 +15,11 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S01 — Mission step orchestrator
 
-- [ ] Runtime loads normalized steps and mounts exactly one active interaction.
-- [ ] Completion is idempotent and advances once.
-- [ ] pause, resume, reset, and dispose lifecycles are explicit.
-- [ ] Exhaustive TypeScript switches fail compilation for unhandled step types.
-- [ ] Components emit events; they do not write global progress directly.
+- [x] Runtime loads normalized steps and mounts exactly one active interaction.
+- [x] Completion is idempotent and advances once.
+- [x] pause, resume, reset, and dispose lifecycles are explicit.
+- [x] Exhaustive TypeScript switches fail compilation for unhandled step types.
+- [x] Components emit events; they do not write global progress directly.
 
 ### E003-S02 — Production tap/remove
 

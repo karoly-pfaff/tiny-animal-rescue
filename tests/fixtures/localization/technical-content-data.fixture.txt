@@ -1,11 +1,21 @@
 type V1CatalogDefinition = Readonly<{ id: string; types: readonly string[] }>;
+type MissionStepActionType = 'start' | 'pause';
+type MissionStepStatus = 'ready' | 'active';
+type MissionStepType = 'tap' | 'drag';
 
 const catalog = {
   id: 'technical-record-id',
   types: ['tap', 'drag'],
 } satisfies V1CatalogDefinition;
 
+const action = 'start' satisfies MissionStepActionType;
+const status = 'ready' satisfies MissionStepStatus;
+const stepType = 'tap' satisfies MissionStepType;
+
 const finding = diagnostic('Developer-only validation diagnostic.');
 
 void catalog;
+void action;
+void status;
+void stepType;
 void finding;
