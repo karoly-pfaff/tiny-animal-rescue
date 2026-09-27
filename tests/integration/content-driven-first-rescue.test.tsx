@@ -83,6 +83,15 @@ describe('content-driven first Rescue runtime', () => {
 
     fireEvent.click(subject);
     expect(play).toHaveBeenLastCalledWith('effects.interaction.obstacle-cleared');
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(
+      screen.queryByRole('button', { name: 'Tap the fixture subject!' }),
+    ).not.toBeInTheDocument();
+    void act(() => vi.advanceTimersByTime(649));
+    expect(
+      screen.queryByRole('button', { name: 'Tap the fixture subject!' }),
+    ).not.toBeInTheDocument();
+    expect(play).toHaveBeenCalledTimes(2);
   });
 
   it('uses the declared localized success key for celebration narration and copy', () => {

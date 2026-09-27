@@ -1,0 +1,73 @@
+.tap-remove-interaction {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tap-remove-target {
+  position: absolute;
+  display: grid;
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  translate: -50% -50%;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.tap-remove-visual {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  pointer-events: none;
+}
+
+.tap-remove-target[data-guidance='true'] .tap-remove-visual {
+  animation: tap-target-pulse 1.35s ease-in-out infinite;
+}
+
+.tap-remove-target[data-incorrect='true'] .tap-remove-visual {
+  animation: tap-target-return 240ms ease-out;
+}
+
+.tap-remove-target:focus-visible {
+  outline: 0.35rem solid #235d84;
+  outline-offset: 0.2rem;
+}
+
+@keyframes tap-target-pulse {
+  50% {
+    scale: 1.08;
+    box-shadow: 0 0 0 0.7rem rgb(255 240 151 / 45%);
+  }
+}
+
+@keyframes tap-target-return {
+  50% {
+    translate: 0.25rem;
+  }
+}
+
+@keyframes tap-target-highlight {
+  50% {
+    filter: brightness(1.18);
+    outline-color: rgb(255 240 151 / 85%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-remove-target[data-guidance='true'] .tap-remove-visual {
+    outline: 0.45rem solid rgb(255 240 151 / 78%);
+    animation: none;
+  }
+
+  .tap-remove-target[data-incorrect='true'] .tap-remove-visual {
+    outline: 0.35rem solid transparent;
+    animation: tap-target-highlight 240ms ease-out;
+  }
+}

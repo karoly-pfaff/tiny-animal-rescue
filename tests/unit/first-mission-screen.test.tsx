@@ -141,6 +141,11 @@ describe('FirstMissionScreen rescue completion', () => {
 
     expect(onCommitReward).toHaveBeenCalledOnce();
     expect(onCelebrate).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).not.toBeInTheDocument();
+    expect(document.querySelector('.mission-kitten-rescue')).toHaveAttribute(
+      'data-phase',
+      'saving',
+    );
     finishCommit();
     await act(async () => {
       await Promise.resolve();

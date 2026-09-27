@@ -1,4 +1,4 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
@@ -6,6 +6,17 @@ import { dragLadder } from './support/ladder-drag';
 
 async function settleVisual(page: Page) {
   await page.evaluate(async () => document.fonts.ready);
+}
+
+async function setAnimationTime(element: Locator, milliseconds: number): Promise<void> {
+  await element.evaluate((animatedElement, nextTime) => {
+    const animation = animatedElement.getAnimations()[0];
+    if (animation === undefined) {
+      throw new Error('Expected rescue animation is missing.');
+    }
+    animation.pause();
+    animation.currentTime = nextTime;
+  }, milliseconds);
 }
 
 const mediaComplete = process.env['VITE_MATERIALIZED_ASSETS'] === 'true';
@@ -32,6 +43,11 @@ const expectedAssetsByScreenshot = {
     'images/residents/mimi/mission.png',
   ],
   'mission-protected-exit-en.png': [
+    'images/missions/garden-kitten-tree/background.png',
+    'images/missions/garden-kitten-tree/ladder.png',
+    'images/residents/mimi/mission.png',
+  ],
+  'mission-mimi-rescuing.png': [
     'images/missions/garden-kitten-tree/background.png',
     'images/missions/garden-kitten-tree/ladder.png',
     'images/residents/mimi/mission.png',
@@ -249,6 +265,31 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
   await settleVisual(page);
 
   await verifyReviewedVisual(page, 'mission-ladder-placed.png', testInfo);
+  expect(browserErrors).toEqual([]);
+});
+
+test('@visual shows Mimi descending before celebration', async ({ page }, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
+  const rescueMotion = page.locator('.mission-kitten-rescue');
+  await expect(rescueMotion).toBeVisible();
+  await setAnimationTime(rescueMotion, 300);
+  await settleVisual(page);
+
+  await verifyReviewedVisual(page, 'mission-mimi-rescuing.png', testInfo);
   expect(browserErrors).toEqual([]);
 });
 

@@ -23,10 +23,10 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S02 — Production tap/remove
 
-- [ ] Single and ordered multi-target removal are supported.
-- [ ] Invisible hit areas may exceed visual bounds and remain testable.
-- [ ] Completed targets cannot trigger duplicate completion.
-- [ ] Tap feedback, target pulse, and reduced-motion alternatives work.
+- [x] Single and ordered multi-target removal are supported.
+- [x] Invisible hit areas may exceed visual bounds and remain testable.
+- [x] Completed targets cannot trigger duplicate completion.
+- [x] Tap feedback, target pulse, and reduced-motion alternatives work.
 
 ### E003-S03 — Production drag-to-target
 

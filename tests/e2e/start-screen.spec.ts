@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { completeFirstRescue } from './support/complete-first-rescue';
@@ -16,6 +16,20 @@ async function setAnimationTime(element: Locator, milliseconds: number): Promise
     animation.pause();
     animation.currentTime = nextTime;
   }, milliseconds);
+}
+
+async function openMimiTapStep(page: Page, hasTouch: boolean) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await activateWithPrimaryPointer(page.getByRole('button', { name: 'Játék' }), hasTouch);
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await dragLadder({
+    destination: 'target',
+    ladder: page.getByRole('button', { name: 'Húzd a létrát a fához!' }),
+    page,
+    pointerType: hasTouch ? 'touch' : 'mouse',
+  });
+  return page.getByRole('button', { name: 'Koppints Mimire!' });
 }
 
 test('@preview renders the localized start screen from production preview', async ({
@@ -178,6 +192,59 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   await ladder.press('Enter');
   await expect(ladder).toHaveAttribute('data-phase', 'placed');
   expect(browserErrors).toEqual([]);
+});
+
+test('@preview activates Mimi through the forgiving tap hit area', async ({ page }, testInfo) => {
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  const mimi = await openMimiTapStep(page, hasTouch);
+  await page.clock.fastForward(5_000);
+
+  const targetBox = await mimi.boundingBox();
+  const visualBox = await mimi.locator('.mission-kitten-tap-visual').boundingBox();
+  if (targetBox === null || visualBox === null) {
+    throw new Error('Mimi tap geometry must be measurable.');
+  }
+  expect(targetBox.width).toBeGreaterThan(visualBox.width);
+  expect(targetBox.height).toBeGreaterThan(visualBox.height);
+  await expect(mimi).toHaveAttribute('data-guidance', 'true');
+  await expect(mimi.locator('.tap-remove-visual')).toHaveCSS('animation-name', 'tap-target-pulse');
+
+  const outsideVisualPoint = { x: 4, y: targetBox.height / 2 };
+  expect(targetBox.x + outsideVisualPoint.x).toBeLessThan(visualBox.x);
+  if (hasTouch) {
+    await mimi.tap({ position: outsideVisualPoint });
+  } else {
+    await mimi.click({ position: outsideVisualPoint });
+  }
+  await expect(mimi).toHaveCount(0);
+  const rescueMotion = page.locator('.mission-kitten-rescue');
+  await expect(rescueMotion).toBeVisible();
+  await expect(rescueMotion).toHaveAttribute('data-phase', 'saving');
+  await expect(rescueMotion).toHaveCSS('animation-name', 'mimi-rescued');
+  await page.clock.fastForward(1);
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await page.clock.fastForward(324);
+  await expect(rescueMotion).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await page.clock.fastForward(325);
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+});
+
+test('@preview substitutes static tap guidance under reduced motion', async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  const mimi = await openMimiTapStep(page, Boolean(testInfo.project.use.hasTouch));
+  await page.clock.fastForward(5_000);
+
+  const visual = mimi.locator('.tap-remove-visual');
+  await expect(mimi).toHaveAttribute('data-guidance', 'true');
+  await expect(visual).toHaveCSS('animation-name', 'none');
+  await expect(visual).toHaveCSS('outline-style', 'solid');
 });
 
 test('@preview demonstrates idle guidance under a normal-motion fake clock', async ({
