@@ -164,9 +164,14 @@ locked object. The product/base-pack version must equal the trusted backlog targ
 The implementer opens that exact retained build in a real browser and completes the
 backlog-declared journey set in Hungarian and English with mouse and touch input. Inspection covers the complete supported
 viewport matrix (1024x768, 1280x800, 1366x1024, and 768x1024) at full size and checks actual asset
-loading, absence of placeholders/fallbacks/watermarks/baked text,
+loading, absence of unexpected placeholders/fallbacks/watermarks/baked text,
 composition, hierarchy, target visibility, clipping, overlap, transition states, and console/runtime
-failures.
+failures. Candidate-owned, changed, or claimed-complete media must be real production media. Any
+ADR-0012-permitted deferred media fallback is inventoried with its owning future story, remains
+functionally and linguistically equivalent, and is reinspected across every inherited journey by that
+owning epic. The exact-head backlog is the deferred-media inventory; the inspection record's
+`Findings: none` value means the observed fallback matched that declaration and introduced no other
+finding.
 
 Record the exact commit, product version, commands, browser, locale/input/viewport matrix, journeys,
 asset-inventory and artifact digests, evidence paths, findings/dispositions, inspector, timestamp, and

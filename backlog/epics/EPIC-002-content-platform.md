@@ -10,8 +10,6 @@
 ## Outcome
 
 Replace vertical-slice-specific declarations with a versioned, validated content registry capable of loading the base pack and future build-time packs without executing content code.
-Finish the bounded production audio set that the M2 journeys actually exercise; full-game audio and
-parent audio settings remain owned by EPIC-006.
 
 ## Stories
 
@@ -60,29 +58,19 @@ parent audio settings remain owned by EPIC-006.
 - [x] Removing the test pack restores the exact base registry.
 - [x] No pack manager UI, remote loading, or arbitrary script support is introduced.
 
-### E002-S07 — Produce and integrate the epic audio set
+### E002-S07 — Defer production audio to M6
 
-- [ ] A generated inventory lists every music, effect, and HU/EN voice runtime ID exercised by the
-      EPIC-002 product journeys, with no unrelated full-game audio scope.
-- [ ] The owner produces, edits, and approves every inventoried file using the repository prompt pack;
-      production exports contain no audible watermark, branding, signature, or authorship credit.
-- [ ] Every asset has approved prompt, provenance/license, mastering, duration/format, channel, and
-      repeated/overlapping playback QA evidence plus an exact R2 object key and digest lock.
-- [ ] Verified R2 media materializes only into the ignored `content/base/assets/audio/` tree and the
-      packaged product resolves local pack paths without a browser-time R2 request.
-- [ ] Music, effects, and voice use separate channels; narration replaces the current line and ducks
-      music without depending on wall-clock audio duration for mission progression.
-- [ ] HU and EN voice coverage is equivalent, code-native speech is absent from the media-complete
-      candidate, and mute/replay/background-resume behavior passes integration and browser checks.
-- [ ] The exact candidate passes asset/audio gates, the complete supported viewport/input journey
-      matrix, listening QA, and ADR-0012 live production-preview inspection.
+- [x] The bounded first-rescue production-audio scope moves intact to E006-S07.
+- [x] No audio acceptance criterion is dropped or weakened by the move.
+- [x] M2 claims only the declarative content platform and does not claim production-audio completion.
+- [x] ADR-0012 records the bounded deferral, and E006-S07 inherits the exercised journey set.
+- [x] No audio binary, delivery rule, runtime behavior, or milestone/version sequence changes here.
 
 ## Exit criteria
 
 - Content validation is part of `validate:quick`.
 - The first rescue is entirely declared by content plus reusable engine behavior.
 - A test pack proves extension without becoming shipped scope.
-- Every sound exercised by the M2 inspection journeys is production media with complete evidence.
 
 ## Verification
 
