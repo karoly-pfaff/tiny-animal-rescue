@@ -1,6 +1,6 @@
 # EPIC-002: Declarative content platform
 
-- Status: In progress
+- Status: Done
 - Milestone: M2
 - Target version: `0.3.0`
 - Inspection journeys: `start,map,content-loading`
