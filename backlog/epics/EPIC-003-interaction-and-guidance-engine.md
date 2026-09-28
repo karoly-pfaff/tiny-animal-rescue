@@ -51,10 +51,10 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S06 — Production trace
 
-- [ ] A broad corridor maps correctly to scaled coordinates.
-- [ ] Small deviations preserve progress; there is no full punitive reset.
-- [ ] Start/end affordances and animated hint path are visible.
-- [ ] Performance remains smooth on the target class of tablet.
+- [x] A broad corridor maps correctly to scaled coordinates.
+- [x] Small deviations preserve progress; there is no full punitive reset.
+- [x] Start/end affordances and animated hint path are visible.
+- [x] Performance remains smooth on the target class of tablet.
 
 ### E003-S07 — Shared guidance ladder
 

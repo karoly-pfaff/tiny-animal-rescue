@@ -37,6 +37,54 @@ body {
   background: linear-gradient(145deg, #d8f0dc, #a9d8dc);
 }
 
+.trace-demo-surface {
+  background:
+    radial-gradient(circle at 16% 18%, rgb(255 255 255 / 38%) 0 7%, transparent 7.5%),
+    linear-gradient(155deg, #a9ddbd, #78bdac 54%, #5aa6b7);
+}
+
+.fixture-trace-start,
+.fixture-trace-pond,
+.fixture-trace-turtle {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fixture-trace-start {
+  border: 0.35rem solid #fff7df;
+  border-radius: 50%;
+  background: radial-gradient(circle, #efac5f 0 30%, #db735d 31% 58%, #6dad78 59%);
+}
+
+.fixture-trace-pond {
+  border: 0.3rem solid #fff7df;
+  border-radius: 52% 48% 58% 42%;
+  background: radial-gradient(ellipse at 45% 42%, #bce9e7 0 22%, #4f9db6 24% 70%, #3c879b 72%);
+}
+
+.fixture-trace-turtle {
+  position: relative;
+  width: 88%;
+  height: 70%;
+  border: 0.22rem solid #315c49;
+  border-radius: 48%;
+  background: radial-gradient(circle at 50% 50%, #d7c96e 0 18%, #6eaa69 20% 68%, #4f8757 70%);
+  box-shadow: 0 0.25rem 0 rgb(49 92 73 / 24%);
+}
+
+.fixture-trace-turtle::after {
+  position: absolute;
+  top: 28%;
+  left: 92%;
+  width: 34%;
+  height: 42%;
+  border: 0.18rem solid #315c49;
+  border-radius: 50%;
+  background: #88b96f;
+  content: '';
+}
+
 .fixture-match-object {
   display: block;
   width: 65%;

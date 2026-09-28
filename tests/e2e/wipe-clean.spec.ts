@@ -1,14 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { interactionFixtureUrl } from './support/fixture-url';
-
-type ClientPoint = Readonly<{ x: number; y: number }>;
-type WipePathOptions = Readonly<{
-  page: Page;
-  points: readonly ClientPoint[];
-  touch: boolean;
-}>;
+import { followPrimaryPointerPath } from './support/pointer';
 
 function createWipePath(box: Readonly<{ height: number; width: number; x: number; y: number }>) {
   const rows = [0.03, 0.14, 0.25, 0.36, 0.47, 0.58, 0.69, 0.8, 0.91, 0.97];
@@ -16,47 +10,6 @@ function createWipePath(box: Readonly<{ height: number; width: number; x: number
     x: box.x + box.width * (index % 2 === 0 ? 0.04 : 0.96),
     y: box.y + box.height * row,
   }));
-}
-
-async function wipeWithMouse(page: Page, points: readonly ClientPoint[]): Promise<void> {
-  const [start, ...rest] = points;
-  if (start === undefined) {
-    throw new Error('The wipe path must contain a start point.');
-  }
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
-  for (const point of rest) {
-    await page.mouse.move(point.x, point.y, { steps: 8 });
-  }
-  await page.mouse.up();
-}
-
-async function wipeWithTouch(page: Page, points: readonly ClientPoint[]): Promise<void> {
-  const [start, ...rest] = points;
-  if (start === undefined) {
-    throw new Error('The wipe path must contain a start point.');
-  }
-  const session = await page.context().newCDPSession(page);
-  await session.send('Input.dispatchTouchEvent', {
-    touchPoints: [{ id: 17, ...start }],
-    type: 'touchStart',
-  });
-  for (const point of rest) {
-    await session.send('Input.dispatchTouchEvent', {
-      touchPoints: [{ id: 17, ...point }],
-      type: 'touchMove',
-    });
-  }
-  await session.send('Input.dispatchTouchEvent', { touchPoints: [], type: 'touchEnd' });
-  await session.detach();
-}
-
-async function followWipePath({ page, points, touch }: WipePathOptions): Promise<void> {
-  if (touch) {
-    await wipeWithTouch(page, points);
-    return;
-  }
-  await wipeWithMouse(page, points);
 }
 
 test('@preview completes a broad wipe in the production build', async ({ page }, testInfo) => {
@@ -88,7 +41,7 @@ test('@preview completes a broad wipe in the production build', async ({ page },
   expect(backingStore.width).toBe(Math.round(box.width * backingStore.ratio));
   expect(backingStore.height).toBe(Math.round(box.height * backingStore.ratio));
 
-  await followWipePath({ page, points: createWipePath(box), touch });
+  await followPrimaryPointerPath({ hasTouch: touch, page, points: createWipePath(box) });
 
   await expect(surface).toHaveAttribute('data-complete', 'true');
   await expect(surface).toHaveAttribute('aria-pressed', 'true');

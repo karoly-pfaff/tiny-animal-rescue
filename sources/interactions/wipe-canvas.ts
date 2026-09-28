@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 
 import type { NormalizedPoint } from './drag-geometry';
+import { observeResponsiveCanvas, resizeCanvasBackingStore } from './responsive-canvas';
 
 export type WipeStroke = Readonly<{ from: NormalizedPoint; to: NormalizedPoint }>;
 
@@ -17,33 +18,13 @@ export function observeWipeCanvas(
   renderOptions: Omit<CanvasRenderOptions, 'canvas' | 'strokes'>,
   strokes: RefObject<WipeStroke[]>,
 ): () => void {
-  const canvas = canvasRef.current;
-  if (canvas === null) {
-    return () => undefined;
-  }
-  const render = () => {
+  return observeResponsiveCanvas(canvasRef, (canvas) => {
     renderMask({ ...renderOptions, canvas, strokes: strokes.current });
-  };
-  render();
-  return observeResize(canvas, render);
-}
-
-function observeResize(canvas: HTMLCanvasElement, render: () => void): () => void {
-  if (typeof ResizeObserver === 'undefined') {
-    window.addEventListener('resize', render);
-    return () => {
-      window.removeEventListener('resize', render);
-    };
-  }
-  const observer = new ResizeObserver(render);
-  observer.observe(canvas);
-  return () => {
-    observer.disconnect();
-  };
+  });
 }
 
 function renderMask(options: CanvasRenderOptions): void {
-  const context = resizeAndGetContext(options.canvas);
+  const context = resizeCanvasBackingStore(options.canvas);
   if (context === null) {
     return;
   }
@@ -60,16 +41,6 @@ function renderMask(options: CanvasRenderOptions): void {
 function clearMask(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
   const bounds = canvas.getBoundingClientRect();
   context.clearRect(0, 0, bounds.width, bounds.height);
-}
-
-function resizeAndGetContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D | null {
-  const bounds = canvas.getBoundingClientRect();
-  const ratio = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = Math.max(1, Math.round(bounds.width * ratio));
-  canvas.height = Math.max(1, Math.round(bounds.height * ratio));
-  const context = canvas.getContext('2d');
-  context?.setTransform(ratio, 0, 0, ratio, 0, 0);
-  return context;
 }
 
 function paintMask(context: CanvasRenderingContext2D, options: CanvasRenderOptions): void {

@@ -1,5 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
+export type ClientPoint = Readonly<{ x: number; y: number }>;
+
 export async function activateWithPrimaryPointer(
   locator: Locator,
   hasTouch: boolean,
@@ -38,8 +40,6 @@ export async function cancelPrimaryPointerOutside({
   await page.mouse.up();
 }
 
-type ClientPoint = Readonly<{ x: number; y: number }>;
-
 async function cancelTouchOutside(
   page: Page,
   start: ClientPoint,
@@ -54,6 +54,53 @@ async function cancelTouchOutside(
     touchPoints: [{ id: 19, ...outside }],
     type: 'touchMove',
   });
+  await session.send('Input.dispatchTouchEvent', { touchPoints: [], type: 'touchEnd' });
+  await session.detach();
+}
+
+type FollowPointerPathOptions = Readonly<{
+  hasTouch: boolean;
+  page: Page;
+  points: readonly ClientPoint[];
+}>;
+
+export async function followPrimaryPointerPath({
+  hasTouch,
+  page,
+  points,
+}: FollowPointerPathOptions): Promise<void> {
+  const [start, ...rest] = points;
+  if (start === undefined) {
+    throw new Error('A pointer path must contain a start point.');
+  }
+  if (hasTouch) {
+    await followTouchPath(page, start, rest);
+    return;
+  }
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  for (const point of rest) {
+    await page.mouse.move(point.x, point.y, { steps: 4 });
+  }
+  await page.mouse.up();
+}
+
+async function followTouchPath(
+  page: Page,
+  start: ClientPoint,
+  rest: readonly ClientPoint[],
+): Promise<void> {
+  const session = await page.context().newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', {
+    touchPoints: [{ id: 17, ...start }],
+    type: 'touchStart',
+  });
+  for (const point of rest) {
+    await session.send('Input.dispatchTouchEvent', {
+      touchPoints: [{ id: 17, ...point }],
+      type: 'touchMove',
+    });
+  }
   await session.send('Input.dispatchTouchEvent', { touchPoints: [], type: 'touchEnd' });
   await session.detach();
 }
