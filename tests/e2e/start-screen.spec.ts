@@ -222,9 +222,8 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   });
   await expect(ladder).toHaveAttribute('data-phase', 'idle');
   await dragLadder({ destination: 'target', ladder, page, pointerType });
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
-  await ladder.press('Enter');
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await expect(ladder).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toBeVisible();
   expect(browserErrors).toEqual([]);
 });
 
@@ -321,7 +320,8 @@ test('@preview @guidance-replay restarts idle guidance under a fake clock', asyn
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await expect(ladder).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toBeVisible();
   expect(browserErrors).toEqual([]);
 });
 

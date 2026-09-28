@@ -161,6 +161,12 @@ Automated browser and visual gates are necessary but not sufficient for epic clo
 every epic and every player-visible patch must be inspected on the exact candidate commit after its
 aggregate gate passes and before merge approval is requested.
 
+When a reusable mechanic intentionally precedes every real mission that will use it, ADR-0015 permits
+only the assembled-content portion of that mechanic's inspection to move to one named later story.
+The current epic still walks every existing affected production journey, and its contract fixture
+remains supporting evidence rather than a production-preview substitute. The later owner must inspect
+the carried mechanic through real HU/EN player content with the full input and viewport matrix.
+
 The protected media-qualification workflow synchronizes and verifies required production media with
 trusted `main` policy, creates the production build and visual evidence in a separate secretless
 candidate job, then uses a fresh trusted finalizer to combine that product with the original immutable

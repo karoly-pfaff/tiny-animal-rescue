@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect } from 'react';
 
+import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import { observeWipeCanvas } from './wipe-canvas';
 import {
   activateWipeAccessibly,
@@ -17,8 +18,10 @@ type WipeCleanProps = Readonly<{
   brushRadius?: number;
   columns?: number;
   completionThreshold: number;
+  guidance: GuidancePresentation;
   maskColor: string;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
   paused?: boolean;
   rows?: number;
   underlay: ReactNode;
@@ -32,10 +35,12 @@ export function WipeClean({
   brushRadius = defaultBrushRadius,
   columns = defaultColumns,
   completionThreshold,
+  guidance,
   maskColor,
   onComplete,
+  onGuidanceActivity,
   paused = false,
-  rows = 32,
+  rows,
   underlay,
 }: WipeCleanProps) {
   const { canvas, coverage, interaction, isComplete, strokes, surface } = useWipeInteraction({
@@ -43,8 +48,9 @@ export function WipeClean({
     columns,
     completionThreshold,
     onComplete,
+    onGuidanceActivity,
     paused,
-    rows,
+    rows: wipeRows(rows),
   });
 
   useEffect(
@@ -65,6 +71,10 @@ export function WipeClean({
       aria-pressed={isComplete}
       className="wipe-clean"
       data-complete={isComplete}
+      data-guidance={hasVisibleGuidance(guidance)}
+      data-guidance-demonstration={guidance.isDemonstrationVisible}
+      data-guidance-mode={guidance.isStaticHighlightVisible ? 'static' : 'motion'}
+      data-guidance-stage={guidance.stage}
       data-paused={paused}
       data-progress={coverage.toFixed(4)}
       onClick={(event) => {
@@ -97,4 +107,12 @@ export function WipeClean({
       <canvas aria-hidden="true" className="wipe-clean-mask" ref={canvas} />
     </button>
   );
+}
+
+function hasVisibleGuidance(guidance: GuidancePresentation): boolean {
+  return guidance.isPulseVisible || guidance.isStaticHighlightVisible;
+}
+
+function wipeRows(rows: number | undefined): number {
+  return rows ?? 32;
 }

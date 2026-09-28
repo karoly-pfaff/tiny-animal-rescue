@@ -5,7 +5,7 @@
 - Target version: `0.8.0`
 - Inspection journeys: `all-missions,all-residents`
 - Dependencies: EPIC-003, EPIC-004, EPIC-005, EPIC-006
-- ADRs: ADR-0002 through ADR-0005, ADR-0008
+- ADRs: ADR-0002 through ADR-0005, ADR-0008, ADR-0012, ADR-0015
 
 ## Outcome
 
@@ -78,6 +78,8 @@ Individual mission work may add content, art, audio, composition data, and tests
 - [ ] All missions can be completed in a clean progression playthrough.
 - [ ] All missions can be replayed from an all-complete save.
 - [ ] No individual mission required an engine-ID branch.
+- [ ] Real HU/EN missions carry forward ADR-0015 live inspection of tap/remove, drag-to-target,
+      wipe/clean, match, and trace with mouse, touch, reduced-motion, and every supported viewport.
 - [ ] Content defect log is empty or explicitly accepted for post-release.
 
 ## Exit criteria

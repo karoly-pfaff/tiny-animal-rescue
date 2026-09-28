@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { inactiveGuidancePresentation } from '../../sources/engine/guidance-ladder-state';
 import { WipeClean } from '../../sources/interactions/wipe-clean';
 
 const bounds = {
@@ -34,15 +35,21 @@ function createCanvasContext() {
   };
 }
 
-function renderWipe(completionThreshold = 0.95, onComplete = vi.fn()) {
+function renderWipe(
+  completionThreshold = 0.95,
+  onComplete = vi.fn(),
+  onGuidanceActivity = vi.fn(),
+) {
   const result = render(
     <WipeClean
       accessibleLabel="Clean the fixture"
       brushRadius={0.1}
       columns={20}
       completionThreshold={completionThreshold}
+      guidance={inactiveGuidancePresentation}
       maskColor="#654321"
       onComplete={onComplete}
+      onGuidanceActivity={onGuidanceActivity}
       rows={20}
       underlay={<span data-testid="clean-surface" />}
     />,
@@ -55,7 +62,7 @@ function renderWipe(completionThreshold = 0.95, onComplete = vi.fn()) {
   };
   Object.assign(button, pointerCapture);
   vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(bounds);
-  return { ...result, button, onComplete, pointerCapture };
+  return { ...result, button, onComplete, onGuidanceActivity, pointerCapture };
 }
 
 function wipe(
@@ -94,6 +101,53 @@ describe('WipeClean', () => {
     vi.unstubAllGlobals();
   });
 
+  it('reports accepted activity and exposes static guidance presentation', () => {
+    const onGuidanceActivity = vi.fn();
+    render(
+      <WipeClean
+        accessibleLabel="Clean the fixture"
+        brushRadius={0.1}
+        columns={20}
+        completionThreshold={0.95}
+        guidance={{
+          ...inactiveGuidancePresentation,
+          isDemonstrationVisible: true,
+          isStaticHighlightVisible: true,
+          stage: 'demonstration',
+        }}
+        maskColor="#654321"
+        onComplete={vi.fn()}
+        onGuidanceActivity={onGuidanceActivity}
+        rows={20}
+        underlay={<span />}
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Clean the fixture' });
+    Object.assign(button, {
+      hasPointerCapture: vi.fn(() => true),
+      releasePointerCapture: vi.fn(),
+      setPointerCapture: vi.fn(),
+    });
+    vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(bounds);
+
+    expect(button).toHaveAttribute('data-guidance', 'true');
+    expect(button).toHaveAttribute('data-guidance-demonstration', 'true');
+    expect(button).toHaveAttribute('data-guidance-mode', 'static');
+    expect(button).toHaveAttribute('data-guidance-stage', 'demonstration');
+
+    fireEvent.pointerDown(button, {
+      button: 0,
+      clientX: 32,
+      clientY: 120,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    fireEvent.pointerMove(button, { clientX: 64, clientY: 120, pointerId: 1 });
+
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(2);
+  });
+
   it('renders a HiDPI mask and caller-owned underlay', () => {
     renderWipe();
     const canvas = document.querySelector('canvas');
@@ -119,8 +173,10 @@ describe('WipeClean', () => {
         brushRadius={0.1}
         columns={20}
         completionThreshold={0.95}
+        guidance={inactiveGuidancePresentation}
         maskColor="#654321"
         onComplete={vi.fn()}
+        onGuidanceActivity={vi.fn()}
         paused
         rows={20}
         underlay={<span data-testid="clean-surface" />}
@@ -135,8 +191,10 @@ describe('WipeClean', () => {
         brushRadius={0.1}
         columns={20}
         completionThreshold={0.95}
+        guidance={inactiveGuidancePresentation}
         maskColor="#654321"
         onComplete={vi.fn()}
+        onGuidanceActivity={vi.fn()}
         rows={20}
         underlay={<span data-testid="clean-surface" />}
       />,

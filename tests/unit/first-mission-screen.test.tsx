@@ -170,6 +170,14 @@ describe('FirstMissionScreen rescue completion', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
+    expect(
+      screen.queryByRole('button', { name: 'Move the ladder to the tree!' }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('.drag-interaction')).toHaveAttribute('data-phase', 'placed');
+    expect(document.querySelector('.drag-interaction')).toHaveAttribute(
+      'data-interactive',
+      'false',
+    );
     expect(props.narrationService.speak).toHaveBeenCalledWith({
       cue: 'voice.mission.garden-kitten-tree.step.help-mimi-down',
       locale: 'en',

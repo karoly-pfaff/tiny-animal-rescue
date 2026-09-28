@@ -50,6 +50,15 @@
   outline-offset: 0.15rem;
 }
 
+.match-item[data-guidance='true'] {
+  animation: match-guidance-pulse 1.35s ease-in-out infinite;
+}
+
+.match-interaction[data-guidance-mode='static'] .match-item[data-guidance='true'] {
+  outline: 0.45rem solid rgb(255 240 151 / 78%);
+  animation: none;
+}
+
 .match-item[data-incorrect='true'] .match-item-visual {
   animation: match-gentle-return var(--match-motion-feedback-duration)
     var(--match-motion-feedback-easing);
@@ -108,7 +117,19 @@
   }
 }
 
+@keyframes match-guidance-pulse {
+  50% {
+    scale: 1.08;
+    box-shadow: 0 0 0 0.7rem rgb(255 240 151 / 45%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .match-item[data-guidance='true'] {
+    outline: 0.45rem solid rgb(255 240 151 / 78%);
+    animation: none;
+  }
+
   .match-item[data-incorrect='true'] .match-item-visual {
     animation: none;
   }

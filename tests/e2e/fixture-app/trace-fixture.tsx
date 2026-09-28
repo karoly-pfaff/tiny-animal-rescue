@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { inactiveGuidancePresentation } from '../../../sources/engine/guidance-ladder-state';
 import { Trace } from '../../../sources/interactions/trace';
 import { fixtureTracePath } from './trace-fixture-path';
 
@@ -13,9 +14,12 @@ export function TraceFixture() {
           corridorColor="#f2d69a"
           corridorWidth={0.18}
           endAffordance={<span className="fixture-trace-pond" />}
+          guidance={inactiveGuidancePresentation}
           onComplete={() => {
             setCompletionCount((current) => current + 1);
           }}
+          onGuidanceActivity={() => undefined}
+          onGuidanceWrongAction={() => undefined}
           path={fixtureTracePath}
           progressColor="#65a986"
           startAffordance={<span className="fixture-trace-start" />}

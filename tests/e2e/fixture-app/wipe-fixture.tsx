@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { inactiveGuidancePresentation } from '../../../sources/engine/guidance-ladder-state';
 import { WipeClean } from '../../../sources/interactions/wipe-clean';
 
 const completionThreshold = 0.7;
@@ -14,10 +15,12 @@ export function WipeFixture() {
           brushRadius={0.1}
           columns={64}
           completionThreshold={completionThreshold}
+          guidance={inactiveGuidancePresentation}
           maskColor="#7b6048"
           onComplete={() => {
             setCompletionCount((current) => current + 1);
           }}
+          onGuidanceActivity={() => undefined}
           rows={64}
           underlay={
             <span className="interaction-demo-underlay">

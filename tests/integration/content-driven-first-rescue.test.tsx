@@ -80,7 +80,7 @@ describe('content-driven first Rescue runtime', () => {
     expect(subject).toHaveAttribute('data-guidance', 'false');
     void act(() => vi.advanceTimersByTime(1));
     expect(subject).toHaveAttribute('data-guidance', 'true');
-    expect(interaction).toHaveAttribute('data-guidance', 'false');
+    expect(interaction).not.toBeInTheDocument();
 
     fireEvent.click(subject);
     expect(play).toHaveBeenLastCalledWith('effects.interaction.obstacle-cleared');
@@ -150,7 +150,7 @@ describe('content-driven first Rescue runtime', () => {
     expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
     fireEvent.pointerUp(ladder, { clientX: 215, clientY: 363, pointerId: 2 });
 
-    expect(ladder).toHaveAttribute('data-phase', 'placed');
+    expect(ladder).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tap the fixture subject!' })).toBeEnabled();
   });
 

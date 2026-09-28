@@ -21,6 +21,7 @@ const technicalProperties = new Set([
   'lineCap',
   'lineJoin',
   'path',
+  'sourceClassName',
   'titleKey',
 ]);
 const technicalCalls = new Set([

@@ -81,6 +81,22 @@
   outline-offset: 0.2rem;
 }
 
+.trace[data-guidance='true'] .trace-start {
+  animation: trace-guidance-pulse 1.35s ease-in-out infinite;
+}
+
+.trace[data-guidance-mode='static'][data-guidance='true'] .trace-start {
+  outline: 0.45rem solid rgb(255 240 151 / 78%);
+  animation: none;
+}
+
+@keyframes trace-guidance-pulse {
+  50% {
+    scale: 1.12;
+    box-shadow: 0 0 0 0.7rem rgb(255 240 151 / 45%);
+  }
+}
+
 @keyframes trace-hint-travel {
   0%,
   45%,
@@ -96,6 +112,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .trace[data-guidance='true'] .trace-start {
+    outline: 0.45rem solid rgb(255 240 151 / 78%);
+    animation: none;
+  }
+
   .trace-tracer {
     transition: none;
   }

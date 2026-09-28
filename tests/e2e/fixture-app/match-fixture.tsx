@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { inactiveGuidancePresentation } from '../../../sources/engine/guidance-ladder-state';
 import { Match, type MatchItem, type MatchPair } from '../../../sources/interactions/match';
 
 type FixtureItemOptions = Readonly<{
@@ -57,9 +58,12 @@ export function MatchFixture() {
     <main className="interaction-demo" data-completion-count={completionCount}>
       <div className="interaction-demo-surface match-demo-surface">
         <Match
+          guidance={inactiveGuidancePresentation}
           onComplete={() => {
             setCompletionCount((current) => current + 1);
           }}
+          onGuidanceActivity={() => undefined}
+          onGuidanceWrongAction={() => undefined}
           pairs={pairs}
         />
       </div>

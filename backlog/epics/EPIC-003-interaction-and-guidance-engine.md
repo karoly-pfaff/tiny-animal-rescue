@@ -1,11 +1,11 @@
 # EPIC-003: Interaction and guidance engine
 
-- Status: Planned
+- Status: In progress
 - Milestone: M3
 - Target version: `0.4.0`
-- Inspection journeys: `interaction-primitives,guidance`
+- Inspection journeys: `first-rescue,guidance`
 - Dependencies: EPIC-001, EPIC-002
-- ADRs: ADR-0001, ADR-0003, ADR-0007
+- ADRs: ADR-0001, ADR-0003, ADR-0007, ADR-0012, ADR-0015
 
 ## Outcome
 
@@ -66,9 +66,9 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S08 — Primitive demonstration suite
 
-- [ ] One contract-only fixture scene demonstrates each primitive.
-- [ ] Visual and E2E tests cover success, wrong action, cancellation, pause, and replay.
-- [ ] No fixture becomes a hidden v1 mission.
+- [x] One contract-only fixture scene demonstrates each primitive.
+- [x] Visual and E2E tests cover success, wrong action, cancellation, pause, and replay.
+- [x] No fixture becomes a hidden v1 mission.
 
 ## Exit criteria
 
@@ -88,6 +88,27 @@ npm run validate:full
 
 Inspect success, wrong action, cancellation, second pointer, pause/resume, fake-clock guidance,
 reduced-motion, touch/mouse, and supported-viewport evidence for every primitive.
+
+## Bounded media deferral
+
+- EPIC-003 owns no new production media and does not claim the first-rescue audio set complete.
+- The nine previously qualified base-pack image assets must be locally materialized for the M3 live
+  product inspection; their locked digests remain unchanged in this milestone.
+- The inherited first-rescue narration continues to use its localized browser-voice development
+  fallback. Production music, effects, and HU/EN voice files are owned by E006-S07, remain outside
+  Git, and must be materialized from R2 and inspected across the inherited first-rescue journeys
+  before EPIC-006 can close.
+
+## Bounded assembled-product inspection deferral
+
+- The production first Rescue exercises drag-to-target and tap/remove through the shared mission-step
+  lifecycle; its HU/EN guidance journeys remain part of the exact-candidate live inspection.
+- Wipe/clean, match, and trace have no authored player mission in this milestone. Their contract-only
+  fixture proves production lifecycle, primitive, input, pause, guidance, and viewport behavior but
+  is not claimed as an assembled-product walkthrough.
+- Under ADR-0015, E007-S08 owns the carried live inspection for all five primitives through real HU/EN
+  missions, with mouse, touch, reduced-motion, and the complete supported viewport matrix. EPIC-007
+  cannot close if any carried primitive journey is absent or uses a mission-ID engine branch.
 
 ## Primary risks
 

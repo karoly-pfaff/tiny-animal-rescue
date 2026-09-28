@@ -7,6 +7,7 @@ import {
 
 import type { NormalizedPoint } from './drag-geometry';
 import { capturePointer, isPrimaryActivationPointer, releasePointer } from './pointer-capture';
+import { sampleTracePointer, type PointerSample } from './trace-pointer-sample';
 import {
   advanceTraceProgress,
   beginTraceProgress,
@@ -24,6 +25,8 @@ type TraceInteraction = Readonly<{
   gestureStartProgress: React.RefObject<number | null>;
   lastPoint: React.RefObject<NormalizedPoint | null>;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   path: TracePath;
   paused: boolean;
   progress: React.RefObject<TraceProgressState>;
@@ -34,6 +37,8 @@ type TraceInteraction = Readonly<{
 type TraceInteractionOptions = Readonly<{
   corridorWidth: number;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   path: TracePath;
   paused: boolean;
 }>;
@@ -70,7 +75,7 @@ export function beginTrace(
   if (!canBeginTrace(event, interaction)) {
     return;
   }
-  const sample = sampleFor(event);
+  const sample = sampleTracePointer(event);
   const result = beginTraceProgress({
     ...sample,
     corridorWidth: interaction.corridorWidth,
@@ -78,6 +83,7 @@ export function beginTrace(
     state: interaction.progress.current,
   });
   if (!result.accepted) {
+    interaction.onGuidanceWrongAction();
     return;
   }
   startTracePointer({ event, interaction, point: sample.point, state: result.state });
@@ -104,6 +110,7 @@ type StartTracePointerOptions = Readonly<{
 
 function startTracePointer({ event, interaction, point, state }: StartTracePointerOptions): void {
   event.preventDefault();
+  interaction.onGuidanceActivity();
   interaction.progress.current = state;
   interaction.gestureStartProgress.current = state.progress;
   interaction.setPresentation(state);
@@ -120,15 +127,23 @@ export function continueTrace(
     return;
   }
   event.preventDefault();
-  const sample = sampleFor(event);
-  const from = interaction.lastPoint.current ?? sample.point;
-  interaction.lastPoint.current = sample.point;
-  if (!hasMeaningfulPointerMovement(from, sample.point)) {
+  const movement = traceMovement(event, interaction);
+  if (movement === null) {
     return;
   }
   const previousState = interaction.progress.current;
-  const nextState = nextTraceState(interaction, sample, from);
+  const nextState = nextTraceState(interaction, movement.sample, movement.from);
   applyTraceState(interaction, previousState, nextState);
+}
+
+function traceMovement(
+  event: ReactPointerEvent<HTMLButtonElement>,
+  interaction: TraceInteraction,
+): Readonly<{ from: NormalizedPoint; sample: PointerSample }> | null {
+  const sample = sampleTracePointer(event);
+  const from = interaction.lastPoint.current ?? sample.point;
+  interaction.lastPoint.current = sample.point;
+  return hasMeaningfulPointerMovement(from, sample.point) ? { from, sample } : null;
 }
 
 function nextTraceState(
@@ -227,6 +242,7 @@ export function activateTraceAccessibly(
   if (event.detail !== 0 || interaction.paused || interaction.completed.current) {
     return;
   }
+  interaction.onGuidanceActivity();
   const previousState = interaction.progress.current;
   const nextState = completeTraceProgress(previousState);
   interaction.progress.current = nextState;
@@ -243,23 +259,4 @@ function completeIfNeeded(
     interaction.completed.current = true;
     interaction.onComplete();
   }
-}
-
-type PointerSample = Readonly<{
-  aspectRatio: number;
-  point: NormalizedPoint;
-}>;
-
-function sampleFor(event: ReactPointerEvent<HTMLButtonElement>): PointerSample {
-  const bounds = event.currentTarget.getBoundingClientRect();
-  if (bounds.width <= 0 || bounds.height <= 0) {
-    return { aspectRatio: 1, point: { x: 0, y: 0 } };
-  }
-  return {
-    aspectRatio: bounds.width / bounds.height,
-    point: {
-      x: (event.clientX - bounds.left) / bounds.width,
-      y: (event.clientY - bounds.top) / bounds.height,
-    },
-  };
 }

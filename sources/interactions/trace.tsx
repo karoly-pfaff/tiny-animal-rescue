@@ -1,5 +1,6 @@
 import { type CSSProperties, type ReactNode, useEffect } from 'react';
 
+import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import { observeTraceCanvas } from './trace-canvas';
 import {
   activateTraceAccessibly,
@@ -18,7 +19,10 @@ export type TraceProps = Readonly<{
   corridorColor: string;
   corridorWidth: number;
   endAffordance: ReactNode;
+  guidance: GuidancePresentation;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   path: TracePath;
   paused?: boolean;
   progressColor: string;
@@ -34,7 +38,10 @@ export function Trace({
   corridorColor,
   corridorWidth,
   endAffordance,
+  guidance,
   onComplete,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
   path,
   paused = false,
   progressColor,
@@ -46,6 +53,8 @@ export function Trace({
   const { canvas, interaction, presentation, surface } = useTraceInteraction({
     corridorWidth: effectiveCorridorWidth,
     onComplete,
+    onGuidanceActivity,
+    onGuidanceWrongAction,
     path,
     paused,
   });
@@ -78,6 +87,9 @@ export function Trace({
       aria-pressed={presentation.isComplete}
       className="trace"
       data-complete={presentation.isComplete}
+      data-guidance={hasVisibleGuidance(guidance)}
+      data-guidance-mode={guidance.isStaticHighlightVisible ? 'static' : 'motion'}
+      data-guidance-stage={guidance.stage}
       data-paused={paused}
       data-progress={presentation.progress.toFixed(4)}
       onClick={(event) => {
@@ -122,6 +134,10 @@ export function Trace({
       </span>
     </button>
   );
+}
+
+function hasVisibleGuidance(guidance: GuidancePresentation): boolean {
+  return guidance.isPulseVisible || guidance.isStaticHighlightVisible;
 }
 
 function TraceHint({ path, progress }: Readonly<{ path: TracePath; progress: number }>) {

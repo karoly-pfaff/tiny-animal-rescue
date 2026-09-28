@@ -36,6 +36,14 @@ export type GuidancePresentation = Readonly<{
   toleranceScale: number;
 }>;
 
+export const inactiveGuidancePresentation = Object.freeze({
+  isDemonstrationVisible: false,
+  isPulseVisible: false,
+  isStaticHighlightVisible: false,
+  stage: idleStage,
+  toleranceScale: 1,
+} satisfies GuidancePresentation);
+
 export function createGuidanceLadderConfig(config: GuidanceLadderConfig): GuidanceLadderConfig {
   assertNonNegative(config.pulseAfterMs, pulseDelayName);
   assertOrdered(config.demonstrationAfterMs, config.pulseAfterMs, demonstrationDelayName);

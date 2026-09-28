@@ -4,6 +4,7 @@ import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import type { NormalizedPoint, NormalizedTarget } from './drag-geometry';
 import { useDragController } from './drag-to-target-controller';
 import { createHintStyle, createItemStyle, createTargetStyle } from './drag-to-target-styles';
+import './drag-to-target.css';
 
 type DragToTargetProps = Readonly<{
   accessibleLabel: string;

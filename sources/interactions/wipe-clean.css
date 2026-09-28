@@ -33,3 +33,54 @@
   outline: 0.35rem solid #173f65;
   outline-offset: 0.2rem;
 }
+
+.wipe-clean[data-guidance='true']::before {
+  position: absolute;
+  z-index: 3;
+  inset: 0.5rem;
+  border: 0.45rem solid rgb(255 240 151 / 78%);
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+  animation: wipe-guidance-pulse 1.35s ease-in-out infinite;
+}
+
+.wipe-clean[data-guidance-mode='static'][data-guidance='true']::before {
+  animation: none;
+}
+
+.wipe-clean[data-guidance-demonstration='true']::after {
+  position: absolute;
+  z-index: 3;
+  top: 30%;
+  left: 24%;
+  width: clamp(2.5rem, 9%, 4rem);
+  aspect-ratio: 1;
+  border: 0.25rem solid #fff;
+  border-radius: 50%;
+  background: rgb(53 104 170 / 78%);
+  box-shadow: 0 0.35rem 0 rgb(31 67 113 / 45%);
+  content: '';
+  pointer-events: none;
+  animation: wipe-guidance-demonstration 2.2s ease-in-out infinite;
+}
+
+@keyframes wipe-guidance-pulse {
+  50% {
+    border-width: 0.7rem;
+  }
+}
+
+@keyframes wipe-guidance-demonstration {
+  50% {
+    top: 68%;
+    left: 76%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wipe-clean[data-guidance='true']::before,
+  .wipe-clean[data-guidance-demonstration='true']::after {
+    animation: none;
+  }
+}

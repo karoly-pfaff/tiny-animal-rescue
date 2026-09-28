@@ -25,8 +25,10 @@ type UseGuidanceLadderOptions = Readonly<{
 export type GuidanceLadderBinding = Readonly<{
   activity: () => void;
   complete: () => void;
+  pause: () => void;
   presentation: GuidancePresentation;
   replay: () => void;
+  resume: () => void;
   wrongAction: () => void;
 }>;
 
@@ -73,8 +75,10 @@ export function useGuidanceLadder({
   return {
     activity: useCallback(() => controller.current?.activity(), []),
     complete: useCallback(() => controller.current?.complete(), []),
+    pause: useCallback(() => controller.current?.pause(), []),
     presentation: active ? presentation : inactivePresentation,
     replay: useCallback(() => controller.current?.replay(), []),
+    resume: useCallback(() => controller.current?.resume(), []),
     wrongAction: useCallback(() => controller.current?.wrongAction(), []),
   };
 }

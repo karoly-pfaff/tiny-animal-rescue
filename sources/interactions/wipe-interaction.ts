@@ -25,6 +25,7 @@ type WipeInteraction = Readonly<{
   completionThreshold: number;
   lastPoint: React.RefObject<NormalizedPoint | null>;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
   paused: boolean;
   progress: React.RefObject<WipeProgressState>;
   setPresentation: React.Dispatch<React.SetStateAction<WipePresentation>>;
@@ -38,6 +39,7 @@ type WipeInteractionOptions = Readonly<{
   columns: number;
   completionThreshold: number;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
   paused: boolean;
   rows: number;
 }>;
@@ -81,6 +83,7 @@ export function beginWipe(
     return;
   }
   event.preventDefault();
+  interaction.onGuidanceActivity();
   interaction.activePointerId.current = event.pointerId;
   capturePointer(event.currentTarget, event.pointerId);
   const sample = sampleFor(event);
@@ -96,6 +99,7 @@ export function continueWipe(
     return;
   }
   event.preventDefault();
+  interaction.onGuidanceActivity();
   const sample = sampleFor(event);
   applyStroke({
     ...sample,
@@ -148,6 +152,7 @@ export function activateWipeAccessibly(
   if (event.detail !== 0 || interaction.completed.current || interaction.paused) {
     return;
   }
+  interaction.onGuidanceActivity();
   interaction.progress.current = completeWipeProgress(interaction.progress.current);
   complete(interaction);
 }

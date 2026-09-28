@@ -3,20 +3,24 @@ import { expect, test, type Locator, type Page, type TestInfo } from '@playwrigh
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { dragLadder } from './support/ladder-drag';
+import { settleVisual } from './support/settle-visual';
 
-async function settleVisual(page: Page) {
-  await page.evaluate(async () => document.fonts.ready);
+async function pauseVisualClock(page: Page): Promise<void> {
+  const currentTime = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(currentTime + 1_000);
 }
 
-async function setAnimationTime(element: Locator, milliseconds: number): Promise<void> {
-  await element.evaluate((animatedElement, nextTime) => {
+async function freezeRescueAtEnd(element: Locator): Promise<void> {
+  await element.evaluate((animatedElement) => {
     const animation = animatedElement.getAnimations()[0];
     if (animation === undefined) {
       throw new Error('Expected rescue animation is missing.');
     }
     animation.pause();
-    animation.currentTime = nextTime;
-  }, milliseconds);
+    animation.currentTime = 650;
+    animation.commitStyles();
+    animation.cancel();
+  });
 }
 
 const mediaComplete = process.env['VITE_MATERIALIZED_ASSETS'] === 'true';
@@ -153,9 +157,23 @@ async function verifyReviewedVisual(page: Page, name: ReviewedScreenshotName, te
           ),
         )
         .toBe(true);
+      await image.evaluate(async (element) => {
+        if (!(element instanceof HTMLImageElement)) {
+          throw new Error('Media-complete visual asset is not an image.');
+        }
+        await element.decode();
+      });
     }
   }
   if (mediaComplete) {
+    await page.addStyleTag({
+      content: [
+        '* { color: transparent !important; text-shadow: none !important; }',
+        name === 'celebration-mimi.png'
+          ? '.celebration-title-plaque, .celebration-actions { visibility: hidden !important; }'
+          : '',
+      ].join('\n'),
+    });
     const screenshot = await page.screenshot({
       animations: 'disabled',
       caret: 'hide',
@@ -251,6 +269,7 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-hint-timer', 'armed');
+  await pauseVisualClock(page);
   await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(page.locator('.drag-ghost-hand')).toBeVisible();
   await settleVisual(page);
@@ -283,6 +302,7 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
   const dragInteraction = page.locator('.drag-interaction');
 
   await expect(page.locator('html')).toHaveAttribute('data-reduced-motion-hint-timer', 'armed');
+  await pauseVisualClock(page);
   await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(dragInteraction).toHaveAttribute('data-guidance', 'true');
   await expect(dragInteraction).toHaveAttribute('data-guidance-mode', 'static');
@@ -315,10 +335,12 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
 
 test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.clock.install();
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await pauseVisualClock(page);
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
@@ -326,7 +348,9 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await expect(ladder).toHaveCount(0);
+  await expect(page.locator('.drag-interaction')).toHaveAttribute('data-phase', 'placed');
+  await expect(page.locator('.drag-interaction')).toHaveAttribute('data-interactive', 'false');
   await settleVisual(page);
 
   await verifyReviewedVisual(page, 'mission-ladder-placed.png', testInfo);
@@ -348,10 +372,11 @@ test('@visual shows Mimi descending before celebration', async ({ page }, testIn
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
+  await pauseVisualClock(page);
   await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
   const rescueMotion = page.locator('.mission-kitten-rescue');
   await expect(rescueMotion).toBeVisible();
-  await setAnimationTime(rescueMotion, 300);
+  await freezeRescueAtEnd(rescueMotion);
   await settleVisual(page);
 
   await verifyReviewedVisual(page, 'mission-mimi-rescuing.png', testInfo);
@@ -377,7 +402,7 @@ test('@visual matches the reviewed English protected-exit state', async ({ page 
     });
   await page.addStyleTag({
     content:
-      '.mission-back.is-holding::after { scale: 0.55 1 !important; transition: none !important; }',
+      ".mission-back[data-holding='true']::after { scale: 0.55 1 !important; transition: none !important; }",
   });
   await settleVisual(page);
 

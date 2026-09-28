@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { inactiveGuidancePresentation } from '../../sources/engine/guidance-ladder-state';
 import { tracePointAtProgress, type TracePath } from '../../sources/interactions/trace-progress';
 import { Trace } from '../../sources/interactions/trace';
 
@@ -38,8 +39,17 @@ function createCanvasContext() {
   };
 }
 
-function renderTrace(options: Readonly<{ onComplete?: () => void; paused?: boolean }> = {}) {
+function renderTrace(
+  options: Readonly<{
+    onComplete?: () => void;
+    onGuidanceActivity?: () => void;
+    onGuidanceWrongAction?: () => void;
+    paused?: boolean;
+  }> = {},
+) {
   const onComplete = options.onComplete ?? vi.fn();
+  const onGuidanceActivity = options.onGuidanceActivity ?? vi.fn();
+  const onGuidanceWrongAction = options.onGuidanceWrongAction ?? vi.fn();
   const pauseProps = options.paused === undefined ? {} : { paused: options.paused };
   const result = render(
     <Trace
@@ -47,7 +57,10 @@ function renderTrace(options: Readonly<{ onComplete?: () => void; paused?: boole
       corridorColor="#d7c68e"
       corridorWidth={0.2}
       endAffordance={<span data-testid="trace-end-icon" />}
+      guidance={inactiveGuidancePresentation}
       onComplete={onComplete}
+      onGuidanceActivity={onGuidanceActivity}
+      onGuidanceWrongAction={onGuidanceWrongAction}
       path={path}
       progressColor="#69a772"
       startAffordance={<span data-testid="trace-start-icon" />}
@@ -63,7 +76,14 @@ function renderTrace(options: Readonly<{ onComplete?: () => void; paused?: boole
   };
   Object.assign(button, pointerCapture);
   vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(bounds);
-  return { ...result, button, onComplete, pointerCapture };
+  return {
+    ...result,
+    button,
+    onComplete,
+    onGuidanceActivity,
+    onGuidanceWrongAction,
+    pointerCapture,
+  };
 }
 
 function pointerDown(button: HTMLElement, x: number, pointerId = 1): void {
@@ -98,6 +118,126 @@ describe('Trace', () => {
     vi.unstubAllGlobals();
   });
 
+  it('reports accepted activity, rejects an off-corridor start, and exposes guidance', () => {
+    const onGuidanceActivity = vi.fn();
+    const onGuidanceWrongAction = vi.fn();
+    const { button, rerender } = renderTrace({
+      onGuidanceActivity,
+      onGuidanceWrongAction,
+    });
+
+    rerender(
+      <Trace
+        accessibleLabel="Guide the animal home"
+        corridorColor="#d7c68e"
+        corridorWidth={0.2}
+        endAffordance={<span />}
+        guidance={{
+          ...inactiveGuidancePresentation,
+          isStaticHighlightVisible: true,
+          stage: 'escalated',
+          toleranceScale: 1.5,
+        }}
+        onComplete={vi.fn()}
+        onGuidanceActivity={onGuidanceActivity}
+        onGuidanceWrongAction={onGuidanceWrongAction}
+        path={path}
+        progressColor="#69a772"
+        startAffordance={<span />}
+        tracer={<span />}
+      />,
+    );
+
+    expect(button).toHaveAttribute('data-guidance', 'true');
+    expect(button).toHaveAttribute('data-guidance-mode', 'static');
+    expect(button).toHaveAttribute('data-guidance-stage', 'escalated');
+
+    fireEvent.pointerDown(button, {
+      button: 0,
+      clientX: 200,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    pointerDown(button, 40, 2);
+    pointerMove(button, 120, 2);
+
+    expect(onGuidanceWrongAction).toHaveBeenCalledOnce();
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(2);
+  });
+
+  it('widens the corridor after escalation and reports repeated no-progress releases as wrong', () => {
+    const onGuidanceActivity = vi.fn();
+    const onGuidanceWrongAction = vi.fn();
+    const { button } = renderTrace({ onGuidanceActivity, onGuidanceWrongAction });
+
+    fireEvent.pointerDown(button, {
+      button: 0,
+      clientX: 40,
+      clientY: 188,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    expect(onGuidanceWrongAction).toHaveBeenCalledOnce();
+
+    pointerDown(button, 40, 2);
+    pointerMove(button, 184, 2);
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(2);
+    fireEvent.pointerMove(button, { clientX: 184, clientY: 20, pointerId: 2 });
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(2);
+    fireEvent.pointerCancel(button, { pointerId: 2 });
+
+    for (const pointerId of [3, 4]) {
+      pointerDown(button, 184, pointerId);
+      fireEvent.pointerUp(button, { clientX: 184, clientY: 150, pointerId });
+    }
+
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(4);
+    expect(onGuidanceWrongAction).toHaveBeenCalledTimes(3);
+
+    const escalatedGuidance = {
+      ...inactiveGuidancePresentation,
+      stage: 'escalated',
+      toleranceScale: 1.5,
+    } as const;
+    const escalated = render(
+      <Trace
+        accessibleLabel="Escalated trace"
+        corridorColor="#d7c68e"
+        corridorWidth={0.2}
+        endAffordance={<span />}
+        guidance={escalatedGuidance}
+        onComplete={vi.fn()}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={onGuidanceWrongAction}
+        path={path}
+        progressColor="#69a772"
+        startAffordance={<span />}
+        tracer={<span />}
+      />,
+    );
+    const escalatedButton = screen.getByRole('button', { name: 'Escalated trace' });
+    Object.assign(escalatedButton, {
+      hasPointerCapture: vi.fn(() => true),
+      releasePointerCapture: vi.fn(),
+      setPointerCapture: vi.fn(),
+    });
+    vi.spyOn(escalatedButton, 'getBoundingClientRect').mockReturnValue(bounds);
+    fireEvent.pointerDown(escalatedButton, {
+      button: 0,
+      clientX: 40,
+      clientY: 188,
+      isPrimary: true,
+      pointerId: 5,
+      pointerType: 'touch',
+    });
+
+    expect(onGuidanceWrongAction).toHaveBeenCalledTimes(3);
+    escalated.unmount();
+  });
+
   it('renders a scaled canvas plus visible start, end, tracer, and hint affordances', () => {
     renderTrace();
     const canvas = document.querySelector('canvas');
@@ -130,7 +270,10 @@ describe('Trace', () => {
         corridorColor="#d7c68e"
         corridorWidth={0.2}
         endAffordance={<span data-testid="trace-end-icon" />}
+        guidance={inactiveGuidancePresentation}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         path={path}
         paused
         progressColor="#69a772"
@@ -149,7 +292,10 @@ describe('Trace', () => {
         corridorColor="#d7c68e"
         corridorWidth={0.2}
         endAffordance={<span data-testid="trace-end-icon" />}
+        guidance={inactiveGuidancePresentation}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         path={path}
         progressColor="#69a772"
         startAffordance={<span data-testid="trace-start-icon" />}
@@ -208,7 +354,10 @@ describe('Trace', () => {
         corridorColor="#d7c68e"
         corridorWidth={0.2}
         endAffordance={<span />}
+        guidance={inactiveGuidancePresentation}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         path={path}
         progressColor="#69a772"
         showHint={false}

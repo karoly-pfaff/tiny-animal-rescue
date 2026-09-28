@@ -1,5 +1,6 @@
 import { type ReactElement, type ReactNode, useEffect, useRef, useState } from 'react';
 
+import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import { toPercent, type NormalizedPoint } from './drag-geometry';
 import {
   activateMatchAccessibly,
@@ -39,12 +40,22 @@ export type MatchPair = Readonly<{
 }>;
 
 type MatchProps = Readonly<{
+  guidance: GuidancePresentation;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   pairs: readonly MatchPair[];
   paused?: boolean;
 }>;
 
-export function Match({ onComplete, pairs, paused = false }: MatchProps) {
+export function Match({
+  guidance,
+  onComplete,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
+  pairs,
+  paused = false,
+}: MatchProps) {
   const definitions = pairDefinitions(pairs);
   const [state, setState] = useState(() => createMatchState(definitions));
   const activePointer = useMatchPointer(paused);
@@ -59,11 +70,25 @@ export function Match({ onComplete, pairs, paused = false }: MatchProps) {
   }, [complete, onComplete]);
 
   const attempt = (selection: MatchSelection) => {
-    setState((current) => attemptMatch(definitions, current, selection));
+    onGuidanceActivity();
+    const nextState = attemptMatch(definitions, state, selection);
+    if (nextState.incorrectRevision > state.incorrectRevision) {
+      onGuidanceWrongAction();
+    }
+    setState(nextState);
   };
 
+  const guidedSelection = guidanceSelection(definitions, state);
+  const hasVisibleGuidance = guidance.isPulseVisible || guidance.isStaticHighlightVisible;
+
   return (
-    <div className="match-interaction" data-complete={complete} data-paused={paused}>
+    <div
+      className="match-interaction"
+      data-complete={complete}
+      data-guidance-mode={guidance.isStaticHighlightVisible ? 'static' : 'motion'}
+      data-guidance-stage={guidance.stage}
+      data-paused={paused}
+    >
       {pairs.map((pair) => (
         <MatchButton
           activePointer={activePointer}
@@ -76,6 +101,13 @@ export function Match({ onComplete, pairs, paused = false }: MatchProps) {
           side={sourceSide}
           state={state}
           definitions={definitions}
+          guided={
+            hasVisibleGuidance &&
+            sameSelection(guidedSelection, {
+              id: pair.source.id,
+              side: sourceSide,
+            })
+          }
         />
       ))}
       {pairs.map((pair) => (
@@ -90,6 +122,13 @@ export function Match({ onComplete, pairs, paused = false }: MatchProps) {
           side={targetSide}
           state={state}
           definitions={definitions}
+          guided={
+            hasVisibleGuidance &&
+            sameSelection(guidedSelection, {
+              id: pair.target.id,
+              side: targetSide,
+            })
+          }
         />
       ))}
       <span aria-live="polite" className="match-live-region">
@@ -102,6 +141,7 @@ export function Match({ onComplete, pairs, paused = false }: MatchProps) {
 type MatchButtonProps = Readonly<{
   activePointer: ReturnType<typeof useMatchPointer>;
   definitions: readonly MatchPairDefinition[];
+  guided: boolean;
   item: MatchItem;
   nonColorCue: ReactElement;
   onAttempt: (selection: MatchSelection) => void;
@@ -124,6 +164,7 @@ function MatchButton(props: MatchButtonProps) {
       aria-pressed={selected}
       className="match-item"
       data-incorrect={incorrect}
+      data-guidance={props.guided}
       data-locked={locked}
       data-match-pair={props.pairId}
       data-side={props.side}
@@ -195,6 +236,26 @@ function itemStyle(item: MatchItem): React.CSSProperties {
 
 function sameSelection(first: MatchSelection | null, second: MatchSelection): boolean {
   return first?.id === second.id && first.side === second.side;
+}
+
+function guidanceSelection(
+  pairs: readonly MatchPairDefinition[],
+  state: MatchState,
+): MatchSelection | null {
+  if (state.selected !== null) {
+    const pair = pairs.find(
+      ({ sourceId, targetId }) =>
+        sourceId === state.selected?.id || targetId === state.selected?.id,
+    );
+    if (pair === undefined) {
+      return null;
+    }
+    return state.selected.side === sourceSide
+      ? { id: pair.targetId, side: targetSide }
+      : { id: pair.sourceId, side: sourceSide };
+  }
+  const pair = pairs.find(({ sourceId }) => !state.completedSourceIds.includes(sourceId));
+  return pair === undefined ? null : { id: pair.sourceId, side: sourceSide };
 }
 
 function completionAnnouncement(pairs: readonly MatchPair[], state: MatchState): string | null {
