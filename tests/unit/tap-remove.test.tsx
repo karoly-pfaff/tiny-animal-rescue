@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TapRemove, type TapRemoveTarget } from '../../sources/interactions/tap-remove';
+import type { GuidancePresentation } from '../../sources/engine/guidance-ladder-state';
 import {
   attemptTapTarget,
   initialTapRemoveState,
@@ -27,6 +28,32 @@ const targets = [
     width: 0.22,
   },
 ] as const satisfies readonly TapRemoveTarget[];
+const idleGuidance = {
+  isDemonstrationVisible: false,
+  isPulseVisible: false,
+  isStaticHighlightVisible: false,
+  stage: 'idle',
+  toleranceScale: 1,
+} as const satisfies GuidancePresentation;
+
+function renderTapRemove(
+  onComplete: () => void,
+  selectedTargets: readonly TapRemoveTarget[],
+  guidance: GuidancePresentation = idleGuidance,
+) {
+  const onGuidanceActivity = vi.fn();
+  const onGuidanceWrongAction = vi.fn();
+  const result = render(
+    <TapRemove
+      guidance={guidance}
+      onComplete={onComplete}
+      onGuidanceActivity={onGuidanceActivity}
+      onGuidanceWrongAction={onGuidanceWrongAction}
+      targets={selectedTargets}
+    />,
+  );
+  return { ...result, onGuidanceActivity, onGuidanceWrongAction };
+}
 
 describe('tap/remove state', () => {
   it('ignores completed targets and attempts after the sequence is complete', () => {
@@ -73,20 +100,19 @@ function tapWithPointer(button: HTMLElement, pointerType: 'mouse' | 'touch', poi
 describe('TapRemove', () => {
   it('supports one target and reports completion once', () => {
     const onComplete = vi.fn();
-    render(
-      <TapRemove isGuidanceActive={false} onComplete={onComplete} targets={targets.slice(0, 1)} />,
-    );
+    const { onGuidanceActivity } = renderTapRemove(onComplete, targets.slice(0, 1));
     const first = screen.getByRole('button', { name: 'First branch' });
     preparePointer(first);
 
     tapWithPointer(first, 'touch');
     expect(onComplete).toHaveBeenCalledOnce();
+    expect(onGuidanceActivity).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'First branch' })).not.toBeInTheDocument();
   });
 
   it('keeps ordered multi-target attempts gentle and completes in authored order', () => {
     const onComplete = vi.fn();
-    render(<TapRemove isGuidanceActive={false} onComplete={onComplete} targets={targets} />);
+    const { onGuidanceWrongAction } = renderTapRemove(onComplete, targets);
     const second = screen.getByRole('button', { name: 'Second branch' });
     preparePointer(second);
 
@@ -94,6 +120,7 @@ describe('TapRemove', () => {
     expect(second).toHaveAttribute('data-incorrect', 'true');
     expect(screen.getByRole('button', { name: 'First branch' })).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
+    expect(onGuidanceWrongAction).toHaveBeenCalledOnce();
 
     const first = screen.getByRole('button', { name: 'First branch' });
     preparePointer(first);
@@ -103,21 +130,38 @@ describe('TapRemove', () => {
   });
 
   it('exposes a hit area larger than its visual and pulses only the active target', () => {
-    render(<TapRemove isGuidanceActive onComplete={vi.fn()} targets={targets} />);
+    const pulseGuidance = {
+      ...idleGuidance,
+      isPulseVisible: true,
+      stage: 'pulse',
+    } as const satisfies GuidancePresentation;
+    renderTapRemove(vi.fn(), targets, pulseGuidance);
 
     const first = screen.getByRole('button', { name: 'First branch' });
     const second = screen.getByRole('button', { name: 'Second branch' });
     expect(first).toHaveStyle({ height: '20%', width: '18%' });
     expect(screen.getByTestId('first-visual').parentElement).toHaveStyle({ scale: '0.6' });
     expect(first).toHaveAttribute('data-guidance', 'true');
+    expect(first).toHaveAttribute('data-guidance-mode', 'motion');
     expect(second).toHaveAttribute('data-guidance', 'false');
+  });
+
+  it('exposes the low-motion guidance alternative without a demonstration', () => {
+    const staticGuidance = {
+      ...idleGuidance,
+      isStaticHighlightVisible: true,
+      stage: 'demonstration',
+    } as const satisfies GuidancePresentation;
+    renderTapRemove(vi.fn(), targets.slice(0, 1), staticGuidance);
+
+    const first = screen.getByRole('button', { name: 'First branch' });
+    expect(first).toHaveAttribute('data-guidance', 'true');
+    expect(first).toHaveAttribute('data-guidance-mode', 'static');
   });
 
   it('cancels safely, ignores secondary pointers, and supports keyboard activation', () => {
     const onComplete = vi.fn();
-    render(
-      <TapRemove isGuidanceActive={false} onComplete={onComplete} targets={targets.slice(0, 1)} />,
-    );
+    renderTapRemove(onComplete, targets.slice(0, 1));
     const first = screen.getByRole('button', { name: 'First branch' });
     const pointerCapture = preparePointer(first);
 
@@ -146,9 +190,7 @@ describe('TapRemove', () => {
 
   it('releases a paused tap and accepts fresh input only after resume', () => {
     const onComplete = vi.fn();
-    const { rerender } = render(
-      <TapRemove isGuidanceActive={false} onComplete={onComplete} targets={targets.slice(0, 1)} />,
-    );
+    const { rerender } = renderTapRemove(onComplete, targets.slice(0, 1));
     const first = screen.getByRole('button', { name: 'First branch' });
     const pointerCapture = preparePointer(first);
     fireEvent.pointerDown(first, {
@@ -160,8 +202,10 @@ describe('TapRemove', () => {
 
     rerender(
       <TapRemove
-        isGuidanceActive={false}
+        guidance={idleGuidance}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         paused
         targets={targets.slice(0, 1)}
       />,
@@ -174,7 +218,13 @@ describe('TapRemove', () => {
     expect(onComplete).not.toHaveBeenCalled();
 
     rerender(
-      <TapRemove isGuidanceActive={false} onComplete={onComplete} targets={targets.slice(0, 1)} />,
+      <TapRemove
+        guidance={idleGuidance}
+        onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
+        targets={targets.slice(0, 1)}
+      />,
     );
     tapWithPointer(first, 'touch', 2);
     expect(onComplete).toHaveBeenCalledOnce();

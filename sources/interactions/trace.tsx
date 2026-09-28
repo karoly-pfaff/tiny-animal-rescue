@@ -42,8 +42,9 @@ export function Trace({
   startAffordance,
   tracer,
 }: TraceProps) {
+  const effectiveCorridorWidth = scaledCorridorWidth(corridorWidth, guidance.toleranceScale);
   const { canvas, interaction, presentation, surface } = useTraceInteraction({
-    corridorWidth,
+    corridorWidth: effectiveCorridorWidth,
     onComplete,
     path,
     paused,
@@ -56,12 +57,12 @@ export function Trace({
     () =>
       observeTraceCanvas(canvas, {
         corridorColor,
-        corridorWidth,
+        corridorWidth: effectiveCorridorWidth,
         path,
         progress: presentation.progress,
         progressColor,
       }),
-    [canvas, corridorColor, corridorWidth, path, presentation.progress, progressColor],
+    [canvas, corridorColor, effectiveCorridorWidth, path, presentation.progress, progressColor],
   );
 
   useEffect(() => {
@@ -143,4 +144,8 @@ function TraceHint({ path, progress }: Readonly<{ path: TracePath; progress: num
 
 function atPoint(point: Readonly<{ x: number; y: number }>): CSSProperties {
   return { left: `${String(point.x * 100)}%`, top: `${String(point.y * 100)}%` };
+}
+
+function scaledCorridorWidth(corridorWidth: number, toleranceScale: number): number {
+  return Math.min(1, corridorWidth * toleranceScale);
 }

@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { toPercent, type NormalizedPoint } from './drag-geometry';
+import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import {
   capturePointer,
   type CapturedPointer,
@@ -31,15 +32,19 @@ export type TapRemoveTarget = Readonly<{
 }>;
 
 type TapRemoveProps = Readonly<{
-  isGuidanceActive: boolean;
+  guidance: GuidancePresentation;
   onComplete: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   paused?: boolean;
   targets: readonly TapRemoveTarget[];
 }>;
 
 export function TapRemove({
-  isGuidanceActive,
+  guidance,
   onComplete,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
   paused = false,
   targets,
 }: TapRemoveProps) {
@@ -68,13 +73,18 @@ export function TapRemove({
         state.completedTargetIds.includes(target.id) ? null : (
           <TapRemoveButton
             isActive={targetIndex === state.activeTargetIndex}
-            isGuidanceActive={isGuidanceActive}
+            guidance={guidance}
             isIncorrect={state.incorrectTargetId === target.id}
             activePointer={activePointer}
             feedbackRevision={state.incorrectAttemptRevision}
             key={target.id}
             onAttempt={() => {
-              setState((current) => attemptTapTarget(targetIds, current, target.id));
+              onGuidanceActivity();
+              const nextState = attemptTapTarget(targetIds, state, target.id);
+              if (nextState.incorrectAttemptRevision > state.incorrectAttemptRevision) {
+                onGuidanceWrongAction();
+              }
+              setState(nextState);
             }}
             paused={paused}
             target={target}
@@ -88,8 +98,8 @@ export function TapRemove({
 type TapRemoveButtonProps = Readonly<{
   activePointer: RefObject<CapturedPointer | null>;
   feedbackRevision: number;
+  guidance: GuidancePresentation;
   isActive: boolean;
-  isGuidanceActive: boolean;
   isIncorrect: boolean;
   onAttempt: () => void;
   paused: boolean;
@@ -99,8 +109,8 @@ type TapRemoveButtonProps = Readonly<{
 function TapRemoveButton({
   activePointer,
   feedbackRevision,
+  guidance,
   isActive,
-  isGuidanceActive,
   isIncorrect,
   onAttempt,
   paused,
@@ -113,7 +123,9 @@ function TapRemoveButton({
       aria-label={target.accessibleLabel}
       className="tap-remove-target"
       data-active={isActive}
-      data-guidance={isActive && isGuidanceActive}
+      data-guidance={isActive && (guidance.isPulseVisible || guidance.isStaticHighlightVisible)}
+      data-guidance-mode={guidance.isStaticHighlightVisible ? 'static' : 'motion'}
+      data-guidance-stage={guidance.stage}
       data-incorrect={isIncorrect}
       data-target-id={target.id}
       onClick={(event) => {

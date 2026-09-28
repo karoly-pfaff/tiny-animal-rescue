@@ -21,6 +21,7 @@ type TraceInteraction = Readonly<{
   canvas: React.RefObject<HTMLCanvasElement | null>;
   completed: React.RefObject<boolean>;
   corridorWidth: number;
+  gestureStartProgress: React.RefObject<number | null>;
   lastPoint: React.RefObject<NormalizedPoint | null>;
   onComplete: () => void;
   path: TracePath;
@@ -37,10 +38,13 @@ type TraceInteractionOptions = Readonly<{
   paused: boolean;
 }>;
 
+const minimumPointerMovementSquared = 0.000_004;
+
 export function useTraceInteraction(options: TraceInteractionOptions) {
   const activePointerId = useRef<number | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const completed = useRef(false);
+  const gestureStartProgress = useRef<number | null>(null);
   const lastPoint = useRef<NormalizedPoint | null>(null);
   const progress = useRef<TraceProgressState>(createTraceProgress());
   const surface = useRef<HTMLButtonElement>(null);
@@ -50,6 +54,7 @@ export function useTraceInteraction(options: TraceInteractionOptions) {
     activePointerId,
     canvas,
     completed,
+    gestureStartProgress,
     lastPoint,
     progress,
     setPresentation,
@@ -100,6 +105,7 @@ type StartTracePointerOptions = Readonly<{
 function startTracePointer({ event, interaction, point, state }: StartTracePointerOptions): void {
   event.preventDefault();
   interaction.progress.current = state;
+  interaction.gestureStartProgress.current = state.progress;
   interaction.setPresentation(state);
   interaction.activePointerId.current = event.pointerId;
   interaction.lastPoint.current = point;
@@ -115,21 +121,35 @@ export function continueTrace(
   }
   event.preventDefault();
   const sample = sampleFor(event);
-  const previousState = interaction.progress.current;
-  const nextState = nextTraceState(interaction, sample);
+  const from = interaction.lastPoint.current ?? sample.point;
   interaction.lastPoint.current = sample.point;
+  if (!hasMeaningfulPointerMovement(from, sample.point)) {
+    return;
+  }
+  const previousState = interaction.progress.current;
+  const nextState = nextTraceState(interaction, sample, from);
   applyTraceState(interaction, previousState, nextState);
 }
 
-function nextTraceState(interaction: TraceInteraction, sample: PointerSample): TraceProgressState {
+function nextTraceState(
+  interaction: TraceInteraction,
+  sample: PointerSample,
+  from: NormalizedPoint,
+): TraceProgressState {
   return advanceTraceProgress({
     ...sample,
     corridorWidth: interaction.corridorWidth,
-    from: interaction.lastPoint.current ?? sample.point,
+    from,
     path: interaction.path,
     state: interaction.progress.current,
     to: sample.point,
   });
+}
+
+function hasMeaningfulPointerMovement(from: NormalizedPoint, to: NormalizedPoint): boolean {
+  const deltaX = to.x - from.x;
+  const deltaY = to.y - from.y;
+  return deltaX * deltaX + deltaY * deltaY >= minimumPointerMovementSquared;
 }
 
 function applyTraceState(
@@ -138,6 +158,7 @@ function applyTraceState(
   nextState: TraceProgressState,
 ): void {
   if (nextState !== previousState) {
+    interaction.onGuidanceActivity();
     interaction.progress.current = nextState;
     interaction.setPresentation(nextState);
     completeIfNeeded(interaction, previousState, nextState);
@@ -152,7 +173,28 @@ export function finishTrace(
     return;
   }
   continueTrace(event, interaction);
+  const wrongAction = isNoProgressGesture(interaction);
+  releaseTracePointer(event, interaction);
+  if (wrongAction) {
+    interaction.onGuidanceWrongAction();
+  }
+}
+
+function isNoProgressGesture(interaction: TraceInteraction): boolean {
+  const startProgress = interaction.gestureStartProgress.current;
+  return (
+    !interaction.completed.current &&
+    startProgress !== null &&
+    interaction.progress.current.progress <= startProgress
+  );
+}
+
+function releaseTracePointer(
+  event: ReactPointerEvent<HTMLButtonElement>,
+  interaction: TraceInteraction,
+): void {
   interaction.activePointerId.current = null;
+  interaction.gestureStartProgress.current = null;
   interaction.lastPoint.current = null;
   releasePointer(event.currentTarget, event.pointerId);
 }
@@ -164,15 +206,14 @@ export function cancelTrace(
   if (interaction.activePointerId.current !== event.pointerId) {
     return;
   }
-  interaction.activePointerId.current = null;
-  interaction.lastPoint.current = null;
-  releasePointer(event.currentTarget, event.pointerId);
+  releaseTracePointer(event, interaction);
 }
 
 export function suspendTrace(interaction: TraceInteraction): void {
   const pointerId = interaction.activePointerId.current;
   const surface = interaction.surface.current;
   interaction.activePointerId.current = null;
+  interaction.gestureStartProgress.current = null;
   interaction.lastPoint.current = null;
   if (pointerId !== null && surface !== null) {
     releasePointer(surface, pointerId);

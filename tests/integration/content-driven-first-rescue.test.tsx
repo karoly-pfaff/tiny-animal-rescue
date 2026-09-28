@@ -80,6 +80,7 @@ describe('content-driven first Rescue runtime', () => {
     expect(subject).toHaveAttribute('data-guidance', 'false');
     void act(() => vi.advanceTimersByTime(1));
     expect(subject).toHaveAttribute('data-guidance', 'true');
+    expect(interaction).toHaveAttribute('data-guidance', 'false');
 
     fireEvent.click(subject);
     expect(play).toHaveBeenLastCalledWith('effects.interaction.obstacle-cleared');
@@ -92,6 +93,65 @@ describe('content-driven first Rescue runtime', () => {
       screen.queryByRole('button', { name: 'Tap the fixture subject!' }),
     ).not.toBeInTheDocument();
     expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains escalated tolerance for an active attempt and treats movement as activity', () => {
+    vi.useFakeTimers();
+    const content = customizedContent();
+    render(
+      <FirstMissionScreen
+        content={content}
+        effectService={{ play: vi.fn() }}
+        locale="en"
+        narrationService={{ speak: vi.fn(), stop: vi.fn() }}
+        onCelebrate={vi.fn()}
+        onCommitReward={() => Promise.resolve()}
+        onExit={vi.fn()}
+      />,
+    );
+    const ladder = screen.getByRole('button', { name: 'Move the fixture object!' });
+    const interaction = requiredInteraction(ladder);
+    stubInteractionBounds(interaction);
+    Object.assign(ladder, {
+      hasPointerCapture: vi.fn(() => true),
+      releasePointerCapture: vi.fn(),
+      setPointerCapture: vi.fn(),
+    });
+
+    fireEvent.pointerDown(ladder, {
+      button: 0,
+      clientX: 113,
+      clientY: 685,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    for (let index = 0; index < 5; index += 1) {
+      void act(() => vi.advanceTimersByTime(20));
+      fireEvent.pointerMove(ladder, {
+        clientX: 130 + index,
+        clientY: 680 - index,
+        pointerId: 1,
+      });
+    }
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
+    fireEvent.pointerCancel(ladder, { pointerId: 1 });
+
+    void act(() => vi.advanceTimersByTime(4_025));
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'escalated');
+    fireEvent.pointerDown(ladder, {
+      button: 0,
+      clientX: 113,
+      clientY: 685,
+      isPrimary: true,
+      pointerId: 2,
+      pointerType: 'touch',
+    });
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
+    fireEvent.pointerUp(ladder, { clientX: 215, clientY: 363, pointerId: 2 });
+
+    expect(ladder).toHaveAttribute('data-phase', 'placed');
+    expect(screen.getByRole('button', { name: 'Tap the fixture subject!' })).toBeEnabled();
   });
 
   it('uses the declared localized success key for celebration narration and copy', () => {
@@ -224,6 +284,28 @@ function customizedContent(): FirstRescueContent {
     },
   };
   return { ...testFirstRescueContent, dragStep, mission, registry, tapStep };
+}
+
+function requiredInteraction(ladder: HTMLElement): HTMLDivElement {
+  const interaction = ladder.closest<HTMLDivElement>('.drag-interaction');
+  if (interaction === null) {
+    throw new Error('Drag interaction surface is missing.');
+  }
+  return interaction;
+}
+
+function stubInteractionBounds(interaction: HTMLDivElement): void {
+  vi.spyOn(interaction, 'getBoundingClientRect').mockReturnValue({
+    bottom: 768,
+    height: 768,
+    left: 0,
+    right: 1_024,
+    top: 0,
+    width: 1_024,
+    x: 0,
+    y: 0,
+    toJSON: () => undefined,
+  });
 }
 
 function dependencyOwnedContent(): FirstRescueContent {

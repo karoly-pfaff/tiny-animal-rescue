@@ -58,11 +58,11 @@ Implement all five production-grade, reusable interaction primitives behind one 
 
 ### E003-S07 — Shared guidance ladder
 
-- [ ] Narration, idle pulse, ghost hand, and tolerance escalation are centrally coordinated.
-- [ ] Timing is configurable and fake-clock tested.
-- [ ] Replay stops/replaces prior prompt without overlap.
-- [ ] Guidance state pauses when the app backgrounds.
-- [ ] Reduced-motion mode substitutes low-motion highlighting.
+- [x] Narration, idle pulse, ghost hand, and tolerance escalation are centrally coordinated.
+- [x] Timing is configurable and fake-clock tested.
+- [x] Replay stops/replaces prior prompt without overlap.
+- [x] Guidance state pauses when the app backgrounds.
+- [x] Reduced-motion mode substitutes low-motion highlighting.
 
 ### E003-S08 — Primitive demonstration suite
 

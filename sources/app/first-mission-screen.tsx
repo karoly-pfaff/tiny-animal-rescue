@@ -4,17 +4,16 @@ import type { EffectService } from '../audio/effect-service';
 import type { NarrationService } from '../audio/narration-service';
 import {
   firstRescueText,
-  narrationCueForContentKey,
   type FirstRescueContent,
   resolveFirstRescueAssets,
 } from '../content/first-rescue-content';
-import type { Locale } from '../i18n/localization';
-import { getStrings } from '../i18n/localization';
+import { getStrings, type Locale } from '../i18n/localization';
 import { DragToTarget } from '../interactions/drag-to-target';
 import { contentDragStart, contentDragTarget } from '../interactions/content-drag-layout';
 import { useHoldToActivate } from '../interactions/hold-to-activate';
 import { LadderArt } from '../interactions/ladder-art';
 import { FirstMissionArtwork, type MissionPhase } from './first-mission-artwork';
+import { useFirstMissionGuidance } from './use-first-mission-guidance';
 
 const exitHoldDurationMs = 650;
 
@@ -42,23 +41,31 @@ export function FirstMissionScreen({
   onExit,
   narrationService,
 }: FirstMissionScreenProps) {
-  const presentation = firstRescuePresentation(content, locale);
+  const missionCopy = firstRescuePresentation(content, locale);
   const strings = getStrings(locale),
     rescue = useRescueCompletion({
       dragSuccessCue: content.dragStep.successCue,
       effectService,
-      helpMimiCue: presentation.tapCue,
-      helpMimiText: presentation.tapPrompt,
-      initialNarrationCue: presentation.dragCue,
-      initialNarrationText: presentation.dragPrompt,
-      locale,
-      narrationService,
       onCelebrate,
       onCommitReward,
       tapSuccessCue: content.tapStep.successCue,
     });
+  const guidance = useFirstMissionGuidance({
+    content,
+    locale,
+    narrationService,
+    phase: rescue.phase,
+  });
   const ladderUrl = resolveFirstRescueAssets(content).ladder;
   const exit = useHoldToActivate(exitHoldDurationMs, onExit);
+  const unlockMimi = () => {
+    guidance.complete();
+    rescue.unlockMimi();
+  };
+  const finishRescue = () => {
+    guidance.complete();
+    rescue.finish();
+  };
 
   return (
     <main className="game-shell" data-route="mission" data-mission-id={content.mission.id}>
@@ -69,9 +76,11 @@ export function FirstMissionScreen({
       >
         <FirstMissionArtwork
           content={content}
-          helpMimiLabel={presentation.tapPrompt}
-          hintDelayMs={content.tapStep.hint.delayMs}
-          onFinish={rescue.finish}
+          guidance={guidance.presentation}
+          helpMimiLabel={missionCopy.tapPrompt}
+          onFinish={finishRescue}
+          onGuidanceActivity={guidance.activity}
+          onGuidanceWrongAction={guidance.wrongAction}
           phase={rescue.phase}
         />
         <header className="mission-title-plaque">
@@ -80,14 +89,16 @@ export function FirstMissionScreen({
           </h1>
         </header>
         <p className="visually-hidden" id="mission-intro">
-          {presentation.intro}
+          {missionCopy.intro}
         </p>
         <DragToTarget
-          accessibleLabel={presentation.dragPrompt}
+          accessibleLabel={missionCopy.dragPrompt}
           completionAnnouncement={strings.ladderPlaced}
+          guidance={guidance.presentation}
           hideTargetWhenPlaced={ladderUrl !== null}
-          hintDelayMs={content.dragStep.hint.delayMs}
-          onComplete={rescue.unlockMimi}
+          onComplete={unlockMimi}
+          onGuidanceActivity={guidance.activity}
+          onGuidanceWrongAction={guidance.wrongAction}
           sourceId={content.dragStep.sourceId}
           sourceClassName="mission-ladder"
           sourceVisual={<LadderArt assetUrl={ladderUrl} />}
@@ -96,6 +107,16 @@ export function FirstMissionScreen({
           target={contentDragTarget(content.dragStep, ladderUrl)}
           targetId={content.dragStep.targetId}
         />
+        <button
+          aria-label={strings.repeatPrompt}
+          className="mission-repeat"
+          disabled={rescue.phase === savingPhase}
+          onClick={guidance.replay}
+          type="button"
+        >
+          <span className="mission-repeat-icon" aria-hidden="true" />
+          <span>{strings.repeatPrompt}</span>
+        </button>
         <button
           className={`mission-back${exit.holding ? ' is-holding' : ''}`}
           disabled={rescue.phase === savingPhase}
@@ -122,34 +143,9 @@ export function FirstMissionScreen({
   );
 }
 
-type MissionEntryNarration = Readonly<{
-  cue: string;
-  text: string;
-  locale: Locale;
-  narrationService: NarrationService;
-}>;
-
-function useMissionEntryNarration({
-  cue,
-  text,
-  locale,
-  narrationService,
-}: MissionEntryNarration): void {
-  useEffect(() => {
-    narrationService.speak({ cue, locale, text });
-    return narrationService.stop;
-  }, [cue, locale, narrationService, text]);
-}
-
 type RescueCompletionOptions = Readonly<{
   dragSuccessCue: FirstRescueContent['dragStep']['successCue'];
   effectService: EffectService;
-  helpMimiCue: string;
-  helpMimiText: string;
-  initialNarrationCue: string;
-  initialNarrationText: string;
-  locale: Locale;
-  narrationService: NarrationService;
   onCelebrate: () => void;
   onCommitReward: () => Promise<void>;
   tapSuccessCue: FirstRescueContent['tapStep']['successCue'];
@@ -158,22 +154,10 @@ type RescueCompletionOptions = Readonly<{
 function useRescueCompletion({
   dragSuccessCue,
   effectService,
-  helpMimiCue,
-  helpMimiText,
-  initialNarrationCue,
-  initialNarrationText,
-  locale,
-  narrationService,
   onCelebrate,
   onCommitReward,
   tapSuccessCue,
 }: RescueCompletionOptions) {
-  useMissionEntryNarration({
-    cue: initialNarrationCue,
-    locale,
-    narrationService,
-    text: initialNarrationText,
-  });
   const [phase, setPhase] = useState<MissionPhase>(ladderPhase);
   const [saveFailed, setSaveFailed] = useState(false);
   const completionStarted = useRef(false);
@@ -224,17 +208,14 @@ function useRescueCompletion({
     unlockMimi: () => {
       effectService.play(dragSuccessCue);
       setPhase(mimiPhase);
-      narrationService.speak({ cue: helpMimiCue, locale, text: helpMimiText });
     },
   } as const;
 }
 
 function firstRescuePresentation(content: FirstRescueContent, locale: Locale) {
   return {
-    dragCue: narrationCueForContentKey(content.dragStep.promptKey),
     dragPrompt: firstRescueText(content, locale, content.dragStep.promptKey),
     intro: firstRescueText(content, locale, content.mission.localization.introKey),
-    tapCue: narrationCueForContentKey(content.tapStep.promptKey),
     tapPrompt: firstRescueText(content, locale, content.tapStep.promptKey),
   } as const;
 }

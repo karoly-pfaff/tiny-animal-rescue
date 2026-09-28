@@ -281,7 +281,7 @@ test('@preview substitutes static tap guidance under reduced motion', async ({
   await expect(visual).toHaveCSS('outline-style', 'solid');
 });
 
-test('@preview demonstrates idle guidance under a normal-motion fake clock', async ({
+test('@preview @guidance-replay restarts idle guidance under a fake clock', async ({
   page,
 }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
@@ -293,7 +293,13 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   const target = page.locator('.ladder-target');
   await expect(target).toHaveCSS('animation-name', 'none');
-  await page.clock.fastForward(5_000);
+  await page.clock.fastForward(4_999);
+  await page.getByRole('button', { name: 'Hallgasd újra' }).click();
+  await page.clock.fastForward(1);
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await page.clock.fastForward(3_999);
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await page.clock.fastForward(1_100);
 
   const ghost = page.locator('.drag-ghost-hand');
   await expect(ghost).toBeVisible();

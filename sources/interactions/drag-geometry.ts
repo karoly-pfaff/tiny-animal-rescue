@@ -27,9 +27,14 @@ export function clientPointToNormalized(
   };
 }
 
-export function isInsideTarget(point: NormalizedPoint, target: NormalizedTarget): boolean {
-  const halfWidth = target.width / 2;
-  const halfHeight = target.height / 2;
+export function isInsideTarget(
+  point: NormalizedPoint,
+  target: NormalizedTarget,
+  toleranceScale = 1,
+): boolean {
+  assertToleranceScale(toleranceScale);
+  const halfWidth = (target.width * toleranceScale) / 2;
+  const halfHeight = (target.height * toleranceScale) / 2;
   const edgeTolerance = 1e-9;
   return (
     point.x >= target.center.x - halfWidth - edgeTolerance &&
@@ -37,6 +42,15 @@ export function isInsideTarget(point: NormalizedPoint, target: NormalizedTarget)
     point.y >= target.center.y - halfHeight - edgeTolerance &&
     point.y <= target.center.y + halfHeight + edgeTolerance
   );
+}
+
+function assertToleranceScale(toleranceScale: number): void {
+  if (!Number.isFinite(toleranceScale)) {
+    throw new Error('Target tolerance scale must be finite and at least one.');
+  }
+  if (toleranceScale < 1) {
+    throw new Error('Target tolerance scale must be finite and at least one.');
+  }
 }
 
 export function toPercent(value: number): string {

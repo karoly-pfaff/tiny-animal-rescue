@@ -37,12 +37,22 @@ const expectedAssetsByScreenshot = {
     'images/missions/garden-kitten-tree/ladder.png',
     'images/residents/mimi/mission.png',
   ],
+  'mission-ladder-reduced-motion.png': [
+    'images/missions/garden-kitten-tree/background.png',
+    'images/missions/garden-kitten-tree/ladder.png',
+    'images/residents/mimi/mission.png',
+  ],
   'mission-ladder-placed.png': [
     'images/missions/garden-kitten-tree/background.png',
     'images/missions/garden-kitten-tree/ladder.png',
     'images/residents/mimi/mission.png',
   ],
   'mission-protected-exit-en.png': [
+    'images/missions/garden-kitten-tree/background.png',
+    'images/missions/garden-kitten-tree/ladder.png',
+    'images/residents/mimi/mission.png',
+  ],
+  'mission-mimi-reduced-motion.png': [
     'images/missions/garden-kitten-tree/background.png',
     'images/missions/garden-kitten-tree/ladder.png',
     'images/residents/mimi/mission.png',
@@ -213,7 +223,7 @@ test('@visual matches the reviewed first-mission baseline', async ({ page }, tes
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await settleVisual(page);
 
@@ -223,6 +233,7 @@ test('@visual matches the reviewed first-mission baseline', async ({ page }, tes
 
 test('@visual shows the deterministic ladder guidance', async ({ page }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.clock.install();
   await page.goto('/');
   await page.evaluate((hintDelayMs) => {
@@ -237,7 +248,7 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   }, firstMissionHintDelayMs);
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-hint-timer', 'armed');
   await page.clock.fastForward(firstMissionHintDelayMs);
@@ -245,6 +256,60 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   await settleVisual(page);
 
   await verifyReviewedVisual(page, 'mission-ladder-hint.png', testInfo);
+  expect(browserErrors).toEqual([]);
+});
+
+test('@visual shows clear reduced-motion guidance for both mission steps', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.evaluate((hintDelayMs) => {
+    const originalSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...arguments_: unknown[]) => {
+      const timer = originalSetTimeout(handler, timeout, ...arguments_);
+      if (timeout === hintDelayMs) {
+        document.documentElement.dataset['reducedMotionHintTimer'] = 'armed';
+      }
+      return timer;
+    }) as typeof window.setTimeout;
+  }, firstMissionHintDelayMs);
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
+  const dragInteraction = page.locator('.drag-interaction');
+
+  await expect(page.locator('html')).toHaveAttribute('data-reduced-motion-hint-timer', 'armed');
+  await page.clock.fastForward(firstMissionHintDelayMs);
+  await expect(dragInteraction).toHaveAttribute('data-guidance', 'true');
+  await expect(dragInteraction).toHaveAttribute('data-guidance-mode', 'static');
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await expect(page.locator('.ladder-target')).toHaveCSS('animation-name', 'none');
+  await settleVisual(page);
+  await verifyReviewedVisual(page, 'mission-ladder-reduced-motion.png', testInfo);
+
+  await page.evaluate(() => {
+    delete document.documentElement.dataset['reducedMotionHintTimer'];
+  });
+  await dragLadder({
+    destination: 'target',
+    ladder,
+    page,
+    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
+  });
+  const mimi = page.getByRole('button', { name: 'Koppints Mimire!' });
+  await expect(page.locator('html')).toHaveAttribute('data-reduced-motion-hint-timer', 'armed');
+  await page.clock.fastForward(firstMissionHintDelayMs);
+  await expect(dragInteraction).toHaveAttribute('data-guidance', 'false');
+  await expect(mimi).toHaveAttribute('data-guidance', 'true');
+  await expect(mimi).toHaveAttribute('data-guidance-mode', 'static');
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await expect(mimi.locator('.tap-remove-visual')).toHaveCSS('animation-name', 'none');
+  await settleVisual(page);
+  await verifyReviewedVisual(page, 'mission-mimi-reduced-motion.png', testInfo);
   expect(browserErrors).toEqual([]);
 });
 

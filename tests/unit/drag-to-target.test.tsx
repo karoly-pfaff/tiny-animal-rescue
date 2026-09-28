@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DragToTarget } from '../../sources/interactions/drag-to-target';
+import type { GuidancePresentation } from '../../sources/engine/guidance-ladder-state';
 import {
   clientPointToNormalized,
   isInsideTarget,
@@ -14,18 +15,33 @@ const target = {
   height: 0.42,
   width: 0.24,
 } as const satisfies NormalizedTarget;
+const idleGuidance = {
+  isDemonstrationVisible: false,
+  isPulseVisible: false,
+  isStaticHighlightVisible: false,
+  stage: 'idle',
+  toleranceScale: 1,
+} as const satisfies GuidancePresentation;
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
-function renderInteraction(onComplete = vi.fn(), paused = false) {
+function renderInteraction(
+  onComplete = vi.fn(),
+  guidance: GuidancePresentation = idleGuidance,
+  paused = false,
+) {
+  const onGuidanceActivity = vi.fn();
+  const onGuidanceWrongAction = vi.fn();
   const result = render(
     <DragToTarget
       accessibleLabel="Move the ladder"
       completionAnnouncement="Placed"
-      hintDelayMs={4_000}
+      guidance={guidance}
       onComplete={onComplete}
+      onGuidanceActivity={onGuidanceActivity}
+      onGuidanceWrongAction={onGuidanceWrongAction}
       paused={paused}
       sourceClassName="fixture-source"
       sourceVisual={<span data-testid="source-visual" />}
@@ -55,7 +71,15 @@ function renderInteraction(onComplete = vi.fn(), paused = false) {
     y: 0,
     toJSON: () => undefined,
   });
-  return { ...result, interaction, ladder, onComplete, pointerCapture };
+  return {
+    ...result,
+    interaction,
+    ladder,
+    onComplete,
+    onGuidanceActivity,
+    onGuidanceWrongAction,
+    pointerCapture,
+  };
 }
 
 describe('drag-to-target geometry', () => {
@@ -77,6 +101,13 @@ describe('drag-to-target geometry', () => {
     expect(isInsideTarget({ x: 0.529, y: 0.47 }, target)).toBe(false);
     expect(isInsideTarget({ x: 0.65, y: 0.891 }, target)).toBe(false);
   });
+
+  it('expands tolerance without changing authored geometry and rejects invalid scales', () => {
+    expect(isInsideTarget({ x: 0.5, y: 0.47 }, target)).toBe(false);
+    expect(isInsideTarget({ x: 0.5, y: 0.47 }, target, 1.35)).toBe(true);
+    expect(() => isInsideTarget(target.center, target, 0.99)).toThrow(/at least one/);
+    expect(() => isInsideTarget(target.center, target, Number.NaN)).toThrow(/finite/);
+  });
 });
 
 describe('DragToTarget', () => {
@@ -88,7 +119,7 @@ describe('DragToTarget', () => {
   });
 
   it('snaps a valid primary-pointer drop and completes exactly once', () => {
-    const { ladder, onComplete } = renderInteraction();
+    const { ladder, onComplete, onGuidanceActivity } = renderInteraction();
     fireEvent.pointerDown(ladder, {
       button: 0,
       clientX: 205,
@@ -103,10 +134,11 @@ describe('DragToTarget', () => {
 
     expect(ladder).toHaveAttribute('data-phase', 'placed');
     expect(onComplete).toHaveBeenCalledOnce();
+    expect(onGuidanceActivity).toHaveBeenCalledTimes(2);
   });
 
   it('returns gently after an invalid drop and ignores secondary input', () => {
-    const { ladder, onComplete } = renderInteraction();
+    const { ladder, onComplete, onGuidanceWrongAction } = renderInteraction();
     fireEvent.pointerDown(ladder, {
       button: 2,
       clientX: 205,
@@ -131,18 +163,67 @@ describe('DragToTarget', () => {
     expect(ladder).toHaveAttribute('data-phase', 'idle');
     expect(ladder).toHaveStyle({ left: '20%', top: '72%' });
     expect(onComplete).not.toHaveBeenCalled();
+    expect(onGuidanceWrongAction).toHaveBeenCalledOnce();
   });
 
-  it('shows deterministic idle guidance under a fake clock and hides it on interaction', () => {
-    vi.useFakeTimers();
-    const { interaction, ladder } = renderInteraction();
-
-    void act(() => vi.advanceTimersByTime(3_999));
-    expect(interaction.querySelector('.drag-ghost-hand')).not.toBeInTheDocument();
-    expect(interaction).toHaveAttribute('data-guidance', 'false');
-    void act(() => vi.advanceTimersByTime(1));
+  it('renders centrally coordinated motion and reduced-motion guidance', () => {
+    const movingGuidance = {
+      ...idleGuidance,
+      isDemonstrationVisible: true,
+      isPulseVisible: true,
+      stage: 'demonstration',
+    } as const satisfies GuidancePresentation;
+    const { interaction, rerender } = renderInteraction(vi.fn(), movingGuidance);
     expect(interaction.querySelector('.drag-ghost-hand')).toBeInTheDocument();
     expect(interaction).toHaveAttribute('data-guidance', 'true');
+    expect(interaction).toHaveAttribute('data-guidance-mode', 'motion');
+
+    const staticGuidance = {
+      ...idleGuidance,
+      isStaticHighlightVisible: true,
+      stage: 'demonstration',
+    } as const satisfies GuidancePresentation;
+    rerender(
+      <DragToTarget
+        accessibleLabel="Move the ladder"
+        completionAnnouncement="Placed"
+        guidance={staticGuidance}
+        onComplete={vi.fn()}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
+        sourceVisual={<span />}
+        start={start}
+        target={target}
+      />,
+    );
+    expect(interaction.querySelector('.drag-ghost-hand')).not.toBeInTheDocument();
+    expect(interaction).toHaveAttribute('data-guidance-mode', 'static');
+  });
+
+  it('does not present guidance on a completed drag target', () => {
+    const movingGuidance = {
+      ...idleGuidance,
+      isPulseVisible: true,
+      stage: 'pulse',
+    } as const satisfies GuidancePresentation;
+    const { interaction, ladder } = renderInteraction(vi.fn(), movingGuidance);
+
+    fireEvent.click(ladder, { detail: 0 });
+
+    expect(interaction).toHaveAttribute('data-phase', 'placed');
+    expect(interaction).toHaveAttribute('data-guidance', 'false');
+  });
+
+  it('accepts an escalated near miss through the coordinated tolerance', () => {
+    const escalatedGuidance = {
+      ...idleGuidance,
+      isDemonstrationVisible: true,
+      isPulseVisible: true,
+      stage: 'escalated',
+      toleranceScale: 1.35,
+    } as const satisfies GuidancePresentation;
+    const onComplete = vi.fn();
+    const { ladder } = renderInteraction(onComplete, escalatedGuidance);
 
     fireEvent.pointerDown(ladder, {
       button: 0,
@@ -152,12 +233,13 @@ describe('DragToTarget', () => {
       pointerId: 1,
       pointerType: 'touch',
     });
-    expect(interaction.querySelector('.drag-ghost-hand')).not.toBeInTheDocument();
-    expect(interaction).toHaveAttribute('data-guidance', 'false');
+    fireEvent.pointerUp(ladder, { clientX: 512, clientY: 409, pointerId: 1 });
+
+    expect(onComplete).toHaveBeenCalledOnce();
   });
 
   it('returns without completion after pointer cancellation or lost capture', () => {
-    const { ladder, onComplete, pointerCapture } = renderInteraction();
+    const { ladder, onComplete, onGuidanceWrongAction, pointerCapture } = renderInteraction();
     fireEvent.pointerDown(ladder, {
       button: 0,
       isPrimary: true,
@@ -178,6 +260,7 @@ describe('DragToTarget', () => {
     expect(ladder).toHaveAttribute('data-phase', 'idle');
     expect(pointerCapture.releasePointerCapture).toHaveBeenCalledTimes(2);
     expect(onComplete).not.toHaveBeenCalled();
+    expect(onGuidanceWrongAction).not.toHaveBeenCalled();
   });
 
   it('keeps the active pointer authoritative during a multi-pointer drag', () => {
@@ -233,8 +316,10 @@ describe('DragToTarget', () => {
       <DragToTarget
         accessibleLabel="Move the ladder"
         completionAnnouncement="Placed"
-        hintDelayMs={4_000}
+        guidance={idleGuidance}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         paused
         sourceVisual={<span />}
         start={start}
@@ -253,8 +338,10 @@ describe('DragToTarget', () => {
       <DragToTarget
         accessibleLabel="Move the ladder"
         completionAnnouncement="Placed"
-        hintDelayMs={4_000}
+        guidance={idleGuidance}
         onComplete={onComplete}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
         sourceVisual={<span />}
         start={start}
         target={target}

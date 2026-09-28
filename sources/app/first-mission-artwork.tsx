@@ -1,24 +1,27 @@
-import { useEffect, useState } from 'react';
-
 import { type FirstRescueContent, resolveFirstRescueAssets } from '../content/first-rescue-content';
+import type { GuidancePresentation } from '../engine/guidance-ladder-state';
 import { TapRemove, type TapRemoveTarget } from '../interactions/tap-remove';
 
 export type MissionPhase = 'ladder' | 'mimi' | 'saving';
 
 type FirstMissionArtworkProps = Readonly<{
   content: FirstRescueContent;
+  guidance: GuidancePresentation;
   helpMimiLabel: string;
-  hintDelayMs: number;
   onFinish: () => void;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   paused?: boolean;
   phase: MissionPhase;
 }>;
 
 export function FirstMissionArtwork({
   content,
+  guidance,
   helpMimiLabel,
-  hintDelayMs,
   onFinish,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
   paused = false,
   phase,
 }: FirstMissionArtworkProps) {
@@ -33,11 +36,12 @@ export function FirstMissionArtwork({
       <div className={backgroundUrl === null ? 'mission-tree' : 'mission-production-layer'}>
         <FallbackTree visible={backgroundUrl === null} />
         <MissionKitten
+          guidance={guidance}
           helpMimiLabel={helpMimiLabel}
-          hintDelayMs={hintDelayMs}
-          key={`${phase}:${String(hintDelayMs)}`}
           mimiUrl={mimiUrl}
           onFinish={onFinish}
+          onGuidanceActivity={onGuidanceActivity}
+          onGuidanceWrongAction={onGuidanceWrongAction}
           paused={paused}
           phase={phase}
           stepId={content.tapStep.id}
@@ -64,17 +68,18 @@ function FallbackTree({ visible }: Readonly<{ visible: boolean }>) {
 type MissionKittenProps = Omit<FirstMissionArtworkProps, 'content'> &
   Readonly<{
     mimiUrl: string | null;
-    hintDelayMs: number;
     stepId: string;
     successCue: string;
     targetIds: readonly string[];
   }>;
 
 function MissionKitten({
+  guidance,
   helpMimiLabel,
-  hintDelayMs,
   mimiUrl,
   onFinish,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
   paused = false,
   phase,
   stepId,
@@ -82,13 +87,12 @@ function MissionKitten({
   targetIds,
 }: MissionKittenProps) {
   const hasProductionArt = mimiUrl !== null;
-  const showGuidance = useTapGuidance(phase, hintDelayMs);
   if (phase === 'ladder') {
     return (
       <span
         className={`mission-kitten${hasProductionArt ? ' mission-kitten-production' : ''}`}
         data-step-id={stepId}
-        data-guidance={showGuidance}
+        data-guidance="false"
         data-success-cue={successCue}
         data-target-ids={targetIds.join(' ')}
         aria-hidden="true"
@@ -102,11 +106,13 @@ function MissionKitten({
   }
   return (
     <MissionKittenAction
+      guidance={guidance}
       hasProductionArt={hasProductionArt}
       helpMimiLabel={helpMimiLabel}
       mimiUrl={mimiUrl}
       onFinish={onFinish}
-      showGuidance={showGuidance}
+      onGuidanceActivity={onGuidanceActivity}
+      onGuidanceWrongAction={onGuidanceWrongAction}
       paused={paused}
       stepId={stepId}
       successCue={successCue}
@@ -116,11 +122,13 @@ function MissionKitten({
 }
 
 type MissionKittenActionProps = Readonly<{
+  guidance: GuidancePresentation;
   hasProductionArt: boolean;
   helpMimiLabel: string;
   mimiUrl: string | null;
   onFinish: () => void;
-  showGuidance: boolean;
+  onGuidanceActivity: () => void;
+  onGuidanceWrongAction: () => void;
   paused: boolean;
   stepId: string;
   successCue: string;
@@ -128,11 +136,13 @@ type MissionKittenActionProps = Readonly<{
 }>;
 
 function MissionKittenAction({
+  guidance,
   hasProductionArt,
   helpMimiLabel,
   mimiUrl,
   onFinish,
-  showGuidance,
+  onGuidanceActivity,
+  onGuidanceWrongAction,
   paused,
   stepId,
   successCue,
@@ -149,8 +159,10 @@ function MissionKittenAction({
   });
   return (
     <TapRemove
-      isGuidanceActive={showGuidance}
+      guidance={guidance}
       onComplete={onFinish}
+      onGuidanceActivity={onGuidanceActivity}
+      onGuidanceWrongAction={onGuidanceWrongAction}
       paused={paused}
       targets={[target]}
     />
@@ -211,22 +223,6 @@ function requiredTapTargetId(targetIds: readonly string[]): string {
     throw new Error('The initial Rescue tap step requires at least one target.');
   }
   return targetId;
-}
-
-function useTapGuidance(phase: MissionPhase, hintDelayMs: number): boolean {
-  const [showGuidance, setShowGuidance] = useState(false);
-  useEffect(() => {
-    if (phase !== 'mimi') {
-      return undefined;
-    }
-    const timer = window.setTimeout(() => {
-      setShowGuidance(true);
-    }, hintDelayMs);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [hintDelayMs, phase]);
-  return showGuidance;
 }
 
 function KittenImage({ mimiUrl }: Readonly<{ mimiUrl: string | null }>) {
