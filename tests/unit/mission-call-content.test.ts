@@ -48,9 +48,9 @@ describe('mission call content', () => {
       unlockedResidentIds: ['mimi-kitten'],
     };
     const progression = {
-      availableMissionIds: ['garden-kitten-tree', testWorldMission.id],
+      availableMissionIds: [testWorldMission.id, 'garden-kitten-tree'],
       missionsByLocation: {
-        garden: ['garden-kitten-tree', testWorldMission.id],
+        garden: [testWorldMission.id, 'garden-kitten-tree'],
       },
       visibleLocationIds: ['garden'],
     };

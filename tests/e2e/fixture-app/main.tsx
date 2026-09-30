@@ -6,6 +6,7 @@ import { MapFixture } from './map-fixture';
 import { PrimitiveSuite } from './primitive-suite';
 import { TraceFixture } from './trace-fixture';
 import { WipeFixture } from './wipe-fixture';
+import { parseProgressionSeedName } from '../../support/progression-content';
 import './style.css';
 
 const rootElement = document.querySelector('#root');
@@ -18,7 +19,12 @@ function fixtureFor(search: string) {
   const parameters = new URLSearchParams(search);
   const fixture = parameters.get('fixture');
   if (fixture === 'map') {
-    return <MapFixture locale={parameters.get('locale') === 'en' ? 'en' : 'hu'} />;
+    return (
+      <MapFixture
+        locale={parameters.get('locale') === 'en' ? 'en' : 'hu'}
+        seed={parseProgressionSeedName(parameters.get('seed'))}
+      />
+    );
   }
   if (fixture === 'match') {
     return <MatchFixture />;

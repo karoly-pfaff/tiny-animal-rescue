@@ -35,6 +35,15 @@
   background: rgb(85 155 91 / 35%);
 }
 
+.map-landmark-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.map-screen[data-call-sheet-open='true'] .map-landmark-stage {
+  bottom: clamp(13.5rem, 30%, 16rem);
+}
+
 .map-paths {
   position: absolute;
   inset: 0;
@@ -149,6 +158,14 @@
   box-shadow: 0 0.25rem 0 rgb(72 45 25 / 55%);
 }
 
+.map-location-landmark[data-selected-location='true'][aria-expanded='false'] {
+  z-index: 3;
+  border-color: #fff4a6;
+  box-shadow:
+    0 0 0 0.42rem rgb(41 62 103 / 82%),
+    0 0.65rem 0 rgb(72 45 25 / 62%);
+}
+
 .map-landmark[data-active-call='true'] {
   z-index: 4;
   scale: 1.12;
@@ -157,6 +174,11 @@
     0 0 0 0.65rem rgb(255 235 112 / 74%),
     0 0.75rem 0 rgb(72 45 25 / 62%);
   animation: active-map-call 1.4s ease-in-out infinite;
+}
+
+.map-screen[data-call-sheet-open='true'] .map-landmark[data-active-call='true'] {
+  scale: 1;
+  animation: none;
 }
 
 .map-active-call-portrait {

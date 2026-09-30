@@ -71,13 +71,8 @@
         "shape": { "enum": ["arch", "circle", "leaf", "rounded-square", "wave"] },
         "accentColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
         "audioCue": {
-          "enum": [
-            "effects.ambience.rescue-center",
-            "effects.ambience.garden",
-            "effects.ambience.forest",
-            "effects.ambience.farm",
-            "effects.ambience.pond"
-          ]
+          "type": "string",
+          "pattern": "^effects\\.ambience\\.[a-z0-9]+(?:-[a-z0-9]+)*$"
         },
         "placement": {
           "type": "object",

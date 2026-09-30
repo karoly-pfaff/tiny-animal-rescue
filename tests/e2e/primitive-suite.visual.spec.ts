@@ -1,7 +1,6 @@
-import { expect, test } from '@playwright/test';
-
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { interactionFixtureUrl } from './support/fixture-url';
+import { expect, test } from './support/muted-test';
 import { settleVisual } from './support/settle-visual';
 
 const primitiveTypes = ['tap', 'drag', 'wipe', 'match', 'trace'] as const;

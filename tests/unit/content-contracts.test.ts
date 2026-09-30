@@ -157,6 +157,7 @@ const expectedLocalization = {
 const expectedMission = {
   id: 'garden-kitten-tree',
   type: 'rescue',
+  mapCallOrder: 0,
   locationId: 'garden',
   subjectAnimalId: 'mimi-kitten',
   prerequisites: [],

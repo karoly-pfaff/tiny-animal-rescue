@@ -1,7 +1,6 @@
-import { expect, test } from '@playwright/test';
-
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { interactionFixtureUrl } from './support/fixture-url';
+import { expect, test } from './support/muted-test';
 import { followPrimaryPointerPath } from './support/pointer';
 
 function createWipePath(box: Readonly<{ height: number; width: number; x: number; y: number }>) {

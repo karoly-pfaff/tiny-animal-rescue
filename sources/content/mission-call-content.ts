@@ -4,7 +4,12 @@ import { resolveContentText } from './content-localization';
 import { animalRecords, locationRecords } from './content-record-kind';
 import { resolveContentRecord } from './content-record-resolver';
 import type { ContentRegistry } from './content-registry';
-import type { ProgressionSelection, ProgressionState } from './progression-selectors';
+import {
+  compareMissionCallOrder,
+  type OwnedMission,
+  type ProgressionSelection,
+  type ProgressionState,
+} from './progression-selectors';
 import type { MapLandmarkPresentation } from './world-content-contracts';
 
 export type MissionCallContent = Readonly<{
@@ -33,9 +38,10 @@ export function selectMissionCalls(
   options: MissionCallOptions,
 ): MissionCallSelection {
   const completed = new Set(options.state.completedMissionIds);
-  const calls = progression.availableMissionIds.map((missionId) =>
-    selectMissionCall(registry, missionId, { completed, locale: options.locale }),
-  );
+  const calls = progression.availableMissionIds
+    .map((missionId) => requiredOwnedMission(registry, missionId))
+    .sort((left, right) => compareMissionCallOrder(registry, left, right))
+    .map((mission) => selectMissionCall(registry, mission, { completed, locale: options.locale }));
   const featuredMissionId = calls.find((call) => !call.completed)?.id ?? null;
   Object.freeze(calls);
   return Object.freeze({ calls, featuredMissionId });
@@ -43,10 +49,9 @@ export function selectMissionCalls(
 
 function selectMissionCall(
   registry: ContentRegistry,
-  missionId: string,
+  mission: OwnedMission,
   context: Readonly<{ completed: ReadonlySet<string>; locale: Locale }>,
 ): MissionCallContent {
-  const mission = requiredOwnedMission(registry, missionId);
   const location = resolveContentRecord({
     registry,
     consumingPackId: mission.ownerPackId,
@@ -55,11 +60,11 @@ function selectMissionCall(
   });
   const locationPresentation = location.record.mapPresentation;
   if (locationPresentation === undefined) {
-    throw new Error(`Available mission ${missionId} has no presented map location.`);
+    throw new Error(`Available mission ${mission.record.id} has no presented map location.`);
   }
   return Object.freeze({
-    completed: context.completed.has(missionId),
-    id: missionId,
+    completed: context.completed.has(mission.record.id),
+    id: mission.record.id,
     locationId: location.record.id,
     locationName: resolveContentText(registry, context.locale, {
       key: location.record.nameKey,
@@ -78,7 +83,7 @@ function selectMissionCall(
   });
 }
 
-function requiredOwnedMission(registry: ContentRegistry, missionId: string) {
+function requiredOwnedMission(registry: ContentRegistry, missionId: string): OwnedMission {
   const ownerPackId = registry.recordOwners.missions[missionId];
   const record = registry.missions[missionId];
   if (ownerPackId === undefined || record === undefined) {

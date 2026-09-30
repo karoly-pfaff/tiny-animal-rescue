@@ -105,10 +105,13 @@ remain separate runtime categories and channels.
   location-unlock flag or application-code ID check.
 - Every landmark remains recognizable without its localized label; color is reinforcement, not the
   only identity signal.
+- Reuse code-native shapes and silhouettes only in a new, globally unique shape-and-silhouette pair;
+  accent colors may repeat, while each `effects.ambience.<kebab-case-id>` cue remains unique.
 - The assembled map owns exactly one central Shelter landmark through a shelter-area
   `mapPresentation` and `mapLabelKey`.
-- Landmark silhouettes, shapes, accent colors, and cues are distinct, and portrait hit regions do
-  not overlap.
+- Mission `mapCallOrder` values are non-negative and unique within a pack. Omitted priorities sort
+  after declared values by stable mission ID, never by filename or discovery order.
+- Landmark portrait hit regions do not overlap.
 
 ## Pack checklist
 

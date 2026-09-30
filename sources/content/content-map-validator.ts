@@ -7,12 +7,10 @@ type PresentedLandmark = Readonly<{
   presentation: MapLandmarkPresentation;
 }>;
 
-type MapIdentityLabel = 'accent color' | 'audio cue' | 'shape' | 'silhouette';
+type MapIdentityLabel = 'audio cue' | 'shape and silhouette';
 
-const accentColorLabel = 'accent color' satisfies MapIdentityLabel;
 const audioCueLabel = 'audio cue' satisfies MapIdentityLabel;
-const shapeLabel = 'shape' satisfies MapIdentityLabel;
-const silhouetteLabel = 'silhouette' satisfies MapIdentityLabel;
+const visualIdentityLabel = 'shape and silhouette' satisfies MapIdentityLabel;
 
 export function validateMapDeclarations(packs: readonly ContentPackSource[]): readonly string[] {
   const locations = packs.flatMap((pack) =>
@@ -52,9 +50,11 @@ export function validateMapDeclarations(packs: readonly ContentPackSource[]): re
 function duplicateIdentityFindings(landmarks: readonly PresentedLandmark[]): readonly string[] {
   return [
     ...duplicateValues(landmarks, audioCueLabel, ({ presentation }) => presentation.audioCue),
-    ...duplicateValues(landmarks, accentColorLabel, ({ presentation }) => presentation.accentColor),
-    ...duplicateValues(landmarks, shapeLabel, ({ presentation }) => presentation.shape),
-    ...duplicateValues(landmarks, silhouetteLabel, ({ presentation }) => presentation.silhouette),
+    ...duplicateValues(
+      landmarks,
+      visualIdentityLabel,
+      ({ presentation }) => `${presentation.shape} + ${presentation.silhouette}`,
+    ),
   ];
 }
 
@@ -65,7 +65,7 @@ function duplicateValues(
 ): readonly string[] {
   const owners = new Map<string, string>();
   return landmarks.flatMap((landmark) => {
-    const value = normalizedIdentityValue(label, select(landmark));
+    const value = select(landmark);
     const owner = owners.get(value);
     owners.set(value, landmark.id);
     return owner === undefined
@@ -76,8 +76,4 @@ function duplicateValues(
           ),
         ];
   });
-}
-
-function normalizedIdentityValue(label: MapIdentityLabel, value: string): string {
-  return label === accentColorLabel ? value.toLowerCase() : value;
 }

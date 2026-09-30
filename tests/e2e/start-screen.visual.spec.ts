@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
@@ -8,6 +8,7 @@ import {
   openFirstRescueMission,
 } from './support/complete-first-rescue';
 import { dragLadder } from './support/ladder-drag';
+import { expect, test } from './support/muted-test';
 import { settleVisual } from './support/settle-visual';
 
 async function pauseVisualClock(page: Page): Promise<void> {

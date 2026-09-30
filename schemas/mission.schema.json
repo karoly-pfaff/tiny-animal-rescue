@@ -18,6 +18,7 @@
   "properties": {
     "id": { "$ref": "#/$defs/id" },
     "type": { "enum": ["rescue", "help", "world"] },
+    "mapCallOrder": { "type": "integer", "minimum": 0 },
     "locationId": { "$ref": "#/$defs/reference" },
     "subjectAnimalId": { "$ref": "#/$defs/reference" },
     "callSubjectAsset": { "$ref": "#/$defs/path" },

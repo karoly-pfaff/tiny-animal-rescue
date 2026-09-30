@@ -5,6 +5,7 @@ import { testContentRegistry } from './first-rescue-content';
 export const testWorldMission: MissionRecord = {
   id: 'garden-bring-ladder',
   type: 'world',
+  mapCallOrder: 1,
   callSubjectAsset: 'images/missions/garden-kitten-tree/ladder.png',
   locationId: 'garden',
   prerequisites: [],

@@ -40,7 +40,33 @@ describe('map declaration validation', () => {
     );
   });
 
-  it('rejects every duplicated landmark identity channel', () => {
+  it('allows controlled primitive and color reuse through a distinct composite identity', () => {
+    const base = basePack();
+    const forest = base.records.locations.find(({ id }) => id === 'forest');
+    const farm = base.records.locations.find(({ id }) => id === 'farm');
+    if (forest?.mapPresentation === undefined || farm?.mapPresentation === undefined) {
+      throw new Error('The Forest and Farm map presentation fixtures are required.');
+    }
+    const meadow: LocationRecord = {
+      ...forest,
+      id: 'meadow',
+      nameKey: 'location.meadow.name',
+      mapLabelKey: 'location.meadow.map-label',
+      mapPresentation: {
+        ...forest.mapPresentation,
+        audioCue: 'effects.ambience.meadow',
+        silhouette: farm.mapPresentation.silhouette,
+      },
+    };
+
+    expect(
+      validateMapDeclarations([
+        withRecords(base, { locations: [...base.records.locations, meadow] }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('rejects duplicated composite visual identities and ambience cues', () => {
     const base = basePack();
     const forest = base.records.locations.find(({ id }) => id === 'forest');
     const forestPresentation = forest?.mapPresentation;
@@ -52,32 +78,7 @@ describe('map declaration validation', () => {
     );
     const findings = validateMapDeclarations([withRecords(base, { locations })]).join('\n');
     expect(findings).toMatch(/share audio cue/u);
-    expect(findings).toMatch(/share accent color/u);
-    expect(findings).toMatch(/share shape/u);
-    expect(findings).toMatch(/share silhouette/u);
-  });
-
-  it('treats mixed-case hexadecimal colors as the same visual identity', () => {
-    const base = basePack();
-    const forest = base.records.locations.find(({ id }) => id === 'forest');
-    const farm = base.records.locations.find(({ id }) => id === 'farm');
-    if (forest?.mapPresentation === undefined || farm?.mapPresentation === undefined) {
-      throw new Error('The Forest and Farm map presentation fixtures are required.');
-    }
-    const duplicateAccentColor = forest.mapPresentation.accentColor.toUpperCase() as `#${string}`;
-    const farmPresentation = farm.mapPresentation;
-    const locations = base.records.locations.map((location) =>
-      location.id === 'farm'
-        ? withMapPresentation(location, {
-            ...farmPresentation,
-            accentColor: duplicateAccentColor,
-          })
-        : location,
-    );
-
-    expect(validateMapDeclarations([withRecords(base, { locations })]).join('\n')).toMatch(
-      /share accent color/u,
-    );
+    expect(findings).toMatch(/share shape and silhouette/u);
   });
 });
 

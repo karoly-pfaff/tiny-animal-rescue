@@ -8,6 +8,9 @@ const width = 64;
 const height = 48;
 const reviewedScreenshotNames = [
   'celebration-mimi.png',
+  'map-call-sheet-en.png',
+  'map-call-sheet-hu.png',
+  'map-completed-replay-hu.png',
   'map-first-rescue.png',
   'mission-first-step.png',
   'mission-ladder-hint.png',

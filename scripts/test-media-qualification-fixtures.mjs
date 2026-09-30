@@ -96,7 +96,7 @@ const lockedWithoutLockManifestRecord = {
 };
 const failures = [];
 
-async function writeFixtureManifest(records = manifestRecords) {
+async function writeFixtureManifest(records = [...manifestRecords, pendingManifestRecord]) {
   await writeFile(
     path.join(sourceRoot, 'content/base/assets/manifest.json'),
     `${JSON.stringify({ schemaVersion: 1, assets: records })}\n`,
@@ -677,6 +677,54 @@ try {
       failures.push(`qualified product accepted application media owned only by ${metadataFile}`);
     }
     await rm(path.join(product, 'build/app', metadataFile));
+  }
+  await writeFile(
+    path.join(product, 'build/app/index.html'),
+    `<!doctype html><link rel="icon" href="./${applicationAssetPath}"><img src="./${assetPath}"><audio src="./${audioPath}"></audio><img src="./${pendingAssetPath}">`,
+  );
+  if (
+    !(await rejects(() =>
+      stageQualifiedMedia({
+        source: sourceRoot,
+        product,
+        materialized: assetRoot,
+        policy: sourceRoot,
+        output: path.join(root, 'active-pending-media'),
+        artifactNamePrefix: 'media-qualified-',
+      }),
+    ))
+  ) {
+    failures.push('qualified product accepted an active pending-media path');
+  }
+  for (const [name, activeReference] of [
+    ['bare', `<img src="./${pendingManifestRecord.objectKey}">`],
+    [
+      'css',
+      `<style>.fixture{background-image:url("./${pendingManifestRecord.objectKey}")}</style>`,
+    ],
+    [
+      'javascript',
+      `<script>const pending={objectKey:"${pendingManifestRecord.objectKey}"};new Image().src=pending.objectKey</script>`,
+    ],
+  ]) {
+    await writeFile(
+      path.join(product, 'build/app/index.html'),
+      `<!doctype html><link rel="icon" href="./${applicationAssetPath}"><img src="./${assetPath}"><audio src="./${audioPath}"></audio>${activeReference}`,
+    );
+    if (
+      !(await rejects(() =>
+        stageQualifiedMedia({
+          source: sourceRoot,
+          product,
+          materialized: assetRoot,
+          policy: sourceRoot,
+          output: path.join(root, `active-pending-${name}`),
+          artifactNamePrefix: 'media-qualified-',
+        }),
+      ))
+    ) {
+      failures.push(`qualified product accepted an active ${name} pending-media reference`);
+    }
   }
   await writeFile(
     path.join(product, 'build/app/index.html'),

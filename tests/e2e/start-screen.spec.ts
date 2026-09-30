@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import {
@@ -9,6 +9,7 @@ import {
   openFirstRescueMission,
 } from './support/complete-first-rescue';
 import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
+import { expect, test } from './support/muted-test';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
 
@@ -185,6 +186,42 @@ test('@preview opens only the first Garden mission and protects mission exit', a
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
+});
+
+test('@preview gives unlocked locations without calls persistent visual selection', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.goto('/');
+  await writePrimarySave(page, {
+    completedMissionIds: ['garden-kitten-tree'],
+    locale: 'en',
+    schemaVersion: 0,
+    unlockedResidentIds: ['mimi-kitten'],
+    worldFlags: ['mimi-rescued'],
+  });
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await page.goto('/#/map');
+
+  const garden = page.getByRole('button', { name: 'Garden rescue: Mimi' });
+  const forest = page.getByRole('button', { name: 'Forest rescues' });
+  const farm = page.getByRole('button', { name: 'Farm rescues' });
+  await activateWithPrimaryPointer(garden, hasTouch);
+  await expect(page.getByRole('region', { name: 'Garden' })).toBeVisible();
+
+  await activateWithPrimaryPointer(forest, hasTouch);
+  await expect(page.getByRole('region', { name: 'Garden' })).toHaveCount(0);
+  await expect(forest).toHaveAttribute('aria-pressed', 'true');
+  await expect(forest).toHaveAttribute('data-selected-location', 'true');
+  await expect(forest).toHaveCSS('box-shadow', /rgba?\(41, 62, 103/u);
+  await expect(garden).toHaveAttribute('aria-pressed', 'false');
+
+  await activateWithPrimaryPointer(farm, hasTouch);
+  await expect(farm).toHaveAttribute('aria-pressed', 'true');
+  await expect(forest).toHaveAttribute('aria-pressed', 'false');
+  expect(browserErrors).toEqual([]);
 });
 
 test('@preview restores map focus after leaving a direct mission route', async ({

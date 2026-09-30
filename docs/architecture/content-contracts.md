@@ -110,6 +110,12 @@ normalized landmark centers for landscape and portrait. These values identify th
 requiring the localized label to be read. They contain no executable behavior and never select a
 concrete mission in application code.
 
+The code-native shape and silhouette vocabularies are reusable primitives, not one-use landmark
+slots. Every presented landmark must own a unique `shape + silhouette` pair so its identity never
+depends on color alone. Accent colors are supplemental and may repeat. Ambience cue IDs use the
+validated `effects.ambience.<kebab-case-id>` namespace and remain unique across the assembled map;
+adding an ordinary pack-owned cue does not require extending an engine enum.
+
 A location may also declare one `unlockRequirement`: either a `mission-completed` reference or a
 positive `rescue-count` minimum. Omission is the contract-version-1 default for an immediately visible
 location. Mission references follow the same own-pack/dependency ownership rules as other content
@@ -120,9 +126,9 @@ remove a replay from an existing save.
 
 Exactly one shelter-area record across an assembled map declares a `mapPresentation` and a
 `mapLabelKey`; this is the stable central Shelter landmark. Presented landmarks must have distinct
-silhouettes, shapes, accent colors, and audio cues. Location and Shelter labels are resolved from the
-declaring pack's localization documents at runtime. Omission remains the contract-version-1 default
-for expansion content that does not add a map landmark.
+shape-and-silhouette pairs and audio cues. Location and Shelter labels are resolved from the declaring
+pack's localization documents at runtime. Omission remains the contract-version-1 default for
+expansion content that does not add a map landmark.
 
 ## Mission record
 
@@ -130,6 +136,7 @@ for expansion content that does not add a map landmark.
 type Mission = {
   id: string;
   type: 'rescue' | 'help' | 'world';
+  mapCallOrder?: number;
   locationId: string;
   subjectAnimalId?: string;
   callSubjectAsset?: string;
@@ -141,6 +148,12 @@ type Mission = {
   assets: MissionAssets;
 };
 ```
+
+`mapCallOrder` is a non-negative, pack-local priority for rescue-map call presentation. Declared
+values must be unique inside their pack. Runtime ordering first follows the dependency-derived pack
+order, then `mapCallOrder`, then stable mission ID. The contract-version-1 default for an omitted
+value is “after every explicitly ordered mission in the same pack, ordered by stable mission ID”; it
+never falls back to JSON array, discovery, or filename order.
 
 Every mission call has a content-owned subject visual. A mission with `subjectAnimalId` uses that
 animal's portrait; a mission without an animal subject must declare `callSubjectAsset`. The latter is

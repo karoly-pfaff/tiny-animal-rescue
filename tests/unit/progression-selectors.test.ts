@@ -1,14 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import { assembleContentRegistry } from '../../sources/content/content-registry';
-import type { MissionRecord } from '../../sources/content/mission-contract';
-import { selectProgression } from '../../sources/content/progression-selectors';
-import type { AnimalRecord } from '../../sources/content/world-content-contracts';
-import { testContentRegistry } from '../support/first-rescue-content';
+import {
+  compareMissionCallOrder,
+  selectProgression,
+} from '../../sources/content/progression-selectors';
+import { progressionFixtureRegistry } from '../support/progression-content';
 
 describe('progression selectors', () => {
+  it('gives both World calls their owned subject asset without inheriting Mimi', () => {
+    const registry = progressionFixtureRegistry();
+
+    for (const missionId of ['farm-piglet-mud-wash', 'pond-clear-litter']) {
+      expect(registry.missions[missionId]).toMatchObject({
+        callSubjectAsset: 'fixture-assets/world-subject.png',
+      });
+      expect(registry.missions[missionId]?.subjectAnimalId).toBeUndefined();
+    }
+  });
+
   it('offers the tutorial and only Garden on a new save', () => {
-    const selection = selectProgression(progressionRegistry(), {
+    const selection = selectProgression(progressionFixtureRegistry(), {
       completedMissionIds: [],
       unlockedResidentIds: [],
     });
@@ -19,14 +31,15 @@ describe('progression selectors', () => {
   });
 
   it('keeps missions at compatible unpresented locations out of map progression', () => {
-    const registry = progressionRegistry();
+    const registry = progressionFixtureRegistry();
     const base = registry.packs['base'];
     const garden = base?.records.locations.find(({ id }) => id === 'garden');
     const tutorial = base?.records.missions.find(({ id }) => id === 'garden-kitten-tree');
     if (base === undefined || garden === undefined || tutorial === undefined) {
       throw new Error('The progression fixture requires the bundled Garden tutorial.');
     }
-    const { mapPresentation: _mapPresentation, ...unpresentedGarden } = garden;
+    const unpresentedGarden = { ...garden };
+    Reflect.deleteProperty(unpresentedGarden, 'mapPresentation');
     const hiddenLocationId = 'hidden-grove';
     const hiddenMissionId = 'hidden-grove-rescue';
     const expandedRegistry = assembleContentRegistry([
@@ -59,11 +72,11 @@ describe('progression selectors', () => {
   });
 
   it('reveals Forest and Farm after the tutorial while gating Help by its resident', () => {
-    const withoutResident = selectProgression(progressionRegistry(), {
+    const withoutResident = selectProgression(progressionFixtureRegistry(), {
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: [],
     });
-    const withResident = selectProgression(progressionRegistry(), {
+    const withResident = selectProgression(progressionFixtureRegistry(), {
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: ['mimi-kitten'],
     });
@@ -71,42 +84,46 @@ describe('progression selectors', () => {
     expect(withoutResident.visibleLocationIds).toEqual(['farm', 'forest', 'garden']);
     expect(withoutResident.availableMissionIds).toEqual([
       'garden-kitten-tree',
-      'farm-lamb-fence',
-      'forest-puppy-branch',
+      'forest-hedgehog-branches',
+      'farm-chick-find-mother',
     ]);
-    expect(withoutResident.availableMissionIds).not.toContain('garden-help-mimi');
-    expect(withResident.availableMissionIds).toContain('garden-help-mimi');
+    expect(withoutResident.availableMissionIds).not.toContain('garden-mimi-find-ball');
+    expect(withResident.availableMissionIds).toContain('garden-mimi-find-ball');
   });
 
   it('reveals Pond only after three known Rescue completions', () => {
-    const registry = progressionRegistry();
+    const registry = progressionFixtureRegistry();
     const twoRescuesAndUnknown = selectProgression(registry, {
-      completedMissionIds: ['garden-kitten-tree', 'farm-lamb-fence', 'unknown-rescue'],
-      unlockedResidentIds: ['mimi-kitten', 'lili-lamb'],
+      completedMissionIds: ['garden-kitten-tree', 'forest-hedgehog-branches', 'unknown-rescue'],
+      unlockedResidentIds: ['mimi-kitten', 'suni-hedgehog'],
     });
     const threeRescues = selectProgression(registry, {
-      completedMissionIds: ['garden-kitten-tree', 'farm-lamb-fence', 'forest-puppy-branch'],
-      unlockedResidentIds: ['mimi-kitten', 'lili-lamb', 'buksi-puppy'],
+      completedMissionIds: [
+        'garden-kitten-tree',
+        'forest-hedgehog-branches',
+        'farm-chick-find-mother',
+      ],
+      unlockedResidentIds: ['mimi-kitten', 'suni-hedgehog', 'pipi-chick'],
     });
 
     expect(twoRescuesAndUnknown.visibleLocationIds).not.toContain('pond');
     expect(threeRescues.visibleLocationIds).toContain('pond');
-    expect(threeRescues.availableMissionIds).toContain('pond-duck-reeds');
+    expect(threeRescues.availableMissionIds).toContain('pond-turtle-find-water');
   });
 
   it('keeps completed missions replayable even when their current gates are unmet', () => {
-    const registry = progressionRegistry();
+    const registry = progressionFixtureRegistry();
     const completedHelpWithoutResident = selectProgression(registry, {
-      completedMissionIds: ['garden-help-mimi'],
+      completedMissionIds: ['garden-mimi-find-ball'],
       unlockedResidentIds: [],
     });
 
     expect(completedHelpWithoutResident.visibleLocationIds).toContain('garden');
-    expect(completedHelpWithoutResident.availableMissionIds).toContain('garden-help-mimi');
+    expect(completedHelpWithoutResident.availableMissionIds).toContain('garden-mimi-find-ball');
   });
 
   it('returns the same immutable ordering for the same state', () => {
-    const registry = progressionRegistry();
+    const registry = progressionFixtureRegistry();
     const state = {
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: ['mimi-kitten'],
@@ -122,7 +139,7 @@ describe('progression selectors', () => {
   });
 
   it('ignores a stale pack-order entry deterministically', () => {
-    const registry = progressionRegistry();
+    const registry = progressionFixtureRegistry();
     const withMissingPack = {
       ...registry,
       packOrder: ['missing-pack', ...registry.packOrder],
@@ -140,88 +157,44 @@ describe('progression selectors', () => {
       }),
     );
   });
+
+  it('orders calls by pack, explicit priority, and the stable-ID omitted default', () => {
+    const registry = progressionFixtureRegistry();
+    const tutorial = registry.missions['garden-kitten-tree'];
+    if (tutorial === undefined) {
+      throw new Error('The progression fixture requires the bundled tutorial mission.');
+    }
+    const withoutOrder = { ...tutorial };
+    Reflect.deleteProperty(withoutOrder, 'mapCallOrder');
+    const withExpansionOrder = { ...registry, packOrder: ['base', 'expansion'] };
+
+    expect(
+      compareMissionCallOrder(
+        withExpansionOrder,
+        { ownerPackId: 'base', record: tutorial },
+        { ownerPackId: 'expansion', record: tutorial },
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareMissionCallOrder(
+        registry,
+        { ownerPackId: 'base', record: tutorial },
+        { ownerPackId: 'base', record: { ...tutorial, id: 'later', mapCallOrder: 1 } },
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareMissionCallOrder(
+        registry,
+        { ownerPackId: 'base', record: tutorial },
+        { ownerPackId: 'base', record: withoutOrder },
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareMissionCallOrder(
+        registry,
+        { ownerPackId: 'base', record: { ...withoutOrder, id: 'z-call' } },
+        { ownerPackId: 'base', record: { ...withoutOrder, id: 'a-call' } },
+      ),
+    ).toBeGreaterThan(0);
+  });
 });
-
-function progressionRegistry() {
-  const base = testContentRegistry.packs['base'];
-  const tutorial = testContentRegistry.missions['garden-kitten-tree'];
-  const mimi = testContentRegistry.animals['mimi-kitten'];
-  if (base === undefined || tutorial === undefined || mimi === undefined) {
-    throw new Error('The progression fixture requires the bundled tutorial content.');
-  }
-  const farmAnimal = animalFrom(mimi, 'lili-lamb', 'lamb');
-  const forestAnimal = animalFrom(mimi, 'buksi-puppy', 'puppy');
-  const pondAnimal = animalFrom(mimi, 'pipi-duck', 'duck');
-  const missions = [
-    tutorial,
-    missionFrom(tutorial, {
-      id: 'farm-lamb-fence',
-      locationId: 'farm',
-      subjectAnimalId: farmAnimal.id,
-      prerequisites: [{ completedMissionId: tutorial.id }],
-    }),
-    missionFrom(tutorial, {
-      id: 'forest-puppy-branch',
-      locationId: 'forest',
-      subjectAnimalId: forestAnimal.id,
-      prerequisites: [{ completedMissionId: tutorial.id }],
-    }),
-    missionFrom(tutorial, {
-      id: 'pond-duck-reeds',
-      locationId: 'pond',
-      subjectAnimalId: pondAnimal.id,
-      prerequisites: [
-        { completedMissionId: 'farm-lamb-fence' },
-        { completedMissionId: 'forest-puppy-branch' },
-      ],
-    }),
-    missionFrom(tutorial, {
-      id: 'garden-help-mimi',
-      locationId: 'garden',
-      subjectAnimalId: mimi.id,
-      prerequisites: [{ completedMissionId: tutorial.id }],
-      type: 'help',
-    }),
-  ];
-
-  return assembleContentRegistry([
-    {
-      ...base,
-      records: {
-        ...base.records,
-        animals: [...base.records.animals, farmAnimal, forestAnimal, pondAnimal],
-        missions,
-      },
-    },
-  ]);
-}
-
-function animalFrom(source: AnimalRecord, id: string, species: string): AnimalRecord {
-  return {
-    ...source,
-    id,
-    species,
-    nameKey: `animal.${id}.name`,
-    shelterLocalization: {
-      happyKey: `animal.${id}.shelter.happy`,
-      tapLabelKey: `animal.${id}.shelter.tap-label`,
-    },
-  };
-}
-
-type MissionOverrides = Pick<MissionRecord, 'id' | 'locationId' | 'prerequisites'> &
-  Readonly<{ subjectAnimalId: string; type?: MissionRecord['type'] }>;
-
-function missionFrom(source: MissionRecord, overrides: MissionOverrides): MissionRecord {
-  const type = overrides.type ?? 'rescue';
-  const reward =
-    type === 'rescue'
-      ? { completeMission: true as const, unlockResidentId: overrides.subjectAnimalId }
-      : { completeMission: true as const };
-  return {
-    ...source,
-    ...overrides,
-    type,
-    reward,
-  };
-}

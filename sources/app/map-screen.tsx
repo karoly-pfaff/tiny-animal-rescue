@@ -61,7 +61,11 @@ export function MapScreen({
 
   return (
     <main className="game-shell" data-route="map">
-      <section className="game-surface map-screen" aria-labelledby="map-title">
+      <section
+        aria-labelledby="map-title"
+        className="game-surface map-screen"
+        data-call-sheet-open={callSheetOpenAttribute(openCalls.length)}
+      >
         {backgroundUrl === null || backgroundUrl === undefined ? null : (
           <img
             aria-hidden="true"
@@ -70,48 +74,51 @@ export function MapScreen({
             src={backgroundUrl}
           />
         )}
-        <MapPaths />
         <header className="map-title-plaque">
           <h1 id="map-title">{strings.screenTitles['screen.map.title']}</h1>
         </header>
-        <ShelterLandmark
-          content={map.shelter}
-          effectService={effectService}
-          label={resolveContentText(registry, locale, {
-            key: map.shelter.labelKey,
-            ownerPackId: map.shelter.ownerPackId,
-          })}
-          onOpen={onOpenShelter}
-        />
-        {map.locations.map((location) => (
-          <LocationLandmark
-            content={location}
+        <div className="map-landmark-stage">
+          <MapPaths />
+          <ShelterLandmark
+            content={map.shelter}
             effectService={effectService}
-            isExpanded={location.id === openLocationId}
-            isActive={location.id === activeLocationId}
-            key={`${location.ownerPackId}:${location.id}`}
             label={resolveContentText(registry, locale, {
-              key: location.record.mapLabelKey,
-              ownerPackId: location.ownerPackId,
+              key: map.shelter.labelKey,
+              ownerPackId: map.shelter.ownerPackId,
             })}
-            name={resolveContentText(registry, locale, {
-              key: location.record.nameKey,
-              ownerPackId: location.ownerPackId,
-            })}
-            onOpen={(locationId) => {
-              onOpenLocation(locationId);
-              if (missionCalls.some((call) => call.locationId === locationId)) {
-                setOpenLocationId(locationId);
-              }
-            }}
-            portraitUrl={
-              location.id === activeLocationId && openLocationId === null ? activePortraitUrl : null
-            }
-            {...(location.id === initialOpenLocationId
-              ? { buttonRef: restoredLocationButton }
-              : {})}
+            onOpen={onOpenShelter}
           />
-        ))}
+          {map.locations.map((location) => (
+            <LocationLandmark
+              content={location}
+              effectService={effectService}
+              isExpanded={location.id === openLocationId && openCalls.length > 0}
+              isActive={location.id === activeLocationId}
+              isSelected={location.id === openLocationId}
+              key={`${location.ownerPackId}:${location.id}`}
+              label={resolveContentText(registry, locale, {
+                key: location.record.mapLabelKey,
+                ownerPackId: location.ownerPackId,
+              })}
+              name={resolveContentText(registry, locale, {
+                key: location.record.nameKey,
+                ownerPackId: location.ownerPackId,
+              })}
+              onOpen={(locationId) => {
+                onOpenLocation(locationId);
+                setOpenLocationId(locationId);
+              }}
+              portraitUrl={
+                location.id === activeLocationId && openLocationId === null
+                  ? activePortraitUrl
+                  : null
+              }
+              {...(location.id === initialOpenLocationId
+                ? { buttonRef: restoredLocationButton }
+                : {})}
+            />
+          ))}
+        </div>
         {openCalls.length === 0 ? null : (
           <MissionCallSheet
             calls={openCalls}
@@ -127,4 +134,8 @@ export function MapScreen({
       </section>
     </main>
   );
+}
+
+function callSheetOpenAttribute(callCount: number): string | undefined {
+  return callCount === 0 ? undefined : String(true);
 }

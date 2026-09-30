@@ -150,6 +150,37 @@ describe('MapScreen', () => {
     expect(garden).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('closes an old call sheet and visibly selects an unlocked location without calls', () => {
+    const call = gardenMissionCall();
+    render(
+      <MapScreen
+        activeLocationId="garden"
+        effectService={{ play: vi.fn() }}
+        featuredMissionId={call.id}
+        locale="en"
+        missionCalls={[call]}
+        onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
+        onOpenShelter={vi.fn()}
+        registry={testContentRegistry}
+        visibleLocationIds={['garden', 'forest', 'farm']}
+      />,
+    );
+
+    const garden = screen.getByRole('button', { name: 'Garden rescue: Mimi' });
+    const forest = screen.getByRole('button', { name: 'Forest rescues' });
+    fireEvent.click(garden);
+    expect(screen.getByRole('region', { name: 'Garden' })).toBeVisible();
+    expect(garden).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(forest);
+    expect(screen.queryByRole('region', { name: 'Garden' })).not.toBeInTheDocument();
+    expect(forest).toHaveAttribute('aria-pressed', 'true');
+    expect(forest).toHaveAttribute('data-selected-location', 'true');
+    expect(forest).toHaveAttribute('aria-expanded', 'false');
+    expect(garden).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('restores a returning location and keeps its completed mission replayable', () => {
     const onInitialLocationRestored = vi.fn();
     const onOpenMission = vi.fn();

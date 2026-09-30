@@ -35,12 +35,7 @@ type LocationUnlockRequirement =
   | Readonly<{ type: 'mission-completed'; missionId: string }>
   | Readonly<{ type: 'rescue-count'; minimum: number }>;
 
-export type MapLandmarkAudioCue =
-  | 'effects.ambience.rescue-center'
-  | 'effects.ambience.garden'
-  | 'effects.ambience.forest'
-  | 'effects.ambience.farm'
-  | 'effects.ambience.pond';
+export type MapLandmarkAudioCue = `effects.ambience.${string}`;
 
 export type MapLandmarkPresentation = Readonly<{
   accentColor: `#${string}`;

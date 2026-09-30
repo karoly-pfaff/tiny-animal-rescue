@@ -5,6 +5,8 @@ import {
   bundledContentRegistry,
   type BundledContentModules,
 } from '../../sources/content/bundled-content-registry';
+import { selectMissionCalls } from '../../sources/content/mission-call-content';
+import { selectProgression } from '../../sources/content/progression-selectors';
 import type { ContentPackSource } from '../../sources/content/content-registry';
 import { validateContentSemantics } from '../../sources/content/content-semantic-validator';
 import type { PackManifestSource } from '../../sources/content/pack-contract';
@@ -32,6 +34,39 @@ describe('test-only content expansion seam', () => {
     const restored = assembleBundledContentRegistry(baseModules());
 
     expect(restored).toStrictEqual(bundledContentRegistry);
+  });
+
+  it('orders map calls by authored priority instead of bundled filename order', () => {
+    const modules = baseModules();
+    const tutorial = bundledContentRegistry.missions['garden-kitten-tree'];
+    if (tutorial === undefined) {
+      throw new Error('The bundled tutorial mission is required.');
+    }
+    const laterMission = {
+      ...tutorial,
+      id: 'garden-later-call',
+      mapCallOrder: 1,
+      reward: { completeMission: true as const },
+      type: 'world' as const,
+    };
+    const registry = assembleBundledContentRegistry({
+      ...modules,
+      missions: {
+        '../../content/base/missions/a-later-call.json': laterMission,
+        '../../content/base/missions/z-tutorial.json': tutorial,
+      },
+    });
+    const state = { completedMissionIds: [], unlockedResidentIds: [] };
+    const progression = selectProgression(registry, state);
+    const calls = selectMissionCalls(registry, progression, { locale: 'en', state });
+
+    expect(registry.packs['base']?.records.missions.map(({ id }) => id)).toEqual([
+      'garden-later-call',
+      'garden-kitten-tree',
+    ]);
+    expect(progression.availableMissionIds).toEqual(['garden-kitten-tree', 'garden-later-call']);
+    expect(calls.calls.map(({ id }) => id)).toEqual(['garden-kitten-tree', 'garden-later-call']);
+    expect(calls.featuredMissionId).toBe('garden-kitten-tree');
   });
 
   it('rejects a bundled manifest whose ID drifts from its pack directory', () => {

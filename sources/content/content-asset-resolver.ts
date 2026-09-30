@@ -14,8 +14,8 @@ export function resolveContentAsset(
   const consumingPack = requiredPack(registry, consumingPackId);
   const ownerPack = requiredPack(registry, ownerPackId);
   assertDeclaredDependency(consumingPackId, ownerPackId, consumingPack.dependencies);
-  requireInventoryAsset(ownerPack.records.assets, objectKey);
-  return materializedAssetUrl(ownerPackId, objectKey);
+  const asset = requireInventoryAsset(ownerPack.records.assets, objectKey);
+  return materializedAssetUrl(ownerPackId, objectKey, asset.delivery);
 }
 
 function requiredAssetReference(reference: string, consumingPackId: string) {
@@ -32,10 +32,12 @@ function requiredAssetReference(reference: string, consumingPackId: string) {
 function requireInventoryAsset(
   assets: ContentRegistry['packs'][string]['records']['assets'],
   objectKey: string,
-): void {
-  if (!assets.some((candidate) => candidate.objectKey === objectKey)) {
+): ContentRegistry['packs'][string]['records']['assets'][number] {
+  const asset = assets.find((candidate) => candidate.objectKey === objectKey);
+  if (asset === undefined) {
     throw new Error('A content asset is missing from its owning pack inventory.');
   }
+  return asset;
 }
 
 function requiredPack(registry: ContentRegistry, packId: string) {
@@ -75,13 +77,31 @@ export function resolveStartBackground(registry: ContentRegistry): string | null
   return resolveContentAsset(registry, match.packId, match.objectKey);
 }
 
-function materializedAssetUrl(packId: string, objectKey: string): string | null {
-  const materialized = import.meta.env.VITE_MATERIALIZED_ASSETS;
-  if (materialized === undefined) {
+function materializedAssetUrl(
+  packId: string,
+  objectKey: string,
+  delivery: 'r2-locked' | 'r2-pending' | undefined,
+): string | null {
+  assertAcceptedDelivery(delivery);
+  const materialized = materializationMarker();
+  if (delivery === 'r2-pending' || materialized === undefined) {
     return null;
   }
-  if (materialized !== 'true') {
+  return `./content/${packId}/assets/${objectKey}`;
+}
+
+function assertAcceptedDelivery(
+  delivery: 'r2-locked' | 'r2-pending' | undefined,
+): asserts delivery is 'r2-locked' | 'r2-pending' {
+  if (delivery !== 'r2-locked' && delivery !== 'r2-pending') {
+    throw new Error('A content asset has no accepted production delivery state.');
+  }
+}
+
+function materializationMarker(): 'true' | undefined {
+  const materialized = import.meta.env.VITE_MATERIALIZED_ASSETS;
+  if (materialized !== undefined && materialized !== 'true') {
     throw new Error('VITE_MATERIALIZED_ASSETS must be exactly true when it is defined.');
   }
-  return `./content/${packId}/assets/${objectKey}`;
+  return materialized;
 }

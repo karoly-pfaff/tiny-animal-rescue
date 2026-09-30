@@ -25,6 +25,8 @@ type OwnedRecord<RecordValue> = Readonly<{
   record: RecordValue;
 }>;
 
+export type OwnedMission = OwnedRecord<MissionRecord>;
+
 type ProgressionContext = Readonly<{
   completed: ReadonlySet<string>;
   completedRescueCount: number;
@@ -117,10 +119,28 @@ function ownedLocations(registry: ContentRegistry): readonly OwnedRecord<Locatio
 }
 
 function ownedMissions(registry: ContentRegistry): readonly OwnedRecord<MissionRecord>[] {
-  return registry.packOrder.flatMap((ownerPackId) => {
-    const pack = registry.packs[ownerPackId];
-    return (pack?.records.missions ?? []).map((record) => ({ ownerPackId, record }));
-  });
+  return registry.packOrder
+    .flatMap((ownerPackId) => {
+      const pack = registry.packs[ownerPackId];
+      return (pack?.records.missions ?? []).map((record) => ({ ownerPackId, record }));
+    })
+    .sort((left, right) => compareMissionCallOrder(registry, left, right));
+}
+
+export function compareMissionCallOrder(
+  registry: ContentRegistry,
+  left: OwnedMission,
+  right: OwnedMission,
+): number {
+  const packOrder =
+    registry.packOrder.indexOf(left.ownerPackId) - registry.packOrder.indexOf(right.ownerPackId);
+  if (packOrder !== 0) {
+    return packOrder;
+  }
+  const authoredOrder =
+    (left.record.mapCallOrder ?? Number.MAX_SAFE_INTEGER) -
+    (right.record.mapCallOrder ?? Number.MAX_SAFE_INTEGER);
+  return authoredOrder === 0 ? left.record.id.localeCompare(right.record.id) : authoredOrder;
 }
 
 function countCompletedRescues(registry: ContentRegistry, completed: ReadonlySet<string>): number {

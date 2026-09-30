@@ -45,9 +45,9 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 ### E004-S05 — Map E2E coverage
 
-- [ ] New-save, post-tutorial, three-rescue, and all-complete seeded states are tested.
-- [ ] Portrait and landscape navigation screenshots are reviewed.
-- [ ] Touch targets do not overlap at minimum supported size.
+- [x] New-save, post-tutorial, three-rescue, and all-complete seeded states are tested.
+- [x] Portrait and landscape navigation screenshots are reviewed.
+- [x] Touch targets do not overlap at minimum supported size.
 
 ## Exit criteria
 

@@ -47,10 +47,19 @@ describe('content visual asset resolver', () => {
     });
   });
 
+  it('keeps pending production media on its code-native fallback', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'true');
+
+    expect(resolveContentAsset(testContentRegistry, 'base', 'images/map/farm-map.png')).toBeNull();
+  });
+
   it('rejects an invalid materialization marker', () => {
     vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'https://assets.example');
 
     expect(() => resolveStartBackground(testContentRegistry)).toThrow(/must be exactly true/u);
+    expect(() =>
+      resolveContentAsset(testContentRegistry, 'base', 'images/map/farm-map.png'),
+    ).toThrow(/must be exactly true/u);
   });
 
   it('rejects unknown packs, undeclared dependencies, and missing inventory records', () => {

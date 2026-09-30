@@ -181,6 +181,22 @@ describe('content semantic validation', () => {
     expect(validateContentSemantics(packs).join('\n')).toMatch(/unlocked by both/u);
   });
 
+  it('rejects duplicate declared map call priorities inside one pack', () => {
+    const packs = validPacks({
+      missions: [
+        makeMission({ mapCallOrder: 0 }),
+        makeMission({
+          id: 'garden-world-call',
+          mapCallOrder: 0,
+          type: 'world',
+          unlockResidentId: undefined,
+        }),
+      ],
+    });
+
+    expect(validateContentSemantics(packs).join('\n')).toMatch(/share mapCallOrder 0/u);
+  });
+
   it('requires every declared locale document and referenced localization key', () => {
     const pack = validPacks()[0];
     if (pack === undefined) {
@@ -598,6 +614,7 @@ function makeShelterArea(overrides: Partial<ShelterAreaRecord> = {}): ShelterAre
 type MissionOptions = Readonly<{
   callSubjectAsset?: string | undefined;
   id?: string;
+  mapCallOrder?: number;
   type?: MissionRecord['type'];
   locationId?: string;
   subjectAnimalId?: string | undefined;
@@ -645,6 +662,7 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
   };
   return {
     ...common,
+    ...(options.mapCallOrder === undefined ? {} : { mapCallOrder: options.mapCallOrder }),
     ...(callSubjectAsset === undefined ? {} : { callSubjectAsset }),
     ...(subjectAnimalId === undefined ? {} : { subjectAnimalId }),
   };

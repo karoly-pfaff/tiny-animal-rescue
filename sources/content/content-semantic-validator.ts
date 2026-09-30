@@ -23,10 +23,30 @@ export function validateContentSemantics(
     ...validatePackDependencyPolicy(packs),
     ...validateContentAssets(packs, { release }),
     ...packs.flatMap(validateMissionCallSubjects),
+    ...packs.flatMap(validateMissionMapCallOrder),
     ...packs.flatMap(validatePackLocalizations),
     ...validateInitialMission(packs),
     ...(release ? validateV1Catalog(packs) : []),
   ]);
+}
+
+function validateMissionMapCallOrder(pack: ContentPackSource): readonly string[] {
+  const owners = new Map<number, string>();
+  return pack.records.missions.flatMap((mission) => {
+    const order = mission.mapCallOrder;
+    if (order === undefined) {
+      return [];
+    }
+    const owner = owners.get(order);
+    owners.set(order, mission.id);
+    return owner === undefined
+      ? []
+      : [
+          diagnostic(
+            `Missions ${owner} and ${mission.id} in pack ${pack.id} share mapCallOrder ${String(order)}.`,
+          ),
+        ];
+  });
 }
 
 function validateMissionCallSubjects(pack: ContentPackSource): readonly string[] {

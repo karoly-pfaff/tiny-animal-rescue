@@ -52,6 +52,7 @@ export function LocationLandmark({
   label,
   isActive,
   isExpanded,
+  isSelected,
   name,
   onOpen,
   portraitUrl,
@@ -62,6 +63,7 @@ export function LocationLandmark({
   label: string;
   isActive: boolean;
   isExpanded: boolean;
+  isSelected: boolean;
   name: string;
   onOpen: (locationId: string) => void;
   portraitUrl: string | null | undefined;
@@ -69,9 +71,11 @@ export function LocationLandmark({
   return (
     <LandmarkButton
       ariaExpanded={isExpanded}
+      ariaPressed={isSelected}
       className="map-location-landmark"
       dataActiveCall={isActive}
       dataLocationId={content.id}
+      dataSelectedLocation={isSelected}
       label={label}
       onOpen={() => {
         effectService.play(content.presentation.audioCue);
@@ -91,21 +95,25 @@ export function LocationLandmark({
 
 function LandmarkButton({
   ariaExpanded,
+  ariaPressed,
   buttonRef,
   children,
   className,
   dataActiveCall,
   dataLocationId,
+  dataSelectedLocation,
   label,
   onOpen,
   presentation,
 }: Readonly<{
   ariaExpanded?: boolean;
+  ariaPressed?: boolean;
   buttonRef?: Ref<HTMLButtonElement>;
   children: ReactNode;
   className: string;
   dataActiveCall?: boolean;
   dataLocationId?: string;
+  dataSelectedLocation?: boolean;
   label: string;
   onOpen: () => void;
   presentation: MapLandmarkPresentation;
@@ -114,9 +122,11 @@ function LandmarkButton({
     <button
       aria-expanded={ariaExpanded}
       aria-label={label}
+      aria-pressed={ariaPressed}
       className={`map-landmark ${className}`}
       data-active-call={dataActiveCall === true ? 'true' : undefined}
       data-location-id={dataLocationId}
+      data-selected-location={dataSelectedLocation === true ? 'true' : undefined}
       data-shape={presentation.shape}
       data-silhouette={presentation.silhouette}
       onClick={onOpen}

@@ -148,6 +148,28 @@ function validateManifestRecords(records, plan, requiredRoles) {
   return findings;
 }
 
+async function assetManifestRecords(root) {
+  const inventoryFiles = repositoryGit(root, ['ls-files', '--', 'content/*/assets/manifest.json'])
+    .split('\n')
+    .filter(Boolean)
+    .sort();
+  if (inventoryFiles.length === 0) throw new Error('Candidate has no tracked asset manifest.');
+  const manifests = await Promise.all(
+    inventoryFiles.map(async (file) => ({
+      packId: file.split('/')[1],
+      manifest: JSON.parse(await readFile(path.join(root, file), 'utf8')),
+    })),
+  );
+  return {
+    packIds: manifests.map(({ packId }) => packId),
+    records: manifests.flatMap(({ packId, manifest }) =>
+      manifest.schemaVersion === 1 && Array.isArray(manifest.assets)
+        ? manifest.assets.map((record) => ({ packId, record }))
+        : [],
+    ),
+  };
+}
+
 async function observedPackMedia(root, packIds) {
   const observed = new Set();
   for (const packId of packIds) {
@@ -172,27 +194,7 @@ export async function verifyCandidateAssetContract({ sourceRoot, assetRoot, requ
   const version = await candidateVersion(sourceRoot);
   const enforcedRoles = requiredRoles ?? (version === '0.2.0' ? [] : requiredFirstRescueAssetRoles);
   const plan = await materializationPlan(sourceRoot);
-  const inventoryFiles = repositoryGit(sourceRoot, [
-    'ls-files',
-    '--',
-    'content/*/assets/manifest.json',
-  ])
-    .split('\n')
-    .filter(Boolean)
-    .sort();
-  if (inventoryFiles.length === 0) throw new Error('Candidate has no tracked asset manifest.');
-  const packIds = inventoryFiles.map((file) => file.split('/')[1]);
-  const manifests = await Promise.all(
-    inventoryFiles.map(async (file) => ({
-      packId: file.split('/')[1],
-      manifest: JSON.parse(await readFile(path.join(sourceRoot, file), 'utf8')),
-    })),
-  );
-  const records = manifests.flatMap(({ packId, manifest }) =>
-    manifest.schemaVersion === 1 && Array.isArray(manifest.assets)
-      ? manifest.assets.map((record) => ({ packId, record }))
-      : [],
-  );
+  const { packIds, records } = await assetManifestRecords(sourceRoot);
   const lockedRecords = records.filter(({ record }) => record.delivery === 'r2-locked');
   const findings = validateManifestRecords(records, plan, enforcedRoles);
   const observed = await observedPackMedia(assetRoot, packIds);
