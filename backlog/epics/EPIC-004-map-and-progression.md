@@ -38,10 +38,10 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 ### E004-S04 — Mission replay and completion state
 
-- [ ] Completed missions remain accessible from their location.
-- [ ] Replay never duplicates residents or world rewards.
-- [ ] Completion is shown as a gentle visual state, not a performance rating.
-- [ ] Returning from a mission restores map focus to its location.
+- [x] Completed missions remain accessible from their location.
+- [x] Replay never duplicates residents or world rewards.
+- [x] Completion is shown as a gentle visual state, not a performance rating.
+- [x] Returning from a mission restores map focus to its location.
 
 ### E004-S05 — Map E2E coverage
 

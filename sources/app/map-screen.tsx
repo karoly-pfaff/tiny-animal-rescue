@@ -1,18 +1,13 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { EffectService } from '../audio/effect-service';
 import { resolveContentText } from '../content/content-localization';
 import type { ContentRegistry } from '../content/content-registry';
 import type { MissionCallContent } from '../content/mission-call-content';
-import {
-  selectRescueMapContent,
-  type MapLocationContent,
-  type MapShelterContent,
-} from '../content/rescue-map-content';
-import type { MapLandmarkPresentation } from '../content/world-content-contracts';
+import { selectRescueMapContent } from '../content/rescue-map-content';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
-import { MapLandmarkIcon } from './map-landmark-icon';
+import { LocationLandmark, MapPaths, ShelterLandmark } from './map-landmarks';
 import { MissionCallSheet } from './mission-call-sheet';
 
 type MapScreenProps = Readonly<{
@@ -22,7 +17,9 @@ type MapScreenProps = Readonly<{
   effectService: EffectService;
   locale: Locale;
   featuredMissionId: string | null;
+  initialOpenLocationId?: string;
   missionCalls: readonly MissionCallContent[];
+  onInitialLocationRestored?: () => void;
   onOpenLocation: (locationId: string) => void;
   onOpenMission: (missionId: string) => void;
   onOpenShelter: () => void;
@@ -30,26 +27,37 @@ type MapScreenProps = Readonly<{
   visibleLocationIds: readonly string[];
 }>;
 
-type LandmarkStyle = CSSProperties & Readonly<Record<`--landmark-${string}`, string>>;
-
 export function MapScreen({
   activeLocationId,
   activePortraitUrl,
   backgroundUrl,
   effectService,
   featuredMissionId,
+  initialOpenLocationId,
   locale,
   missionCalls,
+  onInitialLocationRestored,
   onOpenLocation,
   onOpenMission,
   onOpenShelter,
   registry,
   visibleLocationIds,
 }: MapScreenProps) {
-  const [openLocationId, setOpenLocationId] = useState<string | null>(null);
+  const [openLocationId, setOpenLocationId] = useState<string | null>(
+    initialOpenLocationId ?? null,
+  );
+  const restoredLocationButton = useRef<HTMLButtonElement>(null);
   const strings = getStrings(locale);
   const map = selectRescueMapContent(registry, visibleLocationIds);
   const openCalls = missionCalls.filter(({ locationId }) => locationId === openLocationId);
+
+  useEffect(() => {
+    if (initialOpenLocationId === undefined) {
+      return;
+    }
+    restoredLocationButton.current?.focus();
+    onInitialLocationRestored?.();
+  }, [initialOpenLocationId, onInitialLocationRestored]);
 
   return (
     <main className="game-shell" data-route="map">
@@ -99,12 +107,16 @@ export function MapScreen({
             portraitUrl={
               location.id === activeLocationId && openLocationId === null ? activePortraitUrl : null
             }
+            {...(location.id === initialOpenLocationId
+              ? { buttonRef: restoredLocationButton }
+              : {})}
           />
         ))}
         {openCalls.length === 0 ? null : (
           <MissionCallSheet
             calls={openCalls}
             closeLabel={strings.map}
+            completedLabel={strings.completedReplay}
             featuredMissionId={featuredMissionId}
             onClose={() => {
               setOpenLocationId(null);
@@ -115,130 +127,4 @@ export function MapScreen({
       </section>
     </main>
   );
-}
-
-function MapPaths() {
-  return (
-    <div className="map-paths" aria-hidden="true">
-      <span className="map-path map-path-north-west" />
-      <span className="map-path map-path-north-east" />
-      <span className="map-path map-path-south-west" />
-      <span className="map-path map-path-south-east" />
-    </div>
-  );
-}
-
-function ShelterLandmark({
-  content,
-  effectService,
-  label,
-  onOpen,
-}: Readonly<{
-  content: MapShelterContent;
-  effectService: EffectService;
-  label: string;
-  onOpen: () => void;
-}>) {
-  return (
-    <LandmarkButton
-      className="map-shelter-landmark"
-      label={label}
-      onOpen={() => {
-        effectService.play(content.presentation.audioCue);
-        onOpen();
-      }}
-      presentation={content.presentation}
-    >
-      <MapLandmarkIcon silhouette={content.presentation.silhouette} />
-      <span className="map-landmark-label">{label}</span>
-    </LandmarkButton>
-  );
-}
-
-function LocationLandmark({
-  content,
-  effectService,
-  label,
-  isActive,
-  isExpanded,
-  name,
-  onOpen,
-  portraitUrl,
-}: Readonly<{
-  content: MapLocationContent;
-  effectService: EffectService;
-  label: string;
-  isActive: boolean;
-  isExpanded: boolean;
-  name: string;
-  onOpen: (locationId: string) => void;
-  portraitUrl: string | null | undefined;
-}>) {
-  return (
-    <LandmarkButton
-      ariaExpanded={isExpanded}
-      className="map-location-landmark"
-      dataActiveCall={isActive}
-      dataLocationId={content.id}
-      label={label}
-      onOpen={() => {
-        effectService.play(content.presentation.audioCue);
-        onOpen(content.id);
-      }}
-      presentation={content.presentation}
-    >
-      {portraitUrl === null || portraitUrl === undefined ? null : (
-        <img aria-hidden="true" alt="" className="map-active-call-portrait" src={portraitUrl} />
-      )}
-      <MapLandmarkIcon silhouette={content.presentation.silhouette} />
-      <span className="map-landmark-label">{name}</span>
-    </LandmarkButton>
-  );
-}
-
-function LandmarkButton({
-  ariaExpanded,
-  children,
-  className,
-  dataActiveCall,
-  dataLocationId,
-  label,
-  onOpen,
-  presentation,
-}: Readonly<{
-  ariaExpanded?: boolean;
-  children: ReactNode;
-  className: string;
-  dataActiveCall?: boolean;
-  dataLocationId?: string;
-  label: string;
-  onOpen: () => void;
-  presentation: MapLandmarkPresentation;
-}>) {
-  return (
-    <button
-      aria-expanded={ariaExpanded}
-      aria-label={label}
-      className={`map-landmark ${className}`}
-      data-active-call={dataActiveCall === true ? 'true' : undefined}
-      data-location-id={dataLocationId}
-      data-shape={presentation.shape}
-      data-silhouette={presentation.silhouette}
-      onClick={onOpen}
-      style={landmarkStyle(presentation)}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function landmarkStyle(presentation: MapLandmarkPresentation): LandmarkStyle {
-  return {
-    '--landmark-accent': presentation.accentColor,
-    '--landmark-landscape-x': `${String(presentation.placement.landscape.x * 100)}%`,
-    '--landmark-landscape-y': `${String(presentation.placement.landscape.y * 100)}%`,
-    '--landmark-portrait-x': `${String(presentation.placement.portrait.x * 100)}%`,
-    '--landmark-portrait-y': `${String(presentation.placement.portrait.y * 100)}%`,
-  };
 }

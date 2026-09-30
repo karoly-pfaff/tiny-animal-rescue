@@ -2,7 +2,11 @@ import { expect, test, type Locator, type Page, type TestInfo } from '@playwrigh
 
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
-import { openFirstRescueCallSheet, openFirstRescueMission } from './support/complete-first-rescue';
+import {
+  completeFirstRescue,
+  openFirstRescueCallSheet,
+  openFirstRescueMission,
+} from './support/complete-first-rescue';
 import { dragLadder } from './support/ladder-drag';
 import { settleVisual } from './support/settle-visual';
 
@@ -34,6 +38,10 @@ const expectedAssetsByScreenshot = {
   'map-first-rescue.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
   'map-call-sheet-en.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
   'map-call-sheet-hu.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
+  'map-completed-replay-hu.png': [
+    'images/map/garden-map.png',
+    'images/residents/mimi/canonical.png',
+  ],
   'mission-first-step.png': [
     'images/missions/garden-kitten-tree/background.png',
     'images/missions/garden-kitten-tree/ladder.png',
@@ -256,6 +264,22 @@ for (const locale of ['hu', 'en'] as const) {
     expect(browserErrors).toEqual([]);
   });
 }
+
+test('@visual presents the completed mission as a gentle replay', async ({ page }, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.getByRole('button', { name: 'Játék' }).click();
+  await completeFirstRescue(page, hasTouch, 'hu');
+  await page.getByRole('button', { name: 'Térkép' }).click();
+  const replayCall = page.getByRole('button', { name: 'Mimi a fán — Kert' });
+  await expect(replayCall).toHaveAttribute('data-completed', 'true');
+  await settleVisual(page);
+
+  await verifyReviewedVisual(page, 'map-completed-replay-hu.png', testInfo);
+  expect(browserErrors).toEqual([]);
+});
 
 test('@visual matches the reviewed first-mission baseline', async ({ page }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);

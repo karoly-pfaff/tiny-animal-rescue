@@ -13,6 +13,7 @@ type Strings = Readonly<{
   chooseLanguageTitle: string;
   chooseLanguageHint: string;
   chooseLanguageSaveError: string;
+  completedReplay: string;
   english: string;
   englishCode: string;
   garden: string;
@@ -44,6 +45,7 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     chooseLanguageTitle: 'Válassz nyelvet',
     chooseLanguageHint: 'Ezt később a szülői beállításokban is megváltoztathatod.',
     chooseLanguageSaveError: 'A beállítás nem menthető. Próbáld újra.',
+    completedReplay: 'Kész, újrajátszható',
     english: 'English',
     englishCode: 'EN',
     garden: 'Kert',
@@ -80,6 +82,7 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     chooseLanguageTitle: 'Choose a language',
     chooseLanguageHint: 'You can change this later in Parent Settings.',
     chooseLanguageSaveError: 'The setting could not be saved. Please try again.',
+    completedReplay: 'Completed, replay available',
     english: 'English',
     englishCode: 'EN',
     garden: 'Garden',

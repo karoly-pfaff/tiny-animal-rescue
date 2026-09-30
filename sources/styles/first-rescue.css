@@ -220,6 +220,38 @@
     0 0.48rem 0 #8a5735;
 }
 
+.mission-call-card[data-completed='true'] {
+  border-color: #d9e2a6;
+  background: linear-gradient(150deg, #f4f4d2, #cbd998);
+  box-shadow: 0 0.3rem 0 #6f7547;
+}
+
+.mission-call-complete-cue {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: clamp(1.35rem, 2.5vw, 1.8rem);
+  aspect-ratio: 1;
+  rotate: -8deg;
+  border: 0.16rem solid #fff9d8;
+  border-radius: 52% 48% 54% 46%;
+  background: #74a75a;
+  box-shadow: 0 0.14rem 0 #466c38;
+}
+
+.mission-call-complete-cue::before {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: 42%;
+  height: 22%;
+  content: '';
+  translate: -50% -50%;
+  rotate: -45deg;
+  border-bottom: 0.18rem solid #fffde7;
+  border-left: 0.18rem solid #fffde7;
+}
+
 .mission-call-card:focus-visible,
 .mission-call-close:focus-visible {
   outline: 0.35rem solid #9ac8ff;

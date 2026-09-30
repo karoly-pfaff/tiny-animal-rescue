@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { EffectService } from '../audio/effect-service';
 import type { NarrationService } from '../audio/narration-service';
@@ -16,6 +16,13 @@ import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-res
 import { FoundationScreen } from './foundation-screen';
 import { FirstMissionScreen } from './first-mission-screen';
 import { MapScreen } from './map-screen';
+import {
+  createMapReturnMemory,
+  navigateToMissionCall,
+  selectActiveMapPortrait,
+  selectAvailableMission,
+  selectMissionMapLocationId,
+} from './mission-route-selection';
 import { missionPath, resolveRoute } from './routes';
 import { ShelterScreen } from './shelter-screen';
 
@@ -30,11 +37,26 @@ type PlayerRouteProps = Readonly<{
 }>;
 
 export function PlayerRoute(props: PlayerRouteProps) {
+  const [mapReturn] = useState(createMapReturnMemory);
   if (props.route.id === 'map') {
-    return <RescueMap {...props} />;
+    return (
+      <RescueMap
+        {...props}
+        onMissionSelected={(missionId, locationId) => {
+          mapReturn.remember(locationId);
+          props.onNavigate(missionPath(missionId));
+        }}
+        onReturnLocationRestored={() => {
+          mapReturn.clear();
+        }}
+        returnMapLocationId={mapReturn.read()}
+      />
+    );
   }
   if (props.route.id === 'mission') {
-    return <Mission {...props} missionId={props.route.missionId} />;
+    return (
+      <Mission {...props} missionId={props.route.missionId} onMissionEntered={mapReturn.remember} />
+    );
   }
   if (props.route.id === 'celebration') {
     return <Celebration {...props} />;
@@ -50,8 +72,16 @@ function RescueMap({
   firstRescueContent,
   firstRescueProgressStore,
   locale,
+  onMissionSelected,
   onNavigate,
-}: PlayerRouteProps) {
+  onReturnLocationRestored,
+  returnMapLocationId = null,
+}: PlayerRouteProps &
+  Readonly<{
+    onMissionSelected?: (missionId: string, locationId: string) => void;
+    onReturnLocationRestored?: () => void;
+    returnMapLocationId?: string | null;
+  }>) {
   const assets = resolveFirstRescueAssets(firstRescueContent);
   const progression = selectProgression(
     firstRescueContent.registry,
@@ -62,7 +92,7 @@ function RescueMap({
     state: firstRescueProgressStore.read(),
   });
   const featuredCall = missionCalls.calls.find(({ id }) => id === missionCalls.featuredMissionId);
-  const activePortraitUrl = selectActivePortrait(
+  const activePortraitUrl = selectActiveMapPortrait(
     featuredCall,
     firstRescueContent.mission.id,
     assets.residentPortrait,
@@ -77,30 +107,25 @@ function RescueMap({
       missionCalls={missionCalls.calls}
       onOpenLocation={() => undefined}
       onOpenMission={(missionId) => {
-        onNavigate(missionPath(missionId));
+        navigateToMissionCall(missionId, {
+          calls: missionCalls.calls,
+          onNavigate,
+          path: missionPath(missionId),
+          ...(onMissionSelected === undefined ? {} : { onMissionSelected }),
+        });
       }}
       onOpenShelter={() => {
         onNavigate('/shelter');
       }}
       registry={firstRescueContent.registry}
+      {...(onReturnLocationRestored === undefined
+        ? {}
+        : { onInitialLocationRestored: onReturnLocationRestored })}
+      {...(returnMapLocationId === null ? {} : { initialOpenLocationId: returnMapLocationId })}
       visibleLocationIds={progression.visibleLocationIds}
       {...(featuredCall === undefined ? {} : { activeLocationId: featuredCall.locationId })}
     />
   );
-}
-
-function selectActivePortrait(
-  featuredCall: ReturnType<typeof selectMissionCalls>['calls'][number] | undefined,
-  initialMissionId: string,
-  fallbackPortrait: string | null,
-): string | null {
-  if (featuredCall === undefined) {
-    return null;
-  }
-  if (featuredCall.portraitUrl !== null) {
-    return featuredCall.portraitUrl;
-  }
-  return new Map([[initialMissionId, fallbackPortrait]]).get(featuredCall.id) ?? null;
 }
 
 function Mission({
@@ -109,9 +134,11 @@ function Mission({
   firstRescueProgressStore,
   locale,
   narrationService,
+  onMissionEntered,
   onNavigate,
   missionId,
-}: PlayerRouteProps & Readonly<{ missionId: string | null }>) {
+}: PlayerRouteProps &
+  Readonly<{ missionId: string | null; onMissionEntered: (locationId: string) => void }>) {
   const selectedMissionId = missionId ?? firstRescueContent.mission.id;
   const progression = selectProgression(
     firstRescueContent.registry,
@@ -122,6 +149,15 @@ function Mission({
     progression.availableMissionIds,
     selectedMissionId,
   );
+  const selectedLocationId =
+    selected === null
+      ? undefined
+      : selectMissionMapLocationId(firstRescueContent.registry, selected);
+  useEffect(() => {
+    if (selectedLocationId !== undefined) {
+      onMissionEntered(selectedLocationId);
+    }
+  }, [onMissionEntered, selectedLocationId]);
   if (selected === null) {
     return (
       <UnavailableMissionRoute
@@ -166,19 +202,6 @@ function Mission({
       }}
     />
   );
-}
-
-function selectAvailableMission(
-  registry: FirstRescueContent['registry'],
-  availableMissionIds: readonly string[],
-  missionId: string,
-) {
-  if (!availableMissionIds.includes(missionId)) {
-    return null;
-  }
-  const ownerPackId = registry.recordOwners.missions[missionId];
-  const record = registry.missions[missionId];
-  return ownerPackId === undefined || record === undefined ? null : { ownerPackId, record };
 }
 
 function UnavailableMissionRoute(props: PlayerRouteProps) {

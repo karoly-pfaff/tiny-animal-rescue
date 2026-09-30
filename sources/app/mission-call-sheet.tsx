@@ -6,12 +6,14 @@ import { MapLandmarkIcon } from './map-landmark-icon';
 export function MissionCallSheet({
   calls,
   closeLabel,
+  completedLabel,
   featuredMissionId,
   onClose,
   onOpenMission,
 }: Readonly<{
   calls: readonly MissionCallContent[];
   closeLabel: string;
+  completedLabel: string;
   featuredMissionId: string | null;
   onClose: () => void;
   onOpenMission: (missionId: string) => void;
@@ -38,6 +40,7 @@ export function MissionCallSheet({
         {calls.map((call) => (
           <MissionCallCard
             call={call}
+            completedLabel={completedLabel}
             featured={call.id === featuredMissionId}
             key={call.id}
             onOpen={onOpenMission}
@@ -50,18 +53,22 @@ export function MissionCallSheet({
 
 function MissionCallCard({
   call,
+  completedLabel,
   featured,
   onOpen,
 }: Readonly<{
   call: MissionCallContent;
+  completedLabel: string;
   featured: boolean;
   onOpen: (missionId: string) => void;
 }>) {
   const cueStyle = {
     '--mission-call-accent': call.locationPresentation.accentColor,
   } as CSSProperties;
+  const completionDescriptionId = `mission-call-${call.id}-completion`;
   return (
     <button
+      aria-describedby={call.completed ? completionDescriptionId : undefined}
       aria-label={`${call.title} — ${call.locationName}`}
       className="mission-call-card"
       data-completed={call.completed ? 'true' : undefined}
@@ -82,7 +89,30 @@ function MissionCallCard({
       {call.portraitUrl === null ? null : (
         <img aria-hidden="true" alt="" className="mission-call-portrait" src={call.portraitUrl} />
       )}
+      <MissionCompletion
+        completed={call.completed}
+        descriptionId={completionDescriptionId}
+        label={completedLabel}
+      />
       <span className="mission-call-title">{call.title}</span>
     </button>
+  );
+}
+
+function MissionCompletion({
+  completed,
+  descriptionId,
+  label,
+}: Readonly<{ completed: boolean; descriptionId: string; label: string }>) {
+  if (!completed) {
+    return null;
+  }
+  return (
+    <>
+      <span aria-hidden="true" className="mission-call-complete-cue" />
+      <span className="visually-hidden" id={descriptionId}>
+        {label}
+      </span>
+    </>
   );
 }

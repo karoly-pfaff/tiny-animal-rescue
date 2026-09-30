@@ -75,6 +75,10 @@ The map presents the selector's available missions in authored order. It emphasi
 incomplete mission without removing completed missions from replay, and opens a selected mission on
 its content-addressed `/mission/<mission-id>` route. Direct mission routes are subject to the same
 availability selector and return to the current map when the mission is unknown or unavailable.
+Completed calls use a gentle, non-rating visual marker and remain actionable. During the current app
+session, mission navigation remembers the selected location so an exit or post-celebration return
+reopens that location and restores keyboard focus to its landmark. This transient navigation context
+is not a persisted unlock flag and does not participate in progression derivation.
 
 ## Reset
 

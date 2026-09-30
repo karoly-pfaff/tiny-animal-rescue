@@ -187,6 +187,29 @@ test('@preview opens only the first Garden mission and protects mission exit', a
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
 });
 
+test('@preview restores map focus after leaving a direct mission route', async ({
+  page,
+}, testInfo) => {
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.goto('/#/mission/garden-kitten-tree');
+  await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
+
+  await page
+    .getByRole('button', { name: 'Tartsd nyomva a térképhez' })
+    .dispatchEvent('pointerdown', {
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: hasTouch ? 'touch' : 'mouse',
+    });
+
+  const garden = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
+  await expect(garden).toBeFocused();
+  await expect(garden).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('region', { name: 'Kert' })).toBeVisible();
+});
+
 test('@preview returns an invalid ladder drop and snaps a valid drop exactly once', async ({
   page,
 }, testInfo) => {
@@ -356,6 +379,15 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
   await completeFirstRescue(page, hasTouch, 'hu');
   await expect(page.getByRole('button', { name: 'Térkép' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
+  await activateWithPrimaryPointer(page.getByRole('button', { name: 'Térkép' }), hasTouch);
+  const garden = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
+  const replayCall = page.getByRole('button', { name: 'Mimi a fán — Kert' });
+  await expect(garden).toBeFocused();
+  await expect(garden).toHaveAttribute('aria-expanded', 'true');
+  await expect(replayCall).toHaveAttribute('data-completed', 'true');
+  await expect(replayCall).toHaveAccessibleDescription('Kész, újrajátszható');
+  await expect(replayCall.locator('.mission-call-complete-cue')).toBeVisible();
+  await completeFirstRescue(page, hasTouch, 'hu');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Menhely' }), hasTouch);

@@ -178,6 +178,17 @@ describe('App', () => {
       locale: 'en',
       text: 'Mimi is safe!',
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    const garden = screen.getByRole('button', { name: 'Garden rescue: Mimi' });
+    const replay = screen.getByRole('button', { name: 'Mimi in the tree — Garden' });
+    expect(garden).toHaveFocus();
+    expect(garden).toHaveAttribute('aria-expanded', 'true');
+    expect(replay).toHaveAttribute('data-completed', 'true');
+    expect(replay).toHaveAccessibleDescription('Completed, replay available');
+    expect(replay.querySelector('.mission-call-complete-cue')).toBeVisible();
   });
 
   it('returns an unavailable content-addressed mission route to the current map', async () => {

@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
+import { App } from '../../sources/app/app';
+import { createSessionFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
 import { ShelterScreen } from '../../sources/app/shelter-screen';
@@ -15,6 +17,7 @@ import {
   type ContentPackSource,
 } from '../../sources/content/content-registry';
 import type { MissionRecord } from '../../sources/content/mission-contract';
+import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence/locale-bootstrap-repository';
 import { testFirstRescueContent } from '../support/first-rescue-content';
 
 afterEach(() => {
@@ -228,6 +231,27 @@ describe('content-driven first Rescue runtime', () => {
     const hungarianResident = screen.getByRole('button', { name: 'Simogasd meg Poppyt' });
     fireEvent.click(hungarianResident);
     expect(screen.getByText('Poppy boldogan dorombol.')).toBeVisible();
+  });
+
+  it('restores a dependency-owned location after a direct mission route', async () => {
+    const content = dependencyOwnedContent();
+    window.location.hash = `/mission/${content.mission.id}`;
+    render(
+      <App
+        contentRegistry={content.registry}
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+        narrationService={{ speak: vi.fn(), stop: vi.fn() }}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Poppy in the orchard' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Hold to return to the map' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    const orchard = screen.getByRole('button', { name: 'Orchard rescue: Poppy' });
+    expect(orchard).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Poppy in the orchard — Orchard' })).toBeVisible();
   });
 });
 

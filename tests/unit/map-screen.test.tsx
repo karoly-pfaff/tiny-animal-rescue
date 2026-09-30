@@ -149,15 +149,50 @@ describe('MapScreen', () => {
     expect(screen.queryByRole('region', { name: 'Garden' })).not.toBeInTheDocument();
     expect(garden).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('restores a returning location and keeps its completed mission replayable', () => {
+    const onInitialLocationRestored = vi.fn();
+    const onOpenMission = vi.fn();
+    const call = gardenMissionCall(true);
+    render(
+      <MapScreen
+        activeLocationId="garden"
+        effectService={{ play: vi.fn() }}
+        featuredMissionId={null}
+        initialOpenLocationId="garden"
+        locale="en"
+        missionCalls={[call]}
+        onInitialLocationRestored={onInitialLocationRestored}
+        onOpenLocation={vi.fn()}
+        onOpenMission={onOpenMission}
+        onOpenShelter={vi.fn()}
+        registry={testContentRegistry}
+        visibleLocationIds={['garden']}
+      />,
+    );
+
+    const garden = screen.getByRole('button', { name: 'Garden rescue: Mimi' });
+    const replay = screen.getByRole('button', { name: 'Mimi in the tree — Garden' });
+    expect(garden).toHaveFocus();
+    expect(garden).toHaveAttribute('aria-expanded', 'true');
+    expect(replay).toHaveAttribute('data-completed', 'true');
+    expect(replay).toHaveAccessibleDescription('Completed, replay available');
+    expect(replay).not.toHaveAttribute('data-featured');
+    expect(replay.querySelector('.mission-call-complete-cue')).toBeVisible();
+    expect(onInitialLocationRestored).toHaveBeenCalledOnce();
+
+    fireEvent.click(replay);
+    expect(onOpenMission).toHaveBeenCalledWith('garden-kitten-tree');
+  });
 });
 
-function gardenMissionCall(): MissionCallContent {
+function gardenMissionCall(completed = false): MissionCallContent {
   const location = testContentRegistry.locations['garden'];
   if (location?.mapPresentation === undefined) {
     throw new Error('The Garden presentation fixture is required.');
   }
   return {
-    completed: false,
+    completed,
     id: 'garden-kitten-tree',
     locationId: 'garden',
     locationName: 'Garden',
