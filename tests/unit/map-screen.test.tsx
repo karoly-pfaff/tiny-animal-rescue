@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { MapScreen } from '../../sources/app/map-screen';
 import type { EffectCue } from '../../sources/audio/effect-service';
+import type { MissionCallContent } from '../../sources/content/mission-call-content';
 import { testContentRegistry } from '../support/first-rescue-content';
 
 describe('MapScreen', () => {
@@ -59,8 +60,11 @@ describe('MapScreen', () => {
     render(
       <MapScreen
         effectService={{ play }}
+        featuredMissionId={null}
         locale="en"
+        missionCalls={[]}
         onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
         onOpenShelter={openShelter}
         registry={testContentRegistry}
         visibleLocationIds={['garden']}
@@ -80,8 +84,11 @@ describe('MapScreen', () => {
         activePortraitUrl="/content/base/assets/images/residents/mimi/canonical.png"
         backgroundUrl="/content/base/assets/images/map/garden-map.png"
         effectService={{ play: vi.fn() }}
+        featuredMissionId={null}
         locale="en"
+        missionCalls={[]}
         onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
         onOpenShelter={vi.fn()}
         registry={testContentRegistry}
         visibleLocationIds={['garden']}
@@ -101,7 +108,64 @@ describe('MapScreen', () => {
       '/content/base/assets/images/residents/mimi/canonical.png',
     );
   });
+
+  it('opens localized mission cards with portrait and location cues', () => {
+    const onOpenMission = vi.fn();
+    const call = gardenMissionCall();
+    render(
+      <MapScreen
+        activeLocationId="garden"
+        effectService={{ play: vi.fn() }}
+        featuredMissionId={call.id}
+        locale="en"
+        missionCalls={[call]}
+        onOpenLocation={vi.fn()}
+        onOpenMission={onOpenMission}
+        onOpenShelter={vi.fn()}
+        registry={testContentRegistry}
+        visibleLocationIds={['garden']}
+      />,
+    );
+
+    const garden = screen.getByRole('button', { name: 'Garden rescue: Mimi' });
+    expect(garden).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(garden);
+    expect(garden).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('region', { name: 'Garden' })).toBeVisible();
+    const card = screen.getByRole('button', { name: 'Mimi in the tree — Garden' });
+    expect(card).toHaveAttribute('data-featured', 'true');
+    expect(card.querySelector('.mission-call-location-cue')).toHaveAttribute(
+      'data-shape',
+      'circle',
+    );
+    expect(card.querySelector('.mission-call-portrait')).toHaveAttribute(
+      'src',
+      '/content/base/assets/images/residents/mimi/canonical.png',
+    );
+
+    fireEvent.click(card);
+    expect(onOpenMission).toHaveBeenCalledWith('garden-kitten-tree');
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }));
+    expect(screen.queryByRole('region', { name: 'Garden' })).not.toBeInTheDocument();
+    expect(garden).toHaveAttribute('aria-expanded', 'false');
+  });
 });
+
+function gardenMissionCall(): MissionCallContent {
+  const location = testContentRegistry.locations['garden'];
+  if (location?.mapPresentation === undefined) {
+    throw new Error('The Garden presentation fixture is required.');
+  }
+  return {
+    completed: false,
+    id: 'garden-kitten-tree',
+    locationId: 'garden',
+    locationName: 'Garden',
+    locationPresentation: location.mapPresentation,
+    portraitUrl: '/content/base/assets/images/residents/mimi/canonical.png',
+    title: 'Mimi in the tree',
+  };
+}
 
 function renderMap(
   locale: 'en' | 'hu',
@@ -113,8 +177,11 @@ function renderMap(
   return render(
     <MapScreen
       effectService={{ play: callbacks.play ?? vi.fn() }}
+      featuredMissionId={null}
       locale={locale}
+      missionCalls={[]}
       onOpenLocation={callbacks.select ?? vi.fn()}
+      onOpenMission={vi.fn()}
       onOpenShelter={vi.fn()}
       registry={testContentRegistry}
       visibleLocationIds={['garden', 'forest', 'farm', 'pond']}

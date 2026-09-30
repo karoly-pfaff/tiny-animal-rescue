@@ -207,7 +207,8 @@ function referencedAssets(pack: ContentPackSource): readonly AssetUsageReference
     ...pack.records.animals.flatMap(({ assets }) => Object.values(assets)),
     ...pack.records.locations.flatMap(({ assets }) => Object.values(assets)),
     ...pack.records.shelterAreas.map(({ assets }) => assets.background),
-    ...pack.records.missions.flatMap(({ scene, assets, steps }) => [
+    ...pack.records.missions.flatMap(({ callSubjectAsset, scene, assets, steps }) => [
+      ...(callSubjectAsset === undefined ? [] : [callSubjectAsset]),
       scene.background,
       ...assets.required,
       ...steps.flatMap((step) =>

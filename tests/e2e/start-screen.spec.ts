@@ -2,7 +2,12 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
-import { completeFirstRescue } from './support/complete-first-rescue';
+import {
+  activateFirstRescueCall,
+  completeFirstRescue,
+  openFirstRescueCallSheet,
+  openFirstRescueMission,
+} from './support/complete-first-rescue';
 import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
@@ -22,7 +27,7 @@ async function openMimiTapStep(page: Page, hasTouch: boolean) {
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Játék' }), hasTouch);
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, { force: true, hasTouch, locale: 'hu' });
   await dragLadder({
     destination: 'target',
     ladder: page.getByRole('button', { name: 'Húzd a létrát a fához!' }),
@@ -160,7 +165,15 @@ test('@preview opens only the first Garden mission and protects mission exit', a
   await expect(gardenCall).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
   await expect(page.getByText(/Erdő|Tanya|Tó/u)).not.toBeVisible();
-  await activateWithPrimaryPointer(gardenCall, Boolean(testInfo.project.use.hasTouch));
+  await openFirstRescueCallSheet(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
+  await expect(page.getByRole('button', { name: 'Mimi a fán — Kert' })).toBeVisible();
+  await activateFirstRescueCall(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
 
   const back = page.getByRole('button', { name: 'Tartsd nyomva a térképhez' });
@@ -181,7 +194,10 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
 
@@ -289,7 +305,11 @@ test('@preview @guidance-replay restarts idle guidance under a fake clock', asyn
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    force: true,
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const target = page.locator('.ladder-target');
   await expect(target).toHaveCSS('animation-name', 'none');
   await page.clock.fastForward(4_999);
@@ -386,7 +406,10 @@ test('@preview recovers corrupt save data without crashing the child flow', asyn
 
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',

@@ -22,10 +22,23 @@ export function validateContentSemantics(
     ...validateMapDeclarations(packs),
     ...validatePackDependencyPolicy(packs),
     ...validateContentAssets(packs, { release }),
+    ...packs.flatMap(validateMissionCallSubjects),
     ...packs.flatMap(validatePackLocalizations),
     ...validateInitialMission(packs),
     ...(release ? validateV1Catalog(packs) : []),
   ]);
+}
+
+function validateMissionCallSubjects(pack: ContentPackSource): readonly string[] {
+  return pack.records.missions.flatMap((mission) =>
+    mission.subjectAnimalId === undefined && mission.callSubjectAsset === undefined
+      ? [
+          diagnostic(
+            `Mission ${mission.id} in pack ${pack.id} must declare a subject animal or call subject asset.`,
+          ),
+        ]
+      : [],
+  );
 }
 
 function validatePackDependencyPolicy(packs: readonly ContentPackSource[]): readonly string[] {

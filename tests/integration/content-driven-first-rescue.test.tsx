@@ -184,8 +184,11 @@ describe('content-driven first Rescue runtime', () => {
     const map = render(
       <MapScreen
         effectService={{ play: vi.fn() }}
+        featuredMissionId={null}
         locale="en"
+        missionCalls={[]}
         onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
         onOpenShelter={vi.fn()}
         registry={content.registry}
         visibleLocationIds={[content.location.id]}
@@ -195,8 +198,11 @@ describe('content-driven first Rescue runtime', () => {
     map.rerender(
       <MapScreen
         effectService={{ play: vi.fn() }}
+        featuredMissionId={null}
         locale="hu"
+        missionCalls={[]}
         onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
         onOpenShelter={vi.fn()}
         registry={content.registry}
         visibleLocationIds={[content.location.id]}

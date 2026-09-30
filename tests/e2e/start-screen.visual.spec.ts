@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page, type TestInfo } from '@playwrigh
 
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
+import { openFirstRescueCallSheet, openFirstRescueMission } from './support/complete-first-rescue';
 import { dragLadder } from './support/ladder-drag';
 import { settleVisual } from './support/settle-visual';
 
@@ -31,6 +32,8 @@ const expectedAssetsByScreenshot = {
     'images/residents/mimi/celebration.png',
   ],
   'map-first-rescue.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
+  'map-call-sheet-en.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
+  'map-call-sheet-hu.png': ['images/map/garden-map.png', 'images/residents/mimi/canonical.png'],
   'mission-first-step.png': [
     'images/missions/garden-kitten-tree/background.png',
     'images/missions/garden-kitten-tree/ladder.png',
@@ -236,12 +239,33 @@ test('@visual matches the reviewed first-rescue map baseline', async ({ page }, 
   expect(browserErrors).toEqual([]);
 });
 
+for (const locale of ['hu', 'en'] as const) {
+  test(`@visual presents the ${locale} first-rescue call sheet`, async ({ page }, testInfo) => {
+    const browserErrors = observeUnexpectedBrowserErrors(page);
+    const hasTouch = Boolean(testInfo.project.use.hasTouch);
+    await page.goto('/');
+    await page.getByRole('button', { name: locale === 'hu' ? 'Magyar' : 'English' }).click();
+    await page.getByRole('button', { name: locale === 'hu' ? 'Játék' : 'Play' }).click();
+    await openFirstRescueCallSheet(page, { hasTouch, locale });
+    await expect(
+      page.getByRole('region', { name: locale === 'hu' ? 'Kert' : 'Garden' }),
+    ).toBeVisible();
+    await settleVisual(page);
+
+    await verifyReviewedVisual(page, `map-call-sheet-${locale}.png`, testInfo);
+    expect(browserErrors).toEqual([]);
+  });
+}
+
 test('@visual matches the reviewed first-mission baseline', async ({ page }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await settleVisual(page);
 
@@ -266,7 +290,11 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   }, firstMissionHintDelayMs);
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    force: true,
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-hint-timer', 'armed');
   await pauseVisualClock(page);
@@ -297,7 +325,10 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
   }, firstMissionHintDelayMs);
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const dragInteraction = page.locator('.drag-interaction');
 
@@ -339,7 +370,10 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   await pauseVisualClock(page);
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
@@ -364,7 +398,11 @@ test('@visual shows Mimi descending before celebration', async ({ page }, testIn
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    force: true,
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
@@ -388,7 +426,10 @@ test('@visual matches the reviewed English protected-exit state', async ({ page 
   await page.goto('/');
   await page.getByRole('button', { name: 'English' }).click();
   await page.getByRole('button', { name: 'Play' }).click();
-  await page.getByRole('button', { name: 'Garden rescue: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'en',
+  });
   await expect(page.getByRole('heading', { name: 'Mimi in the tree' })).toBeVisible();
   await page.clock.install();
   await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1_000);
@@ -415,7 +456,10 @@ test('@visual matches the reviewed Mimi celebration', async ({ page }, testInfo)
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
@@ -436,7 +480,10 @@ test('@visual matches the reviewed Indoor Room with Mimi', async ({ page }, test
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',

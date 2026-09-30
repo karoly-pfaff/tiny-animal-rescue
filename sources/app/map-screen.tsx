@@ -1,8 +1,9 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 
 import type { EffectService } from '../audio/effect-service';
 import { resolveContentText } from '../content/content-localization';
 import type { ContentRegistry } from '../content/content-registry';
+import type { MissionCallContent } from '../content/mission-call-content';
 import {
   selectRescueMapContent,
   type MapLocationContent,
@@ -11,6 +12,8 @@ import {
 import type { MapLandmarkPresentation } from '../content/world-content-contracts';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
+import { MapLandmarkIcon } from './map-landmark-icon';
+import { MissionCallSheet } from './mission-call-sheet';
 
 type MapScreenProps = Readonly<{
   activeLocationId?: string;
@@ -18,7 +21,10 @@ type MapScreenProps = Readonly<{
   backgroundUrl?: string | null;
   effectService: EffectService;
   locale: Locale;
+  featuredMissionId: string | null;
+  missionCalls: readonly MissionCallContent[];
   onOpenLocation: (locationId: string) => void;
+  onOpenMission: (missionId: string) => void;
   onOpenShelter: () => void;
   registry: ContentRegistry;
   visibleLocationIds: readonly string[];
@@ -31,14 +37,19 @@ export function MapScreen({
   activePortraitUrl,
   backgroundUrl,
   effectService,
+  featuredMissionId,
   locale,
+  missionCalls,
   onOpenLocation,
+  onOpenMission,
   onOpenShelter,
   registry,
   visibleLocationIds,
 }: MapScreenProps) {
+  const [openLocationId, setOpenLocationId] = useState<string | null>(null);
   const strings = getStrings(locale);
   const map = selectRescueMapContent(registry, visibleLocationIds);
+  const openCalls = missionCalls.filter(({ locationId }) => locationId === openLocationId);
 
   return (
     <main className="game-shell" data-route="map">
@@ -68,6 +79,7 @@ export function MapScreen({
           <LocationLandmark
             content={location}
             effectService={effectService}
+            isExpanded={location.id === openLocationId}
             isActive={location.id === activeLocationId}
             key={`${location.ownerPackId}:${location.id}`}
             label={resolveContentText(registry, locale, {
@@ -78,10 +90,28 @@ export function MapScreen({
               key: location.record.nameKey,
               ownerPackId: location.ownerPackId,
             })}
-            onOpen={onOpenLocation}
-            portraitUrl={location.id === activeLocationId ? activePortraitUrl : null}
+            onOpen={(locationId) => {
+              onOpenLocation(locationId);
+              if (missionCalls.some((call) => call.locationId === locationId)) {
+                setOpenLocationId(locationId);
+              }
+            }}
+            portraitUrl={
+              location.id === activeLocationId && openLocationId === null ? activePortraitUrl : null
+            }
           />
         ))}
+        {openCalls.length === 0 ? null : (
+          <MissionCallSheet
+            calls={openCalls}
+            closeLabel={strings.map}
+            featuredMissionId={featuredMissionId}
+            onClose={() => {
+              setOpenLocationId(null);
+            }}
+            onOpenMission={onOpenMission}
+          />
+        )}
       </section>
     </main>
   );
@@ -119,7 +149,7 @@ function ShelterLandmark({
       }}
       presentation={content.presentation}
     >
-      <LandmarkIcon silhouette={content.presentation.silhouette} />
+      <MapLandmarkIcon silhouette={content.presentation.silhouette} />
       <span className="map-landmark-label">{label}</span>
     </LandmarkButton>
   );
@@ -130,6 +160,7 @@ function LocationLandmark({
   effectService,
   label,
   isActive,
+  isExpanded,
   name,
   onOpen,
   portraitUrl,
@@ -138,12 +169,14 @@ function LocationLandmark({
   effectService: EffectService;
   label: string;
   isActive: boolean;
+  isExpanded: boolean;
   name: string;
   onOpen: (locationId: string) => void;
   portraitUrl: string | null | undefined;
 }>) {
   return (
     <LandmarkButton
+      ariaExpanded={isExpanded}
       className="map-location-landmark"
       dataActiveCall={isActive}
       dataLocationId={content.id}
@@ -157,13 +190,14 @@ function LocationLandmark({
       {portraitUrl === null || portraitUrl === undefined ? null : (
         <img aria-hidden="true" alt="" className="map-active-call-portrait" src={portraitUrl} />
       )}
-      <LandmarkIcon silhouette={content.presentation.silhouette} />
+      <MapLandmarkIcon silhouette={content.presentation.silhouette} />
       <span className="map-landmark-label">{name}</span>
     </LandmarkButton>
   );
 }
 
 function LandmarkButton({
+  ariaExpanded,
   children,
   className,
   dataActiveCall,
@@ -172,6 +206,7 @@ function LandmarkButton({
   onOpen,
   presentation,
 }: Readonly<{
+  ariaExpanded?: boolean;
   children: ReactNode;
   className: string;
   dataActiveCall?: boolean;
@@ -182,6 +217,7 @@ function LandmarkButton({
 }>) {
   return (
     <button
+      aria-expanded={ariaExpanded}
       aria-label={label}
       className={`map-landmark ${className}`}
       data-active-call={dataActiveCall === true ? 'true' : undefined}
@@ -194,18 +230,6 @@ function LandmarkButton({
     >
       {children}
     </button>
-  );
-}
-
-function LandmarkIcon({
-  silhouette,
-}: Readonly<{ silhouette: MapLandmarkPresentation['silhouette'] }>) {
-  return (
-    <span aria-hidden="true" className={`map-landmark-icon map-landmark-icon-${silhouette}`}>
-      <span />
-      <span />
-      <span />
-    </span>
   );
 }
 

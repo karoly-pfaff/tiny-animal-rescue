@@ -88,6 +88,7 @@ export type MissionRecord = Readonly<{
   type: MissionType;
   locationId: string;
   subjectAnimalId?: string;
+  callSubjectAsset?: string;
   prerequisites: readonly MissionPrerequisite[];
   scene: Readonly<{
     background: string;

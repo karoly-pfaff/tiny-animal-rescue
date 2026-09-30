@@ -326,6 +326,7 @@ describe('content contracts', () => {
         assets: { ...animalExample.assets, portrait: objectKey },
       }),
     ).toBe(false);
+    expect(validate(missionSchema, { ...missionExample, callSubjectAsset: objectKey })).toBe(false);
   });
 
   it('accepts a dependency-qualified content reference but not a qualified inventory key', () => {
@@ -336,6 +337,7 @@ describe('content contracts', () => {
         assets: { ...animalExample.assets, portrait: qualified },
       }),
     ).toBe(true);
+    expect(validate(missionSchema, { ...missionExample, callSubjectAsset: qualified })).toBe(true);
     expect(validate(assetSchema, { ...assetExample, objectKey: qualified })).toBe(false);
   });
 

@@ -31,10 +31,10 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 ### E004-S03 — Rescue call presentation
 
-- [ ] Available mission cards show an animal/subject portrait and location cue.
-- [ ] The next authored mission is visually prominent without blocking other unlocked replays.
-- [ ] No countdown, urgency pressure, or guilt message is used.
-- [ ] Selecting a call loads the correct mission and opening narration.
+- [x] Available mission cards show an animal/subject portrait and location cue.
+- [x] The next authored mission is visually prominent without blocking other unlocked replays.
+- [x] No countdown, urgency pressure, or guilt message is used.
+- [x] Selecting a call loads the correct mission and opening narration.
 
 ### E004-S04 — Mission replay and completion state
 

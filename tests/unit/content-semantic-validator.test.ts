@@ -137,6 +137,20 @@ describe('content semantic validation', () => {
       message: /must declare a subject/u,
     },
     {
+      name: 'world mission without a call subject visual',
+      packs: validPacks({
+        missions: [
+          makeMission({
+            callSubjectAsset: undefined,
+            subjectAnimalId: undefined,
+            type: 'world',
+            unlockResidentId: undefined,
+          }),
+        ],
+      }),
+      message: /must declare a subject animal or call subject asset/u,
+    },
+    {
       name: 'rescue with the wrong unlock',
       packs: validPacks({ missions: [makeMission({ unlockResidentId: 'other-animal' })] }),
       message: /unlock exactly its subject/u,
@@ -582,6 +596,7 @@ function makeShelterArea(overrides: Partial<ShelterAreaRecord> = {}): ShelterAre
 }
 
 type MissionOptions = Readonly<{
+  callSubjectAsset?: string | undefined;
   id?: string;
   type?: MissionRecord['type'];
   locationId?: string;
@@ -604,6 +619,11 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
     unlockResidentId === undefined
       ? { completeMission: true as const }
       : { completeMission: true as const, unlockResidentId };
+  const callSubjectAsset = Object.hasOwn(options, 'callSubjectAsset')
+    ? options.callSubjectAsset
+    : subjectAnimalId === undefined
+      ? `images/missions/${id}/background.png`
+      : undefined;
   const common = {
     id,
     type,
@@ -623,7 +643,11 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
     },
     assets: { required: [`images/missions/${id}/background.png`] },
   };
-  return subjectAnimalId === undefined ? common : { ...common, subjectAnimalId };
+  return {
+    ...common,
+    ...(callSubjectAsset === undefined ? {} : { callSubjectAsset }),
+    ...(subjectAnimalId === undefined ? {} : { subjectAnimalId }),
+  };
 }
 
 function makeStep(
@@ -715,7 +739,8 @@ function referencedPaths(records: ContentPackSource['records']): readonly string
     ...records.animals.flatMap(({ assets }) => Object.values(assets)),
     ...records.locations.flatMap(({ assets }) => Object.values(assets)),
     ...records.shelterAreas.map(({ assets }) => assets.background),
-    ...records.missions.flatMap(({ scene, assets, steps }) => [
+    ...records.missions.flatMap(({ callSubjectAsset, scene, assets, steps }) => [
+      ...(callSubjectAsset === undefined ? [] : [callSubjectAsset]),
       scene.background,
       ...assets.required,
       ...steps.flatMap((step) =>

@@ -386,6 +386,7 @@ function missionWithAssets(
   return {
     id: 'mission',
     type: 'world',
+    callSubjectAsset: background,
     locationId: 'place',
     prerequisites: [],
     scene: { background, designWidth: 1024, designHeight: 768 },

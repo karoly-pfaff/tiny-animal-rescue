@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import type { EffectService } from '../audio/effect-service';
 import type { NarrationService } from '../audio/narration-service';
 import {
@@ -5,14 +7,16 @@ import {
   resolveFirstRescueAssets,
   type FirstRescueContent,
 } from '../content/first-rescue-content';
-import type { Locale } from '../i18n/localization';
+import { selectMissionCalls } from '../content/mission-call-content';
 import { selectProgression } from '../content/progression-selectors';
+import type { Locale } from '../i18n/localization';
 import { CelebrationScreen } from './celebration-screen';
+import { ContentMissionScreen } from './content-mission-screen';
 import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
 import { FirstMissionScreen } from './first-mission-screen';
 import { MapScreen } from './map-screen';
-import { resolveRoute } from './routes';
+import { missionPath, resolveRoute } from './routes';
 import { ShelterScreen } from './shelter-screen';
 
 type PlayerRouteProps = Readonly<{
@@ -30,7 +34,7 @@ export function PlayerRoute(props: PlayerRouteProps) {
     return <RescueMap {...props} />;
   }
   if (props.route.id === 'mission') {
-    return <Mission {...props} />;
+    return <Mission {...props} missionId={props.route.missionId} />;
   }
   if (props.route.id === 'celebration') {
     return <Celebration {...props} />;
@@ -53,25 +57,50 @@ function RescueMap({
     firstRescueContent.registry,
     firstRescueProgressStore.read(),
   );
+  const missionCalls = selectMissionCalls(firstRescueContent.registry, progression, {
+    locale,
+    state: firstRescueProgressStore.read(),
+  });
+  const featuredCall = missionCalls.calls.find(({ id }) => id === missionCalls.featuredMissionId);
+  const activePortraitUrl = selectActivePortrait(
+    featuredCall,
+    firstRescueContent.mission.id,
+    assets.residentPortrait,
+  );
   return (
     <MapScreen
-      activeLocationId={firstRescueContent.location.id}
-      activePortraitUrl={assets.residentPortrait}
+      activePortraitUrl={activePortraitUrl}
       backgroundUrl={assets.mapBackground}
       effectService={effectService}
+      featuredMissionId={missionCalls.featuredMissionId}
       locale={locale}
-      onOpenLocation={(locationId) => {
-        if (locationId === firstRescueContent.location.id) {
-          onNavigate('/mission');
-        }
+      missionCalls={missionCalls.calls}
+      onOpenLocation={() => undefined}
+      onOpenMission={(missionId) => {
+        onNavigate(missionPath(missionId));
       }}
       onOpenShelter={() => {
         onNavigate('/shelter');
       }}
       registry={firstRescueContent.registry}
       visibleLocationIds={progression.visibleLocationIds}
+      {...(featuredCall === undefined ? {} : { activeLocationId: featuredCall.locationId })}
     />
   );
+}
+
+function selectActivePortrait(
+  featuredCall: ReturnType<typeof selectMissionCalls>['calls'][number] | undefined,
+  initialMissionId: string,
+  fallbackPortrait: string | null,
+): string | null {
+  if (featuredCall === undefined) {
+    return null;
+  }
+  if (featuredCall.portraitUrl !== null) {
+    return featuredCall.portraitUrl;
+  }
+  return new Map([[initialMissionId, fallbackPortrait]]).get(featuredCall.id) ?? null;
 }
 
 function Mission({
@@ -81,7 +110,45 @@ function Mission({
   locale,
   narrationService,
   onNavigate,
-}: PlayerRouteProps) {
+  missionId,
+}: PlayerRouteProps & Readonly<{ missionId: string | null }>) {
+  const selectedMissionId = missionId ?? firstRescueContent.mission.id;
+  const progression = selectProgression(
+    firstRescueContent.registry,
+    firstRescueProgressStore.read(),
+  );
+  const selected = selectAvailableMission(
+    firstRescueContent.registry,
+    progression.availableMissionIds,
+    selectedMissionId,
+  );
+  if (selected === null) {
+    return (
+      <UnavailableMissionRoute
+        effectService={effectService}
+        firstRescueContent={firstRescueContent}
+        firstRescueProgressStore={firstRescueProgressStore}
+        locale={locale}
+        narrationService={narrationService}
+        onNavigate={onNavigate}
+        route={{ id: 'map', path: '/map', titleKey: 'screen.map.title' }}
+      />
+    );
+  }
+  if (selected.record.id !== firstRescueContent.mission.id) {
+    return (
+      <ContentMissionScreen
+        locale={locale}
+        mission={selected.record}
+        narrationService={narrationService}
+        onExit={() => {
+          onNavigate('/map');
+        }}
+        ownerPackId={selected.ownerPackId}
+        registry={firstRescueContent.registry}
+      />
+    );
+  }
   return (
     <FirstMissionScreen
       content={firstRescueContent}
@@ -99,6 +166,27 @@ function Mission({
       }}
     />
   );
+}
+
+function selectAvailableMission(
+  registry: FirstRescueContent['registry'],
+  availableMissionIds: readonly string[],
+  missionId: string,
+) {
+  if (!availableMissionIds.includes(missionId)) {
+    return null;
+  }
+  const ownerPackId = registry.recordOwners.missions[missionId];
+  const record = registry.missions[missionId];
+  return ownerPackId === undefined || record === undefined ? null : { ownerPackId, record };
+}
+
+function UnavailableMissionRoute(props: PlayerRouteProps) {
+  const { onNavigate } = props;
+  useEffect(() => {
+    onNavigate('/map');
+  }, [onNavigate]);
+  return <RescueMap {...props} />;
 }
 
 function Celebration(props: PlayerRouteProps) {

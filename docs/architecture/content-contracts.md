@@ -132,6 +132,7 @@ type Mission = {
   type: 'rescue' | 'help' | 'world';
   locationId: string;
   subjectAnimalId?: string;
+  callSubjectAsset?: string;
   prerequisites: MissionPrerequisite[];
   scene: SceneDefinition;
   steps: MissionStep[];
@@ -140,6 +141,10 @@ type Mission = {
   assets: MissionAssets;
 };
 ```
+
+Every mission call has a content-owned subject visual. A mission with `subjectAnimalId` uses that
+animal's portrait; a mission without an animal subject must declare `callSubjectAsset`. The latter is
+an ordinary ownership-checked image reference and must be present in the owning pack inventory.
 
 The accepted step union is:
 

@@ -20,6 +20,7 @@
     "type": { "enum": ["rescue", "help", "world"] },
     "locationId": { "$ref": "#/$defs/reference" },
     "subjectAnimalId": { "$ref": "#/$defs/reference" },
+    "callSubjectAsset": { "$ref": "#/$defs/path" },
     "prerequisites": {
       "type": "array",
       "uniqueItems": true,

@@ -28,8 +28,11 @@ export function MapFixture({ locale }: Readonly<{ locale: Locale }>) {
             setLastCue(cue);
           },
         }}
+        featuredMissionId={null}
         locale={locale}
+        missionCalls={[]}
         onOpenLocation={setSelectedLocationId}
+        onOpenMission={() => undefined}
         onOpenShelter={() => {
           setSelectedLocationId('shelter');
         }}
