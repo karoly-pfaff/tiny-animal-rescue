@@ -96,6 +96,17 @@ remain separate runtime categories and channels.
 - The success line names the animal where appropriate.
 - Audio filenames/metadata map to semantic keys rather than translated sentence text.
 
+## Map landmark checklist
+
+- A player-visible map location declares `mapPresentation` with a supported silhouette, shape,
+  accent color, semantic ambience cue, and normalized landscape/portrait centers.
+- Every landmark remains recognizable without its localized label; color is reinforcement, not the
+  only identity signal.
+- The assembled map owns exactly one central Shelter landmark through a shelter-area
+  `mapPresentation` and `mapLabelKey`.
+- Landmark silhouettes, shapes, accent colors, and cues are distinct, and portrait hit regions do
+  not overlap.
+
 ## Pack checklist
 
 - Manifest contract version is supported.

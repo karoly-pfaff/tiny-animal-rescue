@@ -183,19 +183,23 @@ describe('content-driven first Rescue runtime', () => {
 
     const map = render(
       <MapScreen
-        content={content}
+        effectService={{ play: vi.fn() }}
         locale="en"
-        onOpenGardenMission={vi.fn()}
+        onOpenLocation={vi.fn()}
         onOpenShelter={vi.fn()}
+        registry={content.registry}
+        visibleLocationIds={[content.location.id]}
       />,
     );
     expect(screen.getByRole('button', { name: 'Orchard rescue: Poppy' })).toBeVisible();
     map.rerender(
       <MapScreen
-        content={content}
+        effectService={{ play: vi.fn() }}
         locale="hu"
-        onOpenGardenMission={vi.fn()}
+        onOpenLocation={vi.fn()}
         onOpenShelter={vi.fn()}
+        registry={content.registry}
+        visibleLocationIds={[content.location.id]}
       />,
     );
     expect(screen.getByRole('button', { name: 'Gyümölcsöskerti mentés: Poppy' })).toBeVisible();

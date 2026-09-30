@@ -1,4 +1,5 @@
 import { resolveContentAsset } from './content-asset-resolver';
+import { resolveContentText } from './content-localization';
 import { resolveContentRecord, type ResolvedContentRecord } from './content-record-resolver';
 import {
   animalRecords,
@@ -93,11 +94,11 @@ export function firstRescueText(
   selection: string | Readonly<{ key: string; ownerPackId: string }>,
 ): string {
   const { key, ownerPackId } = normalizeTextSelection(content.packId, selection);
-  const value = content.registry.packs[ownerPackId]?.records.localizations[locale]?.[key];
-  if (value === undefined) {
-    throw new Error(`The initial Rescue content is missing localized key ${key}.`);
+  try {
+    return resolveContentText(content.registry, locale, { key, ownerPackId });
+  } catch (cause) {
+    throw new Error(`The initial Rescue content is missing localized key ${key}.`, { cause });
   }
-  return value;
 }
 
 function normalizeTextSelection(

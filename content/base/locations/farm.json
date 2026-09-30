@@ -1,0 +1,19 @@
+{
+  "id": "farm",
+  "nameKey": "location.farm.name",
+  "mapLabelKey": "location.farm.map-label",
+  "mapPresentation": {
+    "silhouette": "barn",
+    "shape": "arch",
+    "accentColor": "#b96832",
+    "audioCue": "effects.ambience.farm",
+    "placement": {
+      "landscape": { "x": 0.2, "y": 0.72 },
+      "portrait": { "x": 0.26, "y": 0.72 }
+    }
+  },
+  "assets": {
+    "mapBackground": "images/map/farm-map.png",
+    "missionBackground": "images/missions/farm/background.png"
+  }
+}

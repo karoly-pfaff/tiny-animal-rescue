@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { MatchFixture } from './match-fixture';
+import { MapFixture } from './map-fixture';
 import { PrimitiveSuite } from './primitive-suite';
 import { TraceFixture } from './trace-fixture';
 import { WipeFixture } from './wipe-fixture';
@@ -14,13 +15,18 @@ if (!(rootElement instanceof HTMLElement)) {
 }
 
 function fixtureFor(search: string) {
-  if (search === '?fixture=match') {
+  const parameters = new URLSearchParams(search);
+  const fixture = parameters.get('fixture');
+  if (fixture === 'map') {
+    return <MapFixture locale={parameters.get('locale') === 'en' ? 'en' : 'hu'} />;
+  }
+  if (fixture === 'match') {
     return <MatchFixture />;
   }
-  if (search === '?fixture=trace') {
+  if (fixture === 'trace') {
     return <TraceFixture />;
   }
-  if (search === '?fixture=suite') {
+  if (fixture === 'suite') {
     return <PrimitiveSuite />;
   }
   return <WipeFixture />;

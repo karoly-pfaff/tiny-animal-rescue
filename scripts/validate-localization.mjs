@@ -202,6 +202,7 @@ function isConstrainedTechnicalLiteral(node) {
         'LanguageTag',
         'Locale',
         'MatchSide',
+        'MapIdentityLabel',
         'MissionPhase',
         'MissionStepActionType',
         'MissionStepStatus',

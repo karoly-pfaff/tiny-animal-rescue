@@ -9,6 +9,7 @@
     "id": { "$ref": "#/$defs/id" },
     "nameKey": { "type": "string", "minLength": 1 },
     "mapLabelKey": { "type": "string", "minLength": 1 },
+    "mapPresentation": { "$ref": "#/$defs/mapPresentation" },
     "assets": {
       "type": "object",
       "additionalProperties": false,
@@ -24,6 +25,43 @@
     "path": {
       "type": "string",
       "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0.08, "maximum": 0.92 },
+        "y": { "type": "number", "minimum": 0.12, "maximum": 0.88 }
+      }
+    },
+    "mapPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["silhouette", "shape", "accentColor", "audioCue", "placement"],
+      "properties": {
+        "silhouette": { "enum": ["barn", "pines", "pond", "shelter", "tree"] },
+        "shape": { "enum": ["arch", "circle", "leaf", "rounded-square", "wave"] },
+        "accentColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "audioCue": {
+          "enum": [
+            "effects.ambience.rescue-center",
+            "effects.ambience.garden",
+            "effects.ambience.forest",
+            "effects.ambience.farm",
+            "effects.ambience.pond"
+          ]
+        },
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["landscape", "portrait"],
+          "properties": {
+            "landscape": { "$ref": "#/$defs/point" },
+            "portrait": { "$ref": "#/$defs/point" }
+          }
+        }
+      }
     }
   }
 }

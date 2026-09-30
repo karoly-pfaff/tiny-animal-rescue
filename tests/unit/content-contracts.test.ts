@@ -75,6 +75,16 @@ const expectedLocation = {
   id: 'garden',
   nameKey: 'location.garden.name',
   mapLabelKey: 'location.garden.map-label',
+  mapPresentation: {
+    silhouette: 'tree',
+    shape: 'circle',
+    accentColor: '#2f7d32',
+    audioCue: 'effects.ambience.garden',
+    placement: {
+      landscape: { x: 0.79, y: 0.62 },
+      portrait: { x: 0.73, y: 0.36 },
+    },
+  },
   assets: {
     mapBackground: 'images/map/garden-map.png',
     missionBackground: 'images/missions/garden-kitten-tree/background.png',
@@ -85,6 +95,17 @@ const expectedShelterArea = {
   id: 'indoor-room',
   nameKey: 'shelter-area.indoor-room.name',
   capacity: 4,
+  mapLabelKey: 'map.shelter.label',
+  mapPresentation: {
+    silhouette: 'shelter',
+    shape: 'rounded-square',
+    accentColor: '#9b4f35',
+    audioCue: 'effects.ambience.rescue-center',
+    placement: {
+      landscape: { x: 0.5, y: 0.55 },
+      portrait: { x: 0.5, y: 0.54 },
+    },
+  },
   assets: { background: 'images/shelter/indoor-room.png' },
 } as const satisfies ShelterAreaRecord;
 

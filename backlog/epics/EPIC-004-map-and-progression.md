@@ -1,6 +1,6 @@
 # EPIC-004: Map and progression
 
-- Status: Planned
+- Status: In progress
 - Milestone: M4
 - Target version: `0.5.0`
 - Inspection journeys: `map,progression,replay`
@@ -15,10 +15,10 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 ### E004-S01 — Location content and map layout
 
-- [ ] Garden, Forest, Farm, Pond, and central Shelter are content-declared.
-- [ ] Layout remains clear in supported landscape and portrait viewports.
-- [ ] Each location has a distinct silhouette, color/shape identity, and audio cue.
-- [ ] Location labels are runtime-localized and optional to understanding.
+- [x] Garden, Forest, Farm, Pond, and central Shelter are content-declared.
+- [x] Layout remains clear in supported landscape and portrait viewports.
+- [x] Each location has a distinct silhouette, color/shape identity, and audio cue.
+- [x] Location labels are runtime-localized and optional to understanding.
 
 ### E004-S02 — Progression selectors
 

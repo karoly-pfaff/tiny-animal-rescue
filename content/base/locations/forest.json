@@ -1,0 +1,19 @@
+{
+  "id": "forest",
+  "nameKey": "location.forest.name",
+  "mapLabelKey": "location.forest.map-label",
+  "mapPresentation": {
+    "silhouette": "pines",
+    "shape": "leaf",
+    "accentColor": "#316b57",
+    "audioCue": "effects.ambience.forest",
+    "placement": {
+      "landscape": { "x": 0.18, "y": 0.31 },
+      "portrait": { "x": 0.25, "y": 0.29 }
+    }
+  },
+  "assets": {
+    "mapBackground": "images/map/forest-map.png",
+    "missionBackground": "images/missions/forest/background.png"
+  }
+}

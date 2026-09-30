@@ -12,11 +12,13 @@ import { testFirstRescueContent } from '../support/first-rescue-content';
 describe('first rescue screen accessibility', () => {
   it.each([
     <MapScreen
+      effectService={{ play: vi.fn() }}
       key="map"
-      content={testFirstRescueContent}
       locale="hu"
-      onOpenGardenMission={vi.fn()}
+      onOpenLocation={vi.fn()}
       onOpenShelter={vi.fn()}
+      registry={testFirstRescueContent.registry}
+      visibleLocationIds={['garden', 'forest', 'farm', 'pond']}
     />,
     <FirstMissionScreen
       key="mission"

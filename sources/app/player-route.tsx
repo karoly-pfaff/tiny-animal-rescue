@@ -1,6 +1,10 @@
 import type { EffectService } from '../audio/effect-service';
 import type { NarrationService } from '../audio/narration-service';
-import { firstRescueReward, type FirstRescueContent } from '../content/first-rescue-content';
+import {
+  firstRescueReward,
+  resolveFirstRescueAssets,
+  type FirstRescueContent,
+} from '../content/first-rescue-content';
 import type { Locale } from '../i18n/localization';
 import { CelebrationScreen } from './celebration-screen';
 import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-rescue-progress';
@@ -36,17 +40,25 @@ export function PlayerRoute(props: PlayerRouteProps) {
   return <FoundationScreen locale={props.locale} route={props.route} />;
 }
 
-function RescueMap({ firstRescueContent, locale, onNavigate }: PlayerRouteProps) {
+function RescueMap({ effectService, firstRescueContent, locale, onNavigate }: PlayerRouteProps) {
+  const assets = resolveFirstRescueAssets(firstRescueContent);
   return (
     <MapScreen
-      content={firstRescueContent}
+      activeLocationId={firstRescueContent.location.id}
+      activePortraitUrl={assets.residentPortrait}
+      backgroundUrl={assets.mapBackground}
+      effectService={effectService}
       locale={locale}
-      onOpenGardenMission={() => {
-        onNavigate('/mission');
+      onOpenLocation={(locationId) => {
+        if (locationId === firstRescueContent.location.id) {
+          onNavigate('/mission');
+        }
       }}
       onOpenShelter={() => {
         onNavigate('/shelter');
       }}
+      registry={firstRescueContent.registry}
+      visibleLocationIds={[firstRescueContent.location.id]}
     />
   );
 }

@@ -102,6 +102,20 @@ An animal declares:
 
 An animal does not define mission logic or arbitrary animation callbacks.
 
+## Map landmark presentation
+
+A location may opt into the rescue map with a declarative `mapPresentation`. The record selects one
+of the supported code-native silhouettes and shapes, an accent color, a semantic ambience cue, and
+normalized landmark centers for landscape and portrait. These values identify the place without
+requiring the localized label to be read. They contain no executable behavior and never select a
+concrete mission in application code.
+
+Exactly one shelter-area record across an assembled map declares a `mapPresentation` and a
+`mapLabelKey`; this is the stable central Shelter landmark. Presented landmarks must have distinct
+silhouettes, shapes, accent colors, and audio cues. Location and Shelter labels are resolved from the
+declaring pack's localization documents at runtime. Omission remains the contract-version-1 default
+for expansion content that does not add a map landmark.
+
 ## Mission record
 
 ```ts
@@ -217,6 +231,10 @@ mandatory for any epic or patch that claims the affected production media comple
 Ignored local working media may satisfy dimension and visual QA during development. A code-native
 fallback may cover an `r2-pending` decorative asset, but it does not make that asset epic- or
 release-ready when the backlog item claims the corresponding production media.
+An inventory reservation for media that has not yet been produced records `qaStatus: not-produced`
+and `pending-production` for both license and provenance. An already produced, reviewed asset that
+is merely awaiting R2 locking may use approved evidence with `r2-pending`; mixed or prematurely
+approved states fail the source asset-policy gate.
 Visual-regression baselines and presentation-only references are evidence, not runtime assets.
 
 A media-complete candidate also provides one tracked
