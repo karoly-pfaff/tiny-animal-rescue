@@ -52,7 +52,7 @@ describe('IndexedDB save game repository', () => {
     expect(saved.locale).toBe('en');
   });
 
-  it('quarantines corrupt data atomically on the next successful write', async () => {
+  it('preserves corrupt data until explicit recovery archives it', async () => {
     const corrupt = { damaged: true, schemaVersion: 1 };
     const harness = createIndexedDbHarness({
       records: {
@@ -62,15 +62,96 @@ describe('IndexedDB save game repository', () => {
     });
     const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
 
-    await expect(repository.load('hu')).resolves.toMatchObject({
-      save: { completedMissionIds: [] },
-      status: 'recovered-corrupt',
+    await expect(repository.load('hu')).resolves.toEqual({
+      save: null,
+      status: 'corrupt',
     });
-    const saved = await repository.transaction('hu', (current) => current);
+    expect(harness.getValue(primaryStoreName, 'primary')).toEqual(corrupt);
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+    await expect(repository.transaction('hu', (current) => current)).rejects.toThrow(
+      'explicit recovery choice',
+    );
+
+    const saved = await repository.recover('hu');
 
     expect(harness.getStoreValues(recoveryStoreName)).toEqual([corrupt]);
     expect(harness.getValue(primaryStoreName, 'primary')).toEqual(saved);
+    expect(saved).toMatchObject({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
   });
+
+  it('treats a present undefined record as corrupt instead of missing', async () => {
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: undefined },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+
+    await expect(repository.load('hu')).resolves.toEqual({ save: null, status: 'corrupt' });
+    expect(harness.getValue(primaryStoreName, 'primary')).toBeUndefined();
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+  });
+
+  it('recovers a structured-clone binary corrupt record without object identity', async () => {
+    const corrupt = new Uint8Array([1, 2, 3]).buffer;
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: corrupt },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+
+    await expect(repository.load('hu')).resolves.toEqual({ save: null, status: 'corrupt' });
+    await expect(repository.recover('hu')).resolves.toMatchObject({ schemaVersion: 1 });
+
+    const archived = harness.getStoreValues(recoveryStoreName);
+    expect(archived).toHaveLength(1);
+    expect(new Uint8Array(archived[0] as ArrayBuffer)).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it('refuses stale recovery after another writer installs a future save', async () => {
+    const corrupt = { damaged: true, schemaVersion: 1 };
+    const future = { schemaVersion: 2 };
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: corrupt },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+    await repository.load('hu');
+    harness.setValue(primaryStoreName, 'primary', future);
+
+    await expect(repository.recover('hu')).rejects.toThrow('changed before recovery');
+    expect(harness.getValue(primaryStoreName, 'primary')).toEqual(future);
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+  });
+
+  it.each(['transaction', 'abort'] as const)(
+    'rolls back corrupt recovery after an IndexedDB %s failure',
+    async (failureMode) => {
+      const corrupt = { damaged: true, schemaVersion: 1 };
+      const harness = createIndexedDbHarness({
+        failureMode,
+        records: {
+          [primaryStoreName]: { primary: corrupt },
+          [recoveryStoreName]: {},
+        },
+      });
+      const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+      await repository.load('hu');
+
+      await expect(repository.recover('hu')).rejects.toBeTruthy();
+      expect(harness.getValue(primaryStoreName, 'primary')).toEqual(corrupt);
+      expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+    },
+  );
 
   it('migrates version zero and refuses to overwrite a future version', async () => {
     const versionZero = {
@@ -109,6 +190,15 @@ describe('IndexedDB save game repository', () => {
     });
     await expect(futureRepository.transaction('hu', (current) => current)).rejects.toThrow(
       'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.replace(createEmptySave('hu', firstTimestamp))).rejects.toThrow(
+      'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.reset('hu')).rejects.toThrow(
+      'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.recover('hu')).rejects.toThrow(
+      'No corrupt save is awaiting recovery.',
     );
     expect(futureHarness.getValue(primaryStoreName, 'primary')).toEqual(future);
   });
@@ -239,6 +329,7 @@ describe('save game repository contract', () => {
     const replacement = createEmptySave('hu', firstTimestamp);
 
     await expect(repository.replace(replacement)).rejects.toThrow('must load successfully');
+    await expect(repository.recover('hu')).rejects.toThrow('No corrupt save');
     await expect(repository.reset('hu')).rejects.toThrow('must load successfully');
   });
 });

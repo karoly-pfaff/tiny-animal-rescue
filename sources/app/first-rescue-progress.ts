@@ -12,9 +12,10 @@ export type FirstRescueProgressStore = Readonly<{
   commitReward: (locale: Locale, reward: RescueRewardDefinition) => Promise<FirstRescueProgress>;
   load: (locale: Locale) => Promise<FirstRescueProgressLoadStatus>;
   read: () => FirstRescueProgress;
+  recoverCorrupt: (locale: Locale) => Promise<FirstRescueProgress>;
 }>;
 
-export type FirstRescueProgressLoadStatus = 'ready' | 'recovered-corrupt' | 'unsupported-version';
+export type FirstRescueProgressLoadStatus = 'corrupt' | 'ready' | 'unsupported-version';
 
 const readyLoadStatus = 'ready' satisfies FirstRescueProgressLoadStatus;
 
@@ -61,6 +62,10 @@ export function createSessionFirstRescueProgressStore(
     },
     load: () => Promise.resolve(readyLoadStatus),
     read: () => progress,
+    recoverCorrupt: () => {
+      progress = emptyFirstRescueProgress;
+      return Promise.resolve(progress);
+    },
   };
 }
 
@@ -78,12 +83,14 @@ export function createPersistedFirstRescueProgressStore(
     },
     async load(locale) {
       const result = await repository.load(locale);
-      if (result.save !== null) {
-        progress = progressFromSave(result.save);
-      }
+      progress = result.save === null ? emptyFirstRescueProgress : progressFromSave(result.save);
       return result.status;
     },
     read: () => progress,
+    async recoverCorrupt(locale) {
+      progress = progressFromSave(await repository.recover(locale));
+      return progress;
+    },
   };
 }
 

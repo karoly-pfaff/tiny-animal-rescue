@@ -64,6 +64,11 @@ If the app closes mid-mission, opening that mission resumes at the first incompl
 
 Each schema version has a pure migration to the next version. Migrations are deterministic, unit-tested, and never fetch network data. Unknown future versions stop with a parent-facing recovery path and do not overwrite the file.
 
+Corrupt current-version data also blocks play without changing the primary record. The adult-facing
+recovery screen offers retry or an explicit safe-start choice. Safe start archives the corrupt value
+and creates an empty save in one IndexedDB transaction; it never infers completed missions,
+residents, or flags from invalid data. Future-version saves never receive that destructive choice.
+
 ## Progression selectors
 
 Availability is derived rather than stored:

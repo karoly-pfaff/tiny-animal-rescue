@@ -22,10 +22,10 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S02 — Migration and recovery framework
 
-- [ ] Pure sequential migration functions exist with fixtures.
-- [ ] Unknown future versions are preserved and not overwritten.
-- [ ] Corrupt current data produces a parent-facing recovery choice.
-- [ ] Recovery never fabricates completed missions or residents.
+- [x] Pure sequential migration functions exist with fixtures.
+- [x] Unknown future versions are preserved and not overwritten.
+- [x] Corrupt current data produces a parent-facing recovery choice.
+- [x] Recovery never fabricates completed missions or residents.
 
 ### E005-S03 — Atomic completion and resume
 

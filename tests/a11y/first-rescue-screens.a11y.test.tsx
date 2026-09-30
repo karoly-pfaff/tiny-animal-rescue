@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
 import { SaveFailureScreen } from '../../sources/app/save-failure-screen';
+import { SaveRecoveryScreen } from '../../sources/app/save-recovery-screen';
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
 import { ContentMissionScreen } from '../../sources/app/content-mission-screen';
 import { ShelterScreen } from '../../sources/app/shelter-screen';
@@ -60,6 +61,20 @@ describe('first rescue screen accessibility', () => {
       }}
     />,
     <SaveFailureScreen key="save-failure" locale="hu" onRetry={vi.fn()} />,
+    <SaveRecoveryScreen
+      key="save-recovery-corrupt"
+      locale="hu"
+      onRecoverCorrupt={vi.fn()}
+      onRetry={vi.fn()}
+      status="corrupt"
+    />,
+    <SaveRecoveryScreen
+      key="save-recovery-future"
+      locale="en"
+      onRecoverCorrupt={vi.fn()}
+      onRetry={vi.fn()}
+      status="unsupported-version"
+    />,
     <ContentMissionScreen
       key="content-mission"
       locale="en"

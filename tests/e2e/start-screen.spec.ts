@@ -463,35 +463,53 @@ test('@preview completes the English rescue and restores Mimi after reload', asy
   expect(browserErrors).toEqual([]);
 });
 
-test('@preview recovers corrupt save data without crashing the child flow', async ({
+test('@preview requires an explicit adult choice before recovering corrupt save data', async ({
   page,
-}, testInfo) => {
+}) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
+  const corrupt = { damaged: true, schemaVersion: 1 };
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
-  await writePrimarySave(page, { damaged: true, schemaVersion: 1 });
+  await writePrimarySave(page, corrupt);
   await page.goto('/#/map');
   await page.reload();
 
-  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
-  await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
-  await openFirstRescueMission(page, {
-    hasTouch: Boolean(testInfo.project.use.hasTouch),
-    locale: 'hu',
-  });
-  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
-  await dragLadder({
-    destination: 'target',
-    ladder,
-    page,
-    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
-  });
-  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
+  await expect(page.getByRole('heading', { name: 'A mentés segítséget kér' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).not.toBeVisible();
+  await expect.poll(async () => readPrimarySave(page)).toEqual(corrupt);
+  await expect.poll(async () => readRecoveryCount(page)).toBe(0);
 
-  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+  await page.getByRole('button', { name: 'Újra' }).click();
+  await expect(page.getByRole('heading', { name: 'A mentés segítséget kér' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sérült mentés archiválása és új játék' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
   await expect.poll(async () => readRecoveryCount(page)).toBe(1);
   await expect
     .poll(async () => readPrimarySave(page))
-    .toMatchObject({ schemaVersion: 1, unlockedResidentIds: ['mimi-kitten'] });
+    .toMatchObject({
+      completedMissionIds: [],
+      schemaVersion: 1,
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview preserves a future save without destructive recovery', async ({ page }) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const future = { marker: 'future-data', schemaVersion: 2 };
+  await page.goto('/');
+  await page.getByRole('button', { name: 'English' }).click();
+  await writePrimarySave(page, future);
+  await page.goto('/#/map');
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Newer save version' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Archive damaged save and start again' }),
+  ).not.toBeVisible();
+  await expect.poll(async () => readPrimarySave(page)).toEqual(future);
+  await expect.poll(async () => readRecoveryCount(page)).toBe(0);
   expect(browserErrors).toEqual([]);
 });

@@ -25,15 +25,19 @@ type Strings = Readonly<{
   map: string;
   mapHint: string;
   parentSettings: string;
+  parentRecovery: string;
   play: string;
   repeatPrompt: string;
   rewardSaveError: string;
-  saveRecovered: string;
+  saveCorrupt: string;
+  saveCorruptTitle: string;
   saveUnavailable: string;
   saveUnavailableTitle: string;
   saveUnsupported: string;
+  saveUnsupportedTitle: string;
   shelter: string;
   shelterEmpty: string;
+  startSafeSave: string;
   tryAgain: string;
   screenTitles: Readonly<Record<ScreenTitleKey, string>>;
 }>;
@@ -57,15 +61,20 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     map: 'Térkép',
     mapHint: 'Az első mentés a Kertben vár.',
     parentSettings: 'Szülői beállítások',
+    parentRecovery: 'Felnőtt segítsége szükséges',
     play: 'Játék',
     repeatPrompt: 'Hallgasd újra',
     rewardSaveError: 'A mentés most nem sikerült. Érintsd meg újra Mimit.',
-    saveRecovered: 'A korábbi mentés sérült volt. Biztonságos új mentés indult.',
+    saveCorrupt:
+      'A korábbi mentést változatlanul megőrizzük. Új, üres mentés csak a választásod után indul.',
+    saveCorruptTitle: 'A mentés segítséget kér',
     saveUnavailable: 'A mentés most nem érhető el. Kérj meg egy felnőttet, hogy próbálja újra.',
     saveUnavailableTitle: 'A mentés pihen',
     saveUnsupported: 'Ez a mentés egy újabb játékverzióhoz tartozik, ezért nem írjuk felül.',
+    saveUnsupportedTitle: 'Újabb mentési verzió',
     shelter: 'Menhely',
     shelterEmpty: 'Az első megmentett állat itt fog lakni.',
+    startSafeSave: 'Sérült mentés archiválása és új játék',
     tryAgain: 'Újra',
     screenTitles: {
       'screen.start.title': 'Kis Állatmentők',
@@ -94,15 +103,20 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     map: 'Map',
     mapHint: 'The first rescue is waiting in the Garden.',
     parentSettings: 'Parent settings',
+    parentRecovery: 'A grown-up is needed',
     play: 'Play',
     repeatPrompt: 'Hear again',
     rewardSaveError: 'The rescue could not be saved yet. Tap Mimi again.',
-    saveRecovered: 'The earlier save was damaged. A safe new save has started.',
+    saveCorrupt:
+      'The earlier save stays unchanged. A new empty save starts only after you choose it.',
+    saveCorruptTitle: 'The save needs help',
     saveUnavailable: 'Saving is unavailable right now. Ask a grown-up to try again.',
     saveUnavailableTitle: 'Saving is resting',
     saveUnsupported: 'This save belongs to a newer game version, so it will not be overwritten.',
+    saveUnsupportedTitle: 'Newer save version',
     shelter: 'Shelter',
     shelterEmpty: 'The first rescued animal will live here.',
+    startSafeSave: 'Archive damaged save and start again',
     tryAgain: 'Try again',
     screenTitles: {
       'screen.start.title': 'Tiny Rescue',

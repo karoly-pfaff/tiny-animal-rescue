@@ -14,16 +14,24 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
     ]),
   );
   let closeCount = 0;
+  let failureMode = options.failureMode;
 
   function createTransaction(): IDBTransaction {
     let completionScheduled = false;
+    let forcedAbort = false;
+    const stagedWrites = new Map<string, Map<string, unknown>>();
     const transaction: {
+      abort: () => void;
       error: DOMException | null;
       onabort: EventHandler;
       oncomplete: EventHandler;
       onerror: EventHandler;
       objectStore: (storeName: string) => IDBObjectStore;
     } = {
+      abort: () => {
+        forcedAbort = true;
+        scheduleCompletion();
+      },
       error: null,
       onabort: null,
       oncomplete: null,
@@ -37,14 +45,25 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
       }
       completionScheduled = true;
       queueMicrotask(() => {
-        if (options.failureMode === 'transaction') {
+        if (failureMode === 'transaction') {
           transaction.onerror?.(new Event('error'));
-        } else if (options.failureMode === 'abort') {
+        } else if (failureMode === 'abort' || forcedAbort) {
           transaction.onabort?.(new Event('abort'));
         } else {
+          applyStagedWrites();
           transaction.oncomplete?.(new Event('complete'));
         }
       });
+    }
+
+    function applyStagedWrites(): void {
+      for (const [storeName, writes] of stagedWrites) {
+        const values = stores.get(storeName) ?? new Map<string, unknown>();
+        stores.set(storeName, values);
+        for (const [key, value] of writes) {
+          values.set(key, value);
+        }
+      }
     }
 
     function createObjectStoreApi(storeName: string, owner: typeof transaction): IDBObjectStore {
@@ -52,9 +71,13 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
       stores.set(storeName, values);
       return {
         get: (key: IDBValidKey) => {
-          const request = createRequest(values.get(toStringKey(key)));
+          const stringKey = toStringKey(key);
+          const writes = stagedWrites.get(storeName);
+          const result =
+            writes?.has(stringKey) === true ? writes.get(stringKey) : values.get(stringKey);
+          const request = createRequest(result);
           queueMicrotask(() => {
-            if (options.failureMode === 'get') {
+            if (failureMode === 'get') {
               request.onerror?.(new Event('error'));
             } else {
               request.onsuccess?.(new Event('success'));
@@ -62,8 +85,25 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
           });
           return request as IDBRequest<unknown>;
         },
+        count: (key?: IDBValidKey | IDBKeyRange | null) => {
+          const count =
+            key === undefined || key === null
+              ? values.size
+              : Number(values.has(toStringKey(key as IDBValidKey)));
+          const request = createRequest(count);
+          queueMicrotask(() => {
+            if (failureMode === 'get') {
+              request.onerror?.(new Event('error'));
+            } else {
+              request.onsuccess?.(new Event('success'));
+            }
+          });
+          return request as IDBRequest<number>;
+        },
         put: (value: unknown, key?: IDBValidKey) => {
-          values.set(toStringKey(key), value);
+          const writes = stagedWrites.get(storeName) ?? new Map<string, unknown>();
+          stagedWrites.set(storeName, writes);
+          writes.set(toStringKey(key), value);
           scheduleCompletion();
           return createRequest(key) as IDBRequest<IDBValidKey>;
         },
@@ -96,7 +136,7 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
       };
       request.onupgradeneeded = null;
       queueMicrotask(() => {
-        if (options.failureMode === 'open') {
+        if (failureMode === 'open') {
           request.onerror?.(new Event('error'));
         } else {
           request.onupgradeneeded?.(new Event('upgradeneeded'));
@@ -112,6 +152,14 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
     getCloseCount: () => closeCount,
     getStoreValues: (storeName: string) => [...(stores.get(storeName)?.values() ?? [])],
     getValue: (storeName: string, key: string) => stores.get(storeName)?.get(key),
+    setFailureMode: (nextMode: IndexedDbFailureMode) => {
+      failureMode = nextMode;
+    },
+    setValue: (storeName: string, key: string, value: unknown) => {
+      const records = stores.get(storeName) ?? new Map<string, unknown>();
+      stores.set(storeName, records);
+      records.set(key, value);
+    },
   };
 }
 

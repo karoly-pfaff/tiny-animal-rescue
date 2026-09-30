@@ -18,6 +18,7 @@ describe('persisted first rescue progress adapter', () => {
     });
     const store = createPersistedFirstRescueProgressStore({
       load: () => Promise.resolve({ save, status: 'ready' }),
+      recover: vi.fn(),
       replace: vi.fn(),
       reset: vi.fn(),
       transaction,
@@ -31,5 +32,62 @@ describe('persisted first rescue progress adapter', () => {
     expect(save.unlockedResidentIds).toEqual(['mimi-kitten']);
     expect(save.worldFlags).toEqual(['mimi-rescued']);
     expect(transaction).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears stale progress for corrupt and future saves, then installs explicit recovery', async () => {
+    const completed = {
+      ...createEmptySave('en', 'created'),
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    };
+    const empty = createEmptySave('en', 'recovered');
+    const load = vi
+      .fn()
+      .mockResolvedValueOnce({ save: completed, status: 'ready' })
+      .mockResolvedValueOnce({ save: null, status: 'corrupt' })
+      .mockResolvedValueOnce({ save: null, status: 'unsupported-version' });
+    const recover = vi.fn(() => Promise.resolve(empty));
+    const store = createPersistedFirstRescueProgressStore({
+      load,
+      recover,
+      replace: vi.fn(),
+      reset: vi.fn(),
+      transaction: vi.fn(),
+    });
+
+    expect(await store.load('en')).toBe('ready');
+    expect(store.read().unlockedResidentIds).toEqual(['mimi-kitten']);
+    expect(await store.load('en')).toBe('corrupt');
+    expect(store.read()).toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(await store.load('en')).toBe('unsupported-version');
+    await expect(store.recoverCorrupt('en')).resolves.toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(recover).toHaveBeenCalledWith('en');
+  });
+
+  it('does not replace progress when explicit recovery fails', async () => {
+    const store = createPersistedFirstRescueProgressStore({
+      load: vi.fn(() => Promise.resolve({ save: null, status: 'corrupt' as const })),
+      recover: vi.fn(() => Promise.reject(new Error('recovery failed'))),
+      replace: vi.fn(),
+      reset: vi.fn(),
+      transaction: vi.fn(),
+    });
+    await store.load('hu');
+
+    await expect(store.recoverCorrupt('hu')).rejects.toThrow('recovery failed');
+    expect(store.read()).toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
   });
 });

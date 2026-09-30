@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { createEmptySave, migrateSaveGame } from '../../sources/persistence/save-game-schema';
+import { applySequentialSaveMigrations } from '../../sources/persistence/save-game-migrations';
+import saveVersionZero from '../fixtures/persistence/save-v0.json';
 
 const timestamp = '2026-09-21T12:00:00.000Z';
 
@@ -56,16 +58,8 @@ describe('save game schema', () => {
   });
 
   it('migrates version zero deterministically', () => {
-    const result = migrateSaveGame(
-      {
-        completedMissionIds: ['garden-kitten-tree'],
-        locale: 'en',
-        schemaVersion: 0,
-        unlockedResidentIds: ['mimi-kitten'],
-        worldFlags: ['mimi-rescued'],
-      },
-      timestamp,
-    );
+    const fixtureBeforeMigration = structuredClone(saveVersionZero);
+    const result = migrateSaveGame(saveVersionZero, timestamp);
 
     expect(result?.save).toMatchObject({
       completedMissionIds: ['garden-kitten-tree'],
@@ -76,6 +70,11 @@ describe('save game schema', () => {
       updatedAt: timestamp,
       worldFlags: ['mimi-rescued'],
     });
+    expect(saveVersionZero).toEqual(fixtureBeforeMigration);
+  });
+
+  it('stops a sequential migration when the next migration is unavailable', () => {
+    expect(applySequentialSaveMigrations(saveVersionZero, timestamp, 2)).toBeNull();
   });
 
   it.each([
@@ -84,6 +83,7 @@ describe('save game schema', () => {
     { schemaVersion: 0 },
     { schemaVersion: 1 },
     { schemaVersion: -1 },
+    { schemaVersion: 'one' },
     {
       completedMissionIds: [],
       createdAt: timestamp,

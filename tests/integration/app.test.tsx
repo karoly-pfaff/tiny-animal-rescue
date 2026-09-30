@@ -2,9 +2,14 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../sources/app/app';
-import { createSessionFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
+import {
+  createPersistedFirstRescueProgressStore,
+  createSessionFirstRescueProgressStore,
+} from '../../sources/app/first-rescue-progress';
 import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence/locale-bootstrap-repository';
+import { createIndexedDbSaveGameRepository } from '../../sources/persistence/save-game-repository';
 import { testRegistryWithWorldMission } from '../support/expanded-mission-content';
+import { createIndexedDbHarness } from '../unit/support/indexed-db-harness';
 
 describe('App', () => {
   it('requires first-run locale choice, then follows the child path', async () => {
@@ -270,5 +275,77 @@ describe('App', () => {
 
     expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('requires an explicit adult choice before replacing corrupt progress', async () => {
+    window.location.hash = '/map';
+    const corrupt = { damaged: true, schemaVersion: 1 };
+    const harness = createIndexedDbHarness({
+      failureMode: 'transaction',
+      records: {
+        'save-games': { primary: corrupt },
+        'save-recovery': {},
+      },
+    });
+    const progressStore = createPersistedFirstRescueProgressStore(
+      createIndexedDbSaveGameRepository(harness.factory, () => 'recovery-time'),
+    );
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'The save needs help' })).toBeVisible();
+    expect(screen.getByText('A grown-up is needed')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Rescue map' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Archive damaged save and start again' }));
+
+    expect(await screen.findByRole('heading', { name: 'Saving is resting' })).toBeVisible();
+    expect(harness.getValue('save-games', 'primary')).toEqual(corrupt);
+    expect(harness.getStoreValues('save-recovery')).toEqual([]);
+    harness.setFailureMode(undefined);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('heading', { name: 'The save needs help' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Archive damaged save and start again' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Rescue map' })).toBeVisible();
+    });
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(harness.getStoreValues('save-recovery')).toEqual([corrupt]);
+  });
+
+  it('preserves a future save without offering a destructive recovery action', async () => {
+    window.location.hash = '/map';
+    const future = { schemaVersion: 2 };
+    const harness = createIndexedDbHarness({
+      records: {
+        'save-games': { primary: future },
+        'save-recovery': {},
+      },
+    });
+    const progressStore = createPersistedFirstRescueProgressStore(
+      createIndexedDbSaveGameRepository(harness.factory),
+    );
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Newer save version' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Archive damaged save and start again' }),
+    ).not.toBeInTheDocument();
+    expect(harness.getValue('save-games', 'primary')).toEqual(future);
+    expect(harness.getStoreValues('save-recovery')).toEqual([]);
   });
 });

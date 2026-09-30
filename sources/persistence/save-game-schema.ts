@@ -1,5 +1,7 @@
 import type { Locale } from '../i18n/localization';
+import { defaultSaveSettings } from './default-save-settings';
 import { isPersistedCurrentMission, type PersistedCurrentMission } from './persisted-mission-state';
+import { applySequentialSaveMigrations } from './save-game-migrations';
 
 export type SaveGameV1 = Readonly<{
   completedMissionIds: readonly string[];
@@ -18,30 +20,16 @@ export type SaveGameV1 = Readonly<{
   worldFlags: readonly string[];
 }>;
 
-export type SaveGameLoadStatus = 'ready' | 'recovered-corrupt' | 'unsupported-version';
+export type SaveGameLoadStatus = 'corrupt' | 'ready' | 'unsupported-version';
 
 export type SaveGameLoadResult =
-  | Readonly<{ save: SaveGameV1; status: Exclude<SaveGameLoadStatus, 'unsupported-version'> }>
-  | Readonly<{ save: null; status: Extract<SaveGameLoadStatus, 'unsupported-version'> }>;
-
-type SaveGameV0 = Readonly<{
-  completedMissionIds: readonly string[];
-  locale: Locale;
-  schemaVersion: 0;
-  unlockedResidentIds: readonly string[];
-  worldFlags: readonly string[];
-}>;
-
-const defaultSettings: SaveGameV1['settings'] = {
-  effectsVolume: 1,
-  musicVolume: 0.7,
-  narrationVolume: 1,
-  reducedMotion: false,
-};
+  | Readonly<{ save: SaveGameV1; status: Extract<SaveGameLoadStatus, 'ready'> }>
+  | Readonly<{ save: null; status: Exclude<SaveGameLoadStatus, 'ready'> }>;
 
 export const readySaveStatus = 'ready' satisfies SaveGameLoadStatus;
-export const recoveredSaveStatus = 'recovered-corrupt' satisfies SaveGameLoadStatus;
+export const corruptSaveStatus = 'corrupt' satisfies SaveGameLoadStatus;
 const unsupportedSaveStatus = 'unsupported-version' satisfies SaveGameLoadStatus;
+const currentSaveVersion = 1;
 
 export function createEmptySave(locale: Locale, timestamp: string): SaveGameV1 {
   return {
@@ -49,7 +37,7 @@ export function createEmptySave(locale: Locale, timestamp: string): SaveGameV1 {
     createdAt: timestamp,
     locale,
     schemaVersion: 1,
-    settings: defaultSettings,
+    settings: defaultSaveSettings,
     unlockedResidentIds: [],
     updatedAt: timestamp,
     worldFlags: [],
@@ -64,36 +52,10 @@ export function migrateSaveGame(value: unknown, timestamp: string): SaveGameLoad
   if (isFutureVersion(schemaVersion)) {
     return { save: null, status: unsupportedSaveStatus };
   }
-  return migrateKnownVersion(value, schemaVersion, timestamp);
-}
-
-function migrateKnownVersion(
-  value: Record<string, unknown>,
-  schemaVersion: unknown,
-  timestamp: string,
-): SaveGameLoadResult | null {
-  if (schemaVersion === 1) {
-    return isSaveGameV1(value) ? { save: value, status: readySaveStatus } : null;
-  }
-  return schemaVersion === 0 ? migrateVersionZero(value, timestamp) : null;
-}
-
-function migrateVersionZero(
-  value: Record<string, unknown>,
-  timestamp: string,
-): SaveGameLoadResult | null {
-  if (!isSaveGameV0(value)) {
-    return null;
-  }
-  return {
-    save: {
-      ...createEmptySave(value.locale, timestamp),
-      completedMissionIds: value.completedMissionIds,
-      unlockedResidentIds: value.unlockedResidentIds,
-      worldFlags: value.worldFlags,
-    },
-    status: readySaveStatus,
-  };
+  const migrated = applySequentialSaveMigrations(value, timestamp, currentSaveVersion);
+  return migrated !== null && isSaveGameV1(migrated)
+    ? { save: migrated, status: readySaveStatus }
+    : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -101,7 +63,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isFutureVersion(value: unknown): boolean {
-  return typeof value === 'number' && value > 1;
+  return typeof value === 'number' && value > currentSaveVersion;
 }
 
 function isLocale(value: unknown): value is Locale {
@@ -110,10 +72,6 @@ function isLocale(value: unknown): value is Locale {
 
 function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
-}
-
-function isSaveGameV0(value: Record<string, unknown>): value is SaveGameV0 {
-  return hasValidProgress(value) && isLocale(value['locale']);
 }
 
 function isSaveGameV1(value: Record<string, unknown>): value is SaveGameV1 {
