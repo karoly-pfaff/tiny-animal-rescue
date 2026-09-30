@@ -44,6 +44,12 @@ export default defineConfig({
           lines: 100,
           statements: 100,
         },
+        'sources/content/location-unlock-validator.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
         'sources/content/mission-graph-validator.ts': {
           branches: 100,
           functions: 100,
@@ -93,6 +99,12 @@ export default defineConfig({
           statements: 100,
         },
         'sources/content/pack-dependency-order.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/content/progression-selectors.ts': {
           branches: 100,
           functions: 100,
           lines: 100,

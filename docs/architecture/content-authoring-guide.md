@@ -100,6 +100,9 @@ remain separate runtime categories and channels.
 
 - A player-visible map location declares `mapPresentation` with a supported silhouette, shape,
   accent color, semantic ambience cue, and normalized landscape/portrait centers.
+- Omit `unlockRequirement` only for a location intended to be immediately visible. Otherwise choose
+  one declarative `mission-completed` reference or a positive `rescue-count`; do not add a stored
+  location-unlock flag or application-code ID check.
 - Every landmark remains recognizable without its localized label; color is reinforcement, not the
   only identity signal.
 - The assembled map owns exactly one central Shelter landmark through a shelter-area

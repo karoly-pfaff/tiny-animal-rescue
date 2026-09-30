@@ -6,6 +6,7 @@ import {
   type FirstRescueContent,
 } from '../content/first-rescue-content';
 import type { Locale } from '../i18n/localization';
+import { selectProgression } from '../content/progression-selectors';
 import { CelebrationScreen } from './celebration-screen';
 import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
@@ -40,8 +41,18 @@ export function PlayerRoute(props: PlayerRouteProps) {
   return <FoundationScreen locale={props.locale} route={props.route} />;
 }
 
-function RescueMap({ effectService, firstRescueContent, locale, onNavigate }: PlayerRouteProps) {
+function RescueMap({
+  effectService,
+  firstRescueContent,
+  firstRescueProgressStore,
+  locale,
+  onNavigate,
+}: PlayerRouteProps) {
   const assets = resolveFirstRescueAssets(firstRescueContent);
+  const progression = selectProgression(
+    firstRescueContent.registry,
+    firstRescueProgressStore.read(),
+  );
   return (
     <MapScreen
       activeLocationId={firstRescueContent.location.id}
@@ -58,7 +69,7 @@ function RescueMap({ effectService, firstRescueContent, locale, onNavigate }: Pl
         onNavigate('/shelter');
       }}
       registry={firstRescueContent.registry}
-      visibleLocationIds={[firstRescueContent.location.id]}
+      visibleLocationIds={progression.visibleLocationIds}
     />
   );
 }

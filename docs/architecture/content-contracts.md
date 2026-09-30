@@ -110,6 +110,14 @@ normalized landmark centers for landscape and portrait. These values identify th
 requiring the localized label to be read. They contain no executable behavior and never select a
 concrete mission in application code.
 
+A location may also declare one `unlockRequirement`: either a `mission-completed` reference or a
+positive `rescue-count` minimum. Omission is the contract-version-1 default for an immediately visible
+location. Mission references follow the same own-pack/dependency ownership rules as other content
+record references. Runtime availability is derived from completed mission IDs: only known Rescue
+records count toward a Rescue threshold, and no separate location-unlock flag is persisted. A
+location containing an already completed mission remains visible so that content-rule changes cannot
+remove a replay from an existing save.
+
 Exactly one shelter-area record across an assembled map declares a `mapPresentation` and a
 `mapLabelKey`; this is the stable central Shelter landmark. Presented landmarks must have distinct
 silhouettes, shapes, accent colors, and audio cues. Location and Shelter labels are resolved from the
@@ -274,6 +282,7 @@ In addition to schema validation, CI verifies:
 - prerequisite graph is acyclic
 - every base Rescue unlocks exactly one unique resident
 - Help missions depend on their resident's Rescue mission
+- location mission-completion unlock references resolve through declared content ownership
 - resident count does not exceed shelter capacity
 - every base mission has 2–4 steps, except an approved trace-only case
 - only accepted interaction and reaction enums are used

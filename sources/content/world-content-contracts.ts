@@ -23,12 +23,17 @@ export type LocationRecord = Readonly<{
   id: string;
   nameKey: string;
   mapLabelKey: string;
+  unlockRequirement?: LocationUnlockRequirement;
   mapPresentation?: MapLandmarkPresentation;
   assets: Readonly<{
     mapBackground: string;
     missionBackground: string;
   }>;
 }>;
+
+type LocationUnlockRequirement =
+  | Readonly<{ type: 'mission-completed'; missionId: string }>
+  | Readonly<{ type: 'rescue-count'; minimum: number }>;
 
 export type MapLandmarkAudioCue =
   | 'effects.ambience.rescue-center'

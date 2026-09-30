@@ -2,6 +2,10 @@
   "id": "pond",
   "nameKey": "location.pond.name",
   "mapLabelKey": "location.pond.map-label",
+  "unlockRequirement": {
+    "type": "rescue-count",
+    "minimum": 3
+  },
   "mapPresentation": {
     "silhouette": "pond",
     "shape": "wave",

@@ -66,6 +66,11 @@ Availability is derived rather than stored:
 - completed missions remain replayable;
 - Help missions remain hidden until their resident is unlocked.
 
+The runtime derives these results deterministically from content-declared location requirements,
+mission prerequisites, known completed mission IDs, and unlocked resident IDs. Unknown completed IDs
+do not satisfy Rescue-count thresholds, and the save does not duplicate derived location availability
+as an unlock flag.
+
 ## Reset
 
 Reset progress is behind the parent gate, requires a second confirmation, and preserves audio/language settings unless the parent selects a full reset.

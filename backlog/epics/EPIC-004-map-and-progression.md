@@ -22,12 +22,12 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 ### E004-S02 — Progression selectors
 
-- [ ] Tutorial is available on a new save.
-- [ ] Forest and Farm reveal after tutorial completion.
-- [ ] Pond reveals after any three Rescue completions.
-- [ ] Mission prerequisites are evaluated from completed IDs.
-- [ ] Help missions stay hidden until their resident is unlocked.
-- [ ] Derived availability is deterministic and unit-tested.
+- [x] Tutorial is available on a new save.
+- [x] Forest and Farm reveal after tutorial completion.
+- [x] Pond reveals after any three Rescue completions.
+- [x] Mission prerequisites are evaluated from completed IDs.
+- [x] Help missions stay hidden until their resident is unlocked.
+- [x] Derived availability is deterministic and unit-tested.
 
 ### E004-S03 — Rescue call presentation
 

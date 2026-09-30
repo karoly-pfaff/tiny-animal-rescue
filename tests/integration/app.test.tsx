@@ -109,6 +109,25 @@ describe('App', () => {
     expect(screen.getByRole('main')).toHaveAttribute('data-mission-id', 'garden-kitten-tree');
   });
 
+  it('reveals Forest and Farm from completed mission IDs without a stored location flag', async () => {
+    window.location.hash = '/map';
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore({
+          completedMissionIds: ['garden-kitten-tree'],
+          unlockedResidentIds: ['mimi-kitten'],
+          worldFlags: ['mimi-rescued'],
+        })}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Forest rescues' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Farm rescues' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Pond rescues' })).not.toBeInTheDocument();
+  });
+
   it('commits the rescue reward before opening the localized celebration', async () => {
     window.location.hash = '/map';
     const repository = createMemoryLocaleBootstrapRepository('en');

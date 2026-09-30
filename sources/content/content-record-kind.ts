@@ -9,5 +9,6 @@ export const shelterAreaRecords = 'shelterAreas' satisfies ContentRecordKind;
 
 export const animalRecordLabel = 'animal' satisfies ContentRecordLabel;
 export const locationRecordLabel = 'location' satisfies ContentRecordLabel;
+export const missionRecordLabel = 'mission' satisfies ContentRecordLabel;
 export const prerequisiteRecordLabel = 'prerequisite' satisfies ContentRecordLabel;
 export const shelterAreaRecordLabel = 'shelter area' satisfies ContentRecordLabel;

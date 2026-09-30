@@ -2,6 +2,10 @@
   "id": "farm",
   "nameKey": "location.farm.name",
   "mapLabelKey": "location.farm.map-label",
+  "unlockRequirement": {
+    "type": "mission-completed",
+    "missionId": "garden-kitten-tree"
+  },
   "mapPresentation": {
     "silhouette": "barn",
     "shape": "arch",

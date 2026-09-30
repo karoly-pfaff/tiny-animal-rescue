@@ -2,6 +2,10 @@
   "id": "forest",
   "nameKey": "location.forest.name",
   "mapLabelKey": "location.forest.map-label",
+  "unlockRequirement": {
+    "type": "mission-completed",
+    "missionId": "garden-kitten-tree"
+  },
   "mapPresentation": {
     "silhouette": "pines",
     "shape": "leaf",

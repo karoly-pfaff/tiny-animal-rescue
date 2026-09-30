@@ -73,6 +73,17 @@ describe('content semantic validation', () => {
       message: /missing location/u,
     },
     {
+      name: 'missing location unlock mission',
+      packs: validPacks({
+        locations: [
+          makeLocation({
+            unlockRequirement: { type: 'mission-completed', missionId: 'missing-mission' },
+          }),
+        ],
+      }),
+      message: /Location garden references missing mission/u,
+    },
+    {
       name: 'missing mission subject',
       packs: validPacks({ missions: [makeMission({ subjectAnimalId: 'missing-animal' })] }),
       message: /missing animal/u,

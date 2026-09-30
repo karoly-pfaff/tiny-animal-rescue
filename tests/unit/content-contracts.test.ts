@@ -352,6 +352,30 @@ describe('content contracts', () => {
         reward: { ...missionExample.reward, unlockResidentId: 'base:mimi-kitten' },
       }),
     ).toBe(true);
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: {
+          type: 'mission-completed',
+          missionId: 'base:garden-kitten-tree',
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('accepts declarative location unlock rules and rejects invalid Rescue counts', () => {
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: { type: 'rescue-count', minimum: 3 },
+      }),
+    ).toBe(true);
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: { type: 'rescue-count', minimum: 0 },
+      }),
+    ).toBe(false);
   });
 
   it('requires locale ownership only for voice assets', () => {
