@@ -86,8 +86,8 @@ Implement one end-to-end vertical slice before generalizing. The first slice is 
 
 - Specification baseline: **v0.1.0** (document revision, not a shipped product version)
 - Latest tagged product version: **v0.4.0** (EPIC-003 / M3)
-- Current candidate version: **v0.4.3** (PATCH-005, unpublished)
-- Next milestone release: **v0.5.0** (EPIC-004 / M4)
+- Current candidate version: **v0.5.0** (EPIC-004 / M4)
+- Next milestone release: **v0.6.0** (EPIC-005 / M5)
 - Target product release: **v1.0.0**
 
 Each epic is one milestone and one `0.x.0` product minor. EPIC-009 produces `v0.10.0`; the

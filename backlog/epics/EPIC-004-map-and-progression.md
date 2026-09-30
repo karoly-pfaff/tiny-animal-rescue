@@ -17,7 +17,10 @@ Deliver the complete rescue map, authored unlock order, location navigation, and
 
 - [x] Garden, Forest, Farm, Pond, and central Shelter are content-declared.
 - [x] Layout remains clear in supported landscape and portrait viewports.
-- [x] Each location has a distinct silhouette, color/shape identity, and audio cue.
+- [x] Each location has a distinct silhouette and color/shape identity.
+- [x] Each location declares a distinct semantic audio cue.
+- [ ] Tapping a location plays its authored effect asset in the shipped product; production playback
+      is carried intact by the bounded E006-S07 deferral below.
 - [x] Location labels are runtime-localized and optional to understanding.
 
 ### E004-S02 — Progression selectors
@@ -67,6 +70,26 @@ npm run validate:full
 
 Inspect new-save, post-tutorial, three-rescue, all-complete, replay, portrait, and landscape evidence
 with deterministic progression fixtures.
+
+## Bounded media deferral
+
+- EPIC-004 proves the declarative map-cue contract and cue dispatch order, but it does not claim that
+  the default browser effect service produces audible output. E006-S07 owns production playback for
+  `effects.ambience.rescue-center`, `effects.ambience.garden`, `effects.ambience.forest`,
+  `effects.ambience.farm`, and `effects.ambience.pond`, including exact R2 keys and digest locks,
+  effect-channel and mute behavior, browser-audio unlock, repeated/overlapping playback QA, and
+  listening QA. E006-S07 inherits EPIC-004's `map`, `progression`, and `replay` journeys in Hungarian
+  and English with mouse, touch, and every supported viewport; EPIC-006 cannot close while any of
+  those map cues remains inaudible.
+- EPIC-004 also declares six location backgrounds whose production binaries remain outside Git and
+  are not yet R2 locked. `images/map/forest-map.png` and
+  `images/missions/forest/background.png` are owned by E007-S03;
+  `images/map/farm-map.png` and `images/missions/farm/background.png` are owned by E007-S04; and
+  `images/map/pond-map.png` and `images/missions/pond/background.png` are owned by E007-S05. Each
+  owner must approve provenance/license and full-size QA, upload and digest-lock the exact object,
+  materialize it locally, and inherit EPIC-004's `map`, `progression`, and `replay` live-inspection
+  journeys for its location. EPIC-007 cannot close until all six carried dependencies pass those
+  journeys and the full-playthrough gate in E007-S08.
 
 ## Primary risks
 
