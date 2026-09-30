@@ -15,10 +15,10 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S01 — Final save repository and schema
 
-- [ ] IndexedDB repository implements typed load, transaction, replace, and reset operations.
-- [ ] In-memory repository supports deterministic tests.
-- [ ] Save timestamps, schema version, settings, completed missions, residents, flags, and resumable mission state are represented.
-- [ ] Writes are serialized to avoid stale overwrites.
+- [x] IndexedDB repository implements typed load, transaction, replace, and reset operations.
+- [x] In-memory repository supports deterministic tests.
+- [x] Save timestamps, schema version, settings, completed missions, residents, flags, and resumable mission state are represented.
+- [x] Writes are serialized to avoid stale overwrites.
 
 ### E005-S02 — Migration and recovery framework
 

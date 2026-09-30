@@ -70,7 +70,7 @@ export function createPersistedFirstRescueProgressStore(
   let progress = emptyFirstRescueProgress;
   return {
     async commitReward(locale, reward) {
-      const save = await repository.update(locale, (currentSave) =>
+      const save = await repository.transaction(locale, (currentSave) =>
         saveWithFirstRescueReward(currentSave, reward),
       );
       progress = progressFromSave(save);

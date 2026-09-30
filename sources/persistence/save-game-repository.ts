@@ -8,12 +8,15 @@ import {
   type SaveGameLoadResult,
   type SaveGameV1,
 } from './save-game-schema';
+import { createSerializedTaskQueue } from './serialized-task-queue';
 
 export type { SaveGameV1 } from './save-game-schema';
 
 export type SaveGameRepository = Readonly<{
   load: (locale: Locale) => Promise<SaveGameLoadResult>;
-  update: (locale: Locale, transform: (save: SaveGameV1) => SaveGameV1) => Promise<SaveGameV1>;
+  replace: (save: SaveGameV1) => Promise<SaveGameV1>;
+  reset: (locale: Locale) => Promise<SaveGameV1>;
+  transaction: (locale: Locale, transform: (save: SaveGameV1) => SaveGameV1) => Promise<SaveGameV1>;
 }>;
 
 type PersistenceKey = string;
@@ -33,6 +36,8 @@ const recoveryStoreName = 'save-recovery' satisfies PersistenceKey;
 const writeMode = 'readwrite' satisfies IDBTransactionMode;
 const defaultLocale = 'hu' satisfies Locale;
 
+type SaveWriter = (save: SaveGameV1) => Promise<SaveGameV1>;
+
 export function createIndexedDbSaveGameRepository(
   factory: IDBFactory | undefined,
   now: () => string = () => new Date().toISOString(),
@@ -43,30 +48,39 @@ export function createIndexedDbSaveGameRepository(
     loadResult: { save: createEmptySave(defaultLocale, now()), status: readySaveStatus },
     unsupportedVersion: false,
   };
+  const writes = createSerializedTaskQueue();
+
+  const persist: SaveWriter = async (save) => {
+    await writeSave({
+      corruptValue: state.pendingCorruptValue,
+      factory: requiredWritableFactory(factory, state),
+      recoveryKey: now(),
+      save,
+    });
+    state = readyState(save);
+    return save;
+  };
 
   return {
-    async load(locale) {
-      state = notLoadedState(locale, now());
-      state = await loadRepositoryState(factory, locale, now);
-      return state.loadResult;
-    },
-    async update(locale, transform) {
-      assertWritable(factory, state);
-      const base = state.currentSave ?? createEmptySave(locale, now());
-      const updated = transform({ ...base, locale, updatedAt: now() });
-      await writeSave({
-        corruptValue: state.pendingCorruptValue,
-        factory,
-        recoveryKey: now(),
-        save: updated,
+    load(locale) {
+      return writes.run(async () => {
+        state = notLoadedState(locale, now());
+        state = await loadRepositoryState(factory, locale, now);
+        return state.loadResult;
       });
-      state = {
-        currentSave: updated,
-        loaded: true,
-        loadResult: { save: updated, status: readySaveStatus },
-        unsupportedVersion: false,
-      };
-      return updated;
+    },
+    replace(save) {
+      return writes.run(() => persist(save));
+    },
+    reset(locale) {
+      return writes.run(() => persist(createEmptySave(locale, now())));
+    },
+    transaction(locale, transform) {
+      return writes.run(() => {
+        assertWritable(factory, state);
+        const base = state.currentSave ?? createEmptySave(locale, now());
+        return persist(transform({ ...base, locale, updatedAt: now() }));
+      });
     },
   };
 }
@@ -84,6 +98,60 @@ function assertWritable(
   if (state.unsupportedVersion) {
     throw new Error('A newer save version cannot be overwritten.');
   }
+}
+
+function requiredWritableFactory(
+  factory: IDBFactory | undefined,
+  state: RepositoryState,
+): IDBFactory {
+  assertWritable(factory, state);
+  return factory;
+}
+
+export function createMemorySaveGameRepository(
+  initialSave: SaveGameV1 | null = null,
+  now: () => string = () => new Date().toISOString(),
+): SaveGameRepository {
+  let loaded = false;
+  let save = initialSave;
+  const writes = createSerializedTaskQueue();
+  const requireLoaded = () => {
+    if (!loaded || save === null) {
+      throw new Error('Save data must load successfully before it can be updated.');
+    }
+    return save;
+  };
+  const persist = (nextSave: SaveGameV1) => {
+    save = nextSave;
+    return Promise.resolve(nextSave);
+  };
+  return {
+    load(locale) {
+      return writes.run(() => {
+        save ??= createEmptySave(locale, now());
+        loaded = true;
+        return Promise.resolve({ save, status: readySaveStatus });
+      });
+    },
+    replace(nextSave) {
+      return writes.run(() => {
+        requireLoaded();
+        return persist(nextSave);
+      });
+    },
+    reset(locale) {
+      return writes.run(() => {
+        requireLoaded();
+        return persist(createEmptySave(locale, now()));
+      });
+    },
+    transaction(locale, transform) {
+      return writes.run(() => {
+        const current = requireLoaded();
+        return persist(transform({ ...current, locale, updatedAt: now() }));
+      });
+    },
+  };
 }
 
 async function loadRepositoryState(

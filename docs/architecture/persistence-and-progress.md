@@ -29,16 +29,25 @@ type SaveGameV1 = {
   currentMission?: {
     missionId: string;
     completedStepIds: string[];
-    stepState?: Record<string, unknown>;
+    stepState?:
+      | { interaction: 'drag'; stepId: string; placedItemIds: string[] }
+      | { interaction: 'match'; stepId: string; matchedPairIds: string[] }
+      | { interaction: 'tap'; stepId: string; acknowledged: boolean }
+      | { interaction: 'trace'; stepId: string; progress: number }
+      | { interaction: 'wipe'; stepId: string; clearedCellIds: string[] };
   };
 };
 ```
 
-The concrete persisted format must further constrain `stepState` by interaction type; arbitrary values are shown only to illustrate resumability.
+`stepState` is deliberately a closed union. Content cannot persist arbitrary executable or
+unbounded values in the save.
 
 ## Storage
 
-Use a repository interface with an IndexedDB implementation and an in-memory implementation for tests. Local storage may hold only a small bootstrap/settings hint, not the authoritative save.
+Use a repository interface with typed `load`, `transaction`, `replace`, and `reset` operations, an
+IndexedDB implementation, and a deterministic in-memory implementation for tests. Writes are
+serialized so concurrent callers cannot base changes on the same stale snapshot. Local storage may
+hold only a small bootstrap/settings hint, not the authoritative save.
 
 ## Commit boundaries
 

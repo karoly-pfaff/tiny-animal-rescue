@@ -10,6 +10,51 @@ describe('save game schema', () => {
     expect(migrateSaveGame(save, timestamp)).toEqual({ save, status: 'ready' });
   });
 
+  it.each([
+    { interaction: 'drag', placedItemIds: ['ladder'], stepId: 'place-ladder' },
+    { interaction: 'match', matchedPairIds: ['blanket'], stepId: 'match-blanket' },
+    { acknowledged: true, interaction: 'tap', stepId: 'greet-mimi' },
+    { interaction: 'trace', progress: 0.5, stepId: 'trace-path' },
+    { clearedCellIds: ['0-0'], interaction: 'wipe', stepId: 'wipe-mud' },
+  ])('accepts bounded resumable $interaction state', (stepState) => {
+    const save = {
+      ...createEmptySave('hu', timestamp),
+      currentMission: {
+        completedStepIds: ['intro'],
+        missionId: 'mission-id',
+        stepState,
+      },
+    };
+
+    expect(migrateSaveGame(save, timestamp)).toEqual({ save, status: 'ready' });
+  });
+
+  it.each([
+    { interaction: 'trace', progress: 2, stepId: 'trace-path' },
+    { interaction: 'wipe', stepId: 'wipe-mud' },
+    { interaction: 'custom', payload: {}, stepId: 'run-code' },
+    { acknowledged: true, interaction: 'tap', payload: {}, stepId: 'greet-mimi' },
+    { interaction: '__proto__', stepId: 'unsafe' },
+    { interaction: 'constructor', stepId: 'unsafe' },
+    { interaction: 'toString', stepId: 'unsafe' },
+  ])('rejects invalid or executable resumable state', (stepState) => {
+    const save = {
+      ...createEmptySave('hu', timestamp),
+      currentMission: { completedStepIds: [], missionId: 'mission-id', stepState },
+    };
+
+    expect(migrateSaveGame(save, timestamp)).toBeNull();
+  });
+
+  it('rejects undeclared current-mission fields', () => {
+    const save = {
+      ...createEmptySave('hu', timestamp),
+      currentMission: { completedStepIds: [], missionId: 'mission-id', payload: {} },
+    };
+
+    expect(migrateSaveGame(save, timestamp)).toBeNull();
+  });
+
   it('migrates version zero deterministically', () => {
     const result = migrateSaveGame(
       {

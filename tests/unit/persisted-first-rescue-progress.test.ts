@@ -12,13 +12,15 @@ describe('persisted first rescue progress adapter', () => {
       unlockedResidentIds: ['mimi-kitten'],
       worldFlags: ['mimi-rescued'],
     };
-    const update = vi.fn((_locale, transform: (current: SaveGameV1) => SaveGameV1) => {
+    const transaction = vi.fn((_locale, transform: (current: SaveGameV1) => SaveGameV1) => {
       save = transform(save);
       return Promise.resolve(save);
     });
     const store = createPersistedFirstRescueProgressStore({
       load: () => Promise.resolve({ save, status: 'ready' }),
-      update,
+      replace: vi.fn(),
+      reset: vi.fn(),
+      transaction,
     });
 
     expect(await store.load('en')).toBe('ready');
@@ -28,6 +30,6 @@ describe('persisted first rescue progress adapter', () => {
     expect(save.completedMissionIds).toEqual(['garden-kitten-tree']);
     expect(save.unlockedResidentIds).toEqual(['mimi-kitten']);
     expect(save.worldFlags).toEqual(['mimi-rescued']);
-    expect(update).toHaveBeenCalledTimes(2);
+    expect(transaction).toHaveBeenCalledTimes(2);
   });
 });

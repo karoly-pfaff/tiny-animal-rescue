@@ -1,8 +1,10 @@
 import type { Locale } from '../i18n/localization';
+import { isPersistedCurrentMission, type PersistedCurrentMission } from './persisted-mission-state';
 
 export type SaveGameV1 = Readonly<{
   completedMissionIds: readonly string[];
   createdAt: string;
+  currentMission?: PersistedCurrentMission;
   locale: Locale;
   schemaVersion: 1;
   settings: Readonly<{
@@ -115,7 +117,11 @@ function isSaveGameV0(value: Record<string, unknown>): value is SaveGameV0 {
 }
 
 function isSaveGameV1(value: Record<string, unknown>): value is SaveGameV1 {
-  return hasValidSaveMetadata(value) && hasValidProgress(value);
+  return (
+    hasValidSaveMetadata(value) &&
+    hasValidProgress(value) &&
+    (value['currentMission'] === undefined || isPersistedCurrentMission(value['currentMission']))
+  );
 }
 
 function hasValidProgress(value: Record<string, unknown>): boolean {
