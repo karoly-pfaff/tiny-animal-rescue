@@ -55,6 +55,7 @@ describe('first rescue screen accessibility', () => {
       key="shelter"
       content={testFirstRescueContent}
       locale="en"
+      narrationService={{ speak: vi.fn(), stop: vi.fn() }}
       onMap={vi.fn()}
       progress={{
         completedMissionIds: ['garden-kitten-tree'],

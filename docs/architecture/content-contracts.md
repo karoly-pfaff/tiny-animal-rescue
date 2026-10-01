@@ -130,6 +130,15 @@ shape-and-silhouette pairs and audio cues. Location and Shelter labels are resol
 pack's localization documents at runtime. Omission remains the contract-version-1 default for
 expansion content that does not add a map landmark.
 
+Shelter-area records may declare a non-negative `navigationOrder`. The runtime sorts declared areas
+by that value and then by stable ID, so authored swipe and arrow order does not depend on filesystem
+or discovery order. Omitted values sort after every explicit value and then by stable ID; this is the
+contract-version-1 compatibility default. Each area owns one text-free background. The three base
+areas have capacity four; future packs may add a suitable area or explicitly extend capacity as
+required by ADR-0004. Only unlocked residents are rendered; unused capacity remains natural scene
+space and is never shown as a lock, silhouette, or future obligation. The base pack declares Indoor
+Room, Garden, and Pondside in that order.
+
 ## Mission record
 
 ```ts
@@ -293,7 +302,7 @@ Every key used by a record must exist in each locale declared by the pack. Base 
 
 In addition to schema validation, CI verifies:
 
-- unique IDs across the assembled registry
+- unique IDs across every record kind in the assembled registry
 - all references resolve
 - every own-pack record reference is unqualified and every qualified record reference names a
   declared dependency and the record's actual owner pack

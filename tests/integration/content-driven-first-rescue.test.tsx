@@ -229,14 +229,27 @@ describe('content-driven first Rescue runtime', () => {
       unlockedResidentIds: [content.animal.id],
       worldFlags: [],
     };
+    const narrationService = { speak: vi.fn(), stop: vi.fn() };
     const shelter = render(
-      <ShelterScreen content={content} locale="en" onMap={vi.fn()} progress={progress} />,
+      <ShelterScreen
+        content={content}
+        locale="en"
+        narrationService={narrationService}
+        onMap={vi.fn()}
+        progress={progress}
+      />,
     );
     const englishResident = screen.getByRole('button', { name: 'Give Poppy a gentle pat' });
     fireEvent.click(englishResident);
     expect(screen.getByText('Poppy purrs happily.')).toBeVisible();
     shelter.rerender(
-      <ShelterScreen content={content} locale="hu" onMap={vi.fn()} progress={progress} />,
+      <ShelterScreen
+        content={content}
+        locale="hu"
+        narrationService={narrationService}
+        onMap={vi.fn()}
+        progress={progress}
+      />,
     );
     const hungarianResident = screen.getByRole('button', { name: 'Simogasd meg Poppyt' });
     fireEvent.click(hungarianResident);

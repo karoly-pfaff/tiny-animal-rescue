@@ -62,9 +62,9 @@
       "energy": 2
     },
     {
-      "id": "voice.shelter.garden.name",
+      "id": "voice.shelter.shelter-garden.name",
       "group": "location",
-      "text": "Shelter Garden",
+      "text": "Garden",
       "energy": 2
     },
     { "id": "voice.shelter.pondside.name", "group": "location", "text": "Pondside", "energy": 2 },

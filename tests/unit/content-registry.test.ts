@@ -5,7 +5,10 @@ import {
   type ContentPackSource,
 } from '../../sources/content/content-registry';
 import { normalizePackManifest } from '../../sources/content/pack-contract';
-import type { LocationRecord } from '../../sources/content/world-content-contracts';
+import type {
+  LocationRecord,
+  ShelterAreaRecord,
+} from '../../sources/content/world-content-contracts';
 
 describe('content registry assembly', () => {
   it('orders packs deterministically after their dependencies', () => {
@@ -33,7 +36,7 @@ describe('content registry assembly', () => {
     ).toThrow(/base pack cannot depend/u);
   });
 
-  it('rejects duplicate pack and global record IDs', () => {
+  it('rejects duplicate pack IDs and global record IDs', () => {
     expect(() => assembleContentRegistry([packSource('base'), packSource('base')])).toThrow(
       /Duplicate pack ID: base/u,
     );
@@ -43,6 +46,21 @@ describe('content registry assembly', () => {
         packSource('winter-rescue', ['base'], 'shared-id'),
       ]),
     ).toThrow(/Duplicate global content ID shared-id/u);
+  });
+
+  it('rejects a record ID reused by another record kind', () => {
+    const base = packSource('base', [], 'garden');
+    expect(() =>
+      assembleContentRegistry([
+        {
+          ...base,
+          records: {
+            ...base.records,
+            shelterAreas: [shelterArea('garden')],
+          },
+        },
+      ]),
+    ).toThrow(/Duplicate global content ID garden/u);
   });
 
   it('accepts prototype-named pack IDs and resolves them as dependencies', () => {
@@ -110,5 +128,14 @@ function location(id: string): LocationRecord {
       mapBackground: `images/map/${id}.png`,
       missionBackground: `images/missions/${id}.png`,
     },
+  };
+}
+
+function shelterArea(id: string): ShelterAreaRecord {
+  return {
+    id,
+    assets: { background: `images/shelter/${id}.png` },
+    capacity: 4,
+    nameKey: `shelter-area.${id}.name`,
   };
 }

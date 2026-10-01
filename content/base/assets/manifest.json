@@ -273,6 +273,40 @@
       "licenseStatus": "pending-production",
       "provenanceStatus": "pending-production",
       "delivery": "r2-pending"
+    },
+    {
+      "id": "garden-shelter-background",
+      "category": "image",
+      "objectKey": "images/shelter/garden.png",
+      "role": "garden-shelter-background",
+      "width": 1448,
+      "height": 1086,
+      "transparent": false,
+      "mediaType": "image/png",
+      "promptRecord": "prompts/images/pending/epic-005/garden-shelter-background.md",
+      "classification": "production-safe",
+      "qaStatus": "not-produced",
+      "ownership": "base",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production",
+      "delivery": "r2-pending"
+    },
+    {
+      "id": "pondside-shelter-background",
+      "category": "image",
+      "objectKey": "images/shelter/pondside.png",
+      "role": "pondside-shelter-background",
+      "width": 1448,
+      "height": 1086,
+      "transparent": false,
+      "mediaType": "image/png",
+      "promptRecord": "prompts/images/pending/epic-005/pondside-shelter-background.md",
+      "classification": "production-safe",
+      "qaStatus": "not-produced",
+      "ownership": "base",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production",
+      "delivery": "r2-pending"
     }
   ]
 }

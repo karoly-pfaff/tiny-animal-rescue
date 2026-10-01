@@ -36,14 +36,14 @@ export function ShelterResident({ assetUrl, happyText, name, tapLabel }: Shelter
     <>
       <button
         aria-label={tapLabel}
-        className={`shelter-mimi${happy ? ' is-happy' : ''}`}
+        className={`shelter-resident${happy ? ' is-happy' : ''}`}
         onClick={react}
         type="button"
       >
         {assetUrl === null ? (
-          <span className="shelter-mimi-face" aria-hidden="true" />
+          <span className="shelter-resident-face" aria-hidden="true" />
         ) : (
-          <img className="shelter-mimi-art" src={assetUrl} alt="" aria-hidden="true" />
+          <img className="shelter-resident-art" src={assetUrl} alt="" aria-hidden="true" />
         )}
         <span>{name}</span>
       </button>

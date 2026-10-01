@@ -120,6 +120,13 @@ await withFixtureRoot(async (root) => {
   await assert.rejects(discoverContentPacks(root, validators), /Duplicate global content ID/u);
 });
 
+await withFixtureRoot(async (root) => {
+  await writePack(root, 'typed-ids', validManifest('typed-ids'));
+  await writeRecord(root, 'typed-ids', 'locations', { id: 'garden' });
+  await writeRecord(root, 'typed-ids', 'shelter-areas', { id: 'garden' });
+  await assert.rejects(discoverContentPacks(root, validators), /Duplicate global content ID/u);
+});
+
 console.log(
   `Content discovery fixtures rejected ${String(invalidDirectories.length)} unsafe directory form(s), directory/manifest drift, missing dependencies, and duplicate IDs.`,
 );

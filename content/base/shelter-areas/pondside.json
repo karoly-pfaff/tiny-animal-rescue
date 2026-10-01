@@ -1,0 +1,9 @@
+{
+  "id": "pondside",
+  "nameKey": "shelter-area.pondside.name",
+  "capacity": 4,
+  "navigationOrder": 2,
+  "assets": {
+    "background": "images/shelter/pondside.png"
+  }
+}

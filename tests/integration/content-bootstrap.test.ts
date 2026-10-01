@@ -16,7 +16,7 @@ describe('bundled content bootstrap', () => {
       locations: 'locations',
       shelterAreas: 'shelter-areas',
     });
-    expect(Object.keys(bundledContentRegistry.assets)).toHaveLength(15);
+    expect(Object.keys(bundledContentRegistry.assets)).toHaveLength(17);
     expect(bundledContentRegistry.assets['start-background']?.objectKey).toBe(
       'images/start/welcome-garden.png',
     );
@@ -30,6 +30,11 @@ describe('bundled content bootstrap', () => {
       'pond',
     ]);
     expect(bundledContentRegistry.missions['garden-kitten-tree']?.type).toBe('rescue');
+    expect(Object.keys(bundledContentRegistry.shelterAreas)).toEqual([
+      'indoor-room',
+      'pondside',
+      'shelter-garden',
+    ]);
     expect(bundledContentRegistry.shelterAreas['indoor-room']?.capacity).toBe(4);
     expect(
       bundledContentRegistry.packs['base']?.records.localizations['en']?.[

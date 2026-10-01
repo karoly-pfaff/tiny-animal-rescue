@@ -270,6 +270,13 @@ describe('content contracts', () => {
     }
   });
 
+  it('allows expansion capacity and requires a non-negative navigation order', () => {
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, capacity: 5 })).toBe(true);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, capacity: 13 })).toBe(false);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, navigationOrder: -1 })).toBe(false);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, navigationOrder: 0 })).toBe(true);
+  });
+
   it('rejects invalid values from every enum family', () => {
     const cases = [
       [packSchema, { ...packExample, locales: ['de'] }],

@@ -25,6 +25,17 @@ describe('first rescue narration resolver', () => {
     expect(
       resolveFirstRescueNarration('voice.mission.garden-kitten-tree.step.place-ladder', 'hu'),
     ).toBeNull();
+    expect(resolveFirstRescueNarration('voice.shelter.shelter-garden.name', 'en')).toBeNull();
+    expect(resolveFirstRescueNarration('voice.shelter.winter-room.name', 'en')).toBeNull();
+    expect(resolveFirstRescueNarration('voice.resident.mimi-kitten.name', 'hu')).toBeNull();
+    expect(resolveFirstRescueNarration('voice.resident.winter-kitten.name', 'en')).toBeNull();
+  });
+
+  it('keeps failing closed for unknown non-resident production cues', () => {
+    vi.stubEnv('VITE_MATERIALIZED_ASSETS', 'true');
+    expect(() => resolveFirstRescueNarration('voice.mission.unknown.success', 'en')).toThrow(
+      /Missing first-rescue voice asset/u,
+    );
   });
 
   it('fails closed instead of treating a configured value as a remote asset base', () => {

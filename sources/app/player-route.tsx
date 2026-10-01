@@ -28,7 +28,7 @@ import {
   selectMissionMapLocationId,
 } from './mission-route-selection';
 import { missionPath, resolveRoute } from './routes';
-import { ShelterScreen } from './shelter-screen';
+import { ShelterRoute } from './shelter-route';
 
 type PlayerRouteProps = Readonly<{
   effectService: EffectService;
@@ -66,16 +66,7 @@ export function PlayerRoute(props: PlayerRouteProps) {
     return <Celebration {...props} />;
   }
   if (props.route.id === 'shelter') {
-    return (
-      <ShelterScreen
-        content={props.firstRescueContent}
-        locale={props.locale}
-        onMap={() => {
-          props.onNavigate('/map');
-        }}
-        progress={props.firstRescueProgressStore.read()}
-      />
-    );
+    return <ShelterRoute {...props} />;
   }
   return <FoundationScreen locale={props.locale} route={props.route} />;
 }

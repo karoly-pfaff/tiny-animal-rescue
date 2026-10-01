@@ -36,11 +36,11 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S04 — Three shelter areas
 
-- [ ] Indoor Room, Garden, and Pondside load from content.
-- [ ] Swipe and large arrows navigate areas.
-- [ ] The current area is announced visually and, when requested, audibly.
-- [ ] Each area renders at most four residents with non-overlapping hit regions.
-- [ ] Empty slots are visually natural, not shown as locked silhouettes.
+- [x] Indoor Room, Garden, and Pondside load from content.
+- [x] Swipe and large arrows navigate areas.
+- [x] The current area is announced visually and, when requested, audibly.
+- [x] Each area renders at most four residents with non-overlapping hit regions.
+- [x] Empty slots are visually natural, not shown as locked silhouettes.
 
 ### E005-S05 — Resident presentation and reactions
 

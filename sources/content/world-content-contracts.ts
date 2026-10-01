@@ -52,6 +52,7 @@ export type ShelterAreaRecord = Readonly<{
   id: string;
   nameKey: string;
   capacity: number;
+  navigationOrder?: number;
   mapLabelKey?: string;
   mapPresentation?: MapLandmarkPresentation;
   assets: Readonly<{

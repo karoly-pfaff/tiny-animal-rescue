@@ -24,6 +24,27 @@
         "hu": "Mimi biztonságban van!",
         "en": "Mimi is safe!"
       }
+    },
+    {
+      "cue": "voice.shelter.indoor-room.name",
+      "fallbackText": {
+        "hu": "Belső szoba",
+        "en": "Indoor Room"
+      }
+    },
+    {
+      "cue": "voice.shelter.shelter-garden.name",
+      "fallbackText": {
+        "hu": "Kert",
+        "en": "Garden"
+      }
+    },
+    {
+      "cue": "voice.shelter.pondside.name",
+      "fallbackText": {
+        "hu": "Tópart",
+        "en": "Pondside"
+      }
     }
   ]
 }

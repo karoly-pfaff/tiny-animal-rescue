@@ -4,7 +4,7 @@
 
 The authoritative localized narration index is the [voice catalog](voice/catalog.md). It contains 115
 semantic lines per locale with identical HU/EN IDs and ordering. The machine-readable inventories are
-under `voice/scripts/`; the first-rescue runtime subset is registered in
+under `voice/scripts/`; the currently integrated runtime subset is registered in
 `content/base/assets/voice-manifest.json`.
 
 ## Music

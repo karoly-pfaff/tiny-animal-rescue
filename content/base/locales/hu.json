@@ -17,5 +17,7 @@
   "mission.garden-kitten-tree.success": "Mimi biztonságban van!",
   "mission.garden-kitten-tree.title": "Mimi a fán",
   "pack.base.title": "Kis Állatmentők",
-  "shelter-area.indoor-room.name": "Belső szoba"
+  "shelter-area.garden.name": "Kert",
+  "shelter-area.indoor-room.name": "Belső szoba",
+  "shelter-area.pondside.name": "Tópart"
 }

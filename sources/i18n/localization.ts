@@ -27,6 +27,9 @@ type Strings = Readonly<{
   parentSettings: string;
   parentRecovery: string;
   play: string;
+  nextShelterArea: string;
+  previousShelterArea: string;
+  repeatAreaName: string;
   repeatPrompt: string;
   rewardSaveError: string;
   saveCorrupt: string;
@@ -63,6 +66,9 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     parentSettings: 'Szülői beállítások',
     parentRecovery: 'Felnőtt segítsége szükséges',
     play: 'Játék',
+    nextShelterArea: 'Következő menhelyterület',
+    previousShelterArea: 'Előző menhelyterület',
+    repeatAreaName: 'Terület nevének meghallgatása',
     repeatPrompt: 'Hallgasd újra',
     rewardSaveError: 'A mentés most nem sikerült. Érintsd meg újra Mimit.',
     saveCorrupt:
@@ -105,6 +111,9 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     parentSettings: 'Parent settings',
     parentRecovery: 'A grown-up is needed',
     play: 'Play',
+    nextShelterArea: 'Next shelter area',
+    previousShelterArea: 'Previous shelter area',
+    repeatAreaName: 'Hear area name',
     repeatPrompt: 'Hear again',
     rewardSaveError: 'The rescue could not be saved yet. Tap Mimi again.',
     saveCorrupt:

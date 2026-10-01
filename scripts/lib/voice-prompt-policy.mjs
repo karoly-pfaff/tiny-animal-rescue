@@ -1,7 +1,10 @@
-const firstRescueVoiceCues = Object.freeze([
+const runtimeVoiceCues = Object.freeze([
   'voice.mission.garden-kitten-tree.step.place-ladder',
   'voice.mission.garden-kitten-tree.step.help-mimi-down',
   'voice.mission.garden-kitten-tree.success',
+  'voice.shelter.indoor-room.name',
+  'voice.shelter.shelter-garden.name',
+  'voice.shelter.pondside.name',
 ]);
 
 const locales = Object.freeze(['hu', 'en']);
@@ -283,10 +286,10 @@ export function validateRuntimeVoiceManifest(manifest, inventories) {
   if (new Set(cues).size !== cues.length)
     findings.push('Runtime voice manifest contains duplicate cues.');
   if (
-    cues.length !== firstRescueVoiceCues.length ||
-    firstRescueVoiceCues.some((cue) => !cues.includes(cue))
+    cues.length !== runtimeVoiceCues.length ||
+    runtimeVoiceCues.some((cue) => !cues.includes(cue))
   ) {
-    findings.push('Runtime voice manifest must contain exactly the first-rescue required cues.');
+    findings.push('Runtime voice manifest must contain exactly the currently integrated cues.');
   }
   const linesByLocale = { en: lineMap(inventories.en), hu: lineMap(inventories.hu) };
   for (const asset of assets) findings.push(...validateRuntimeAsset(asset, linesByLocale));

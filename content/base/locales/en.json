@@ -17,5 +17,7 @@
   "mission.garden-kitten-tree.success": "Mimi is safe!",
   "mission.garden-kitten-tree.title": "Mimi in the tree",
   "pack.base.title": "Tiny Rescue",
-  "shelter-area.indoor-room.name": "Indoor Room"
+  "shelter-area.garden.name": "Garden",
+  "shelter-area.indoor-room.name": "Indoor Room",
+  "shelter-area.pondside.name": "Pondside"
 }
