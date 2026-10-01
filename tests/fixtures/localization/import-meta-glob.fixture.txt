@@ -2,3 +2,12 @@ const modules = import.meta.glob('../../content/*/pack.json', {
   eager: true,
   import: 'default',
 });
+
+const records = import.meta.glob(
+  [
+    '../../content/*/**/*.json',
+    '!../../content/*/assets/**',
+    '!../../content/*/locales/**',
+  ],
+  { eager: true, import: 'default' },
+);

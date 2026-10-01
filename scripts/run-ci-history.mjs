@@ -9,7 +9,7 @@ import {
 import { commitsBetween, git, isAncestor, tagRevisions } from './lib/history-repository.mjs';
 import { validateHistoryPolicy } from './lib/history-policy.mjs';
 import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
-import { verifyQualifiedMedia } from './lib/media-qualification.mjs';
+import { assetInventoryDigest, verifyQualifiedMedia } from './lib/media-qualification.mjs';
 
 function requiredEnvironment(name) {
   const value = process.env[name];
@@ -96,6 +96,11 @@ function requiredTaggedNumber(message, label) {
   return value;
 }
 
+function optionalInspectionNumber(message) {
+  if (/^Inspection-Comment: none$/mu.test(message)) return undefined;
+  return requiredTaggedNumber(message, 'Inspection-Comment');
+}
+
 async function tagMode() {
   const tagName = event.ref.replace('refs/tags/', '');
   const message = git(['for-each-ref', `refs/tags/${tagName}`, '--format=%(contents)']).trim();
@@ -104,23 +109,36 @@ async function tagMode() {
   const input = await pullRequestInput(pullRequest, 'tag');
   const approvalCommentId = requiredTaggedNumber(message, 'Approval-Comment');
   const mergeApprovalCommentId = requiredTaggedNumber(message, 'Merge-Approval-Comment');
-  const inspectionCommentId = requiredTaggedNumber(message, 'Inspection-Comment');
+  const inspectionCommentId = optionalInspectionNumber(message);
+  if (input.item.requiresInspection !== (inspectionCommentId !== undefined)) {
+    throw new Error('Tag inspection record does not match the work-item policy.');
+  }
   const [approval, mergeApproval, inspection] = await Promise.all([
     github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
     github(`/issues/comments/${mergeApprovalCommentId}`).then(approvalRecordFromGithub),
-    github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
-      inspectionRecordFromGithub(comment, { github, repository }),
-    ),
+    inspectionCommentId === undefined
+      ? undefined
+      : github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
+          inspectionRecordFromGithub(comment, { github, repository }),
+        ),
   ]);
   const { targetSha, policySha } = tagRevisions(tagName);
-  const evidence = await verifyQualifiedMedia({
-    source: '.',
-    qualification: 'build/tag-qualification',
-    expectedHeadSha: pullRequest.head.sha,
-    expectedPolicySha: policySha,
-    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
-  });
-  if (inspection.artifact?.name !== evidence.artifactName) {
+  const evidence =
+    inspectionCommentId === undefined
+      ? {
+          artifactDigest: `sha256:${
+            JSON.parse(await readFile('build/reports/artifact-integrity.json', 'utf8')).digest
+          }`,
+          assetInventoryDigest: await assetInventoryDigest('.'),
+        }
+      : await verifyQualifiedMedia({
+          source: '.',
+          qualification: 'build/tag-qualification',
+          expectedHeadSha: pullRequest.head.sha,
+          expectedPolicySha: policySha,
+          artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
+        });
+  if (inspection !== undefined && inspection.artifact?.name !== evidence.artifactName) {
     throw new Error('Downloaded tag qualification differs from the inspection provider artifact.');
   }
   const [inspectedCommit, tagCommit] = await Promise.all([

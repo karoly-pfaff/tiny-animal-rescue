@@ -26,9 +26,12 @@ declares the exact branch, target/related version, Conventional Commit type, agg
 intent, live-inspection requirement, and exact journey list when applicable. That branch contains one
 canonical commit scoped to the maintenance ID and reaches `main` as one squash.
 Except for the one-time governance bootstrap documented in repository governance, maintenance policy
-is predeclared on protected `main` before implementation begins. The trusted merge job resolves that
-base-branch declaration, so candidate code cannot downgrade its release, gate, type, or inspection
-requirements.
+is authored in the candidate backlog item before implementation begins. Protected-`main` parser code
+reads that declaration from a read-only candidate checkout only after the checkout commit, provider PR
+head, and validation-evidence head are proven identical. Candidate code never executes with merge
+credentials. A fresh independent audit, exact-head checks, and the owner's immutable merge approval
+must reject an invalid attempt to classify player-visible work as inspection-free. Under ADR-0014,
+the agent may materialize that provider record from a direct owner instruction.
 
 ## Commit-message standard
 
@@ -174,7 +177,8 @@ footer. Merge automation appends the immutable merge-approval comment ID. The an
 repeats that crosswalk and records the merge-approval, live-inspection, and distinct tag-approval
 comment IDs, resulting squash SHA, artifact digest, and asset-inventory digest. These
 Git-native and provider records preserve traceability without treating a green build as publication
-authority.
+authority. Their distinct identities do not require duplicate owner gestures: one direct instruction
+may authorize both operations when it unambiguously says so.
 
 Before merge:
 
@@ -182,21 +186,27 @@ Before merge:
 2. review the entire epic diff against current `main`;
 3. run a clean frozen install and the applicable aggregate gate;
 4. complete the epic-level fresh-context audit, disposition every finding, and rerun affected gates;
-5. materialize every required production asset, open the exact production preview, complete and record
-   the ADR-0012 live product inspection, and resolve every finding;
+5. for an epic or player-visible patch, materialize every required production asset, run
+   `validate:media`, open the exact production preview, complete and record the ADR-0012 live product
+   inspection, and resolve every finding; a non-player-visible PATCH records `Inspection-Comment:
+none` and binds a clean rebuilt artifact instead;
 6. verify milestone/version/release evidence and all required status checks on the final branch head;
 7. validate the exact proposed PR title and deterministic squash body/crosswalk;
-8. present the complete candidate evidence and obtain the user's explicit approval to merge only;
-9. only after that approval, let repository merge automation perform the squash with those exact
+8. present the complete candidate evidence and obtain the user's explicit approval; the instruction
+   may cover merge only or both merge and tag publication;
+9. only after that approval and its agent-materialized provider record, let repository merge
+   automation perform the squash with those exact
    validated inputs;
 10. verify the resulting `main` subject/body, squash SHA, tree identity, and post-merge history check;
-11. verify the squash tree equals the inspected head, independently verify the immutable qualified
-    build/receipt, and wait for the complete trusted `main` check suite on that exact squash SHA;
+11. verify the squash tree equals the approved head, independently verify the immutable qualified
+    build/receipt or non-inspected rebuild evidence, and wait for the complete trusted `main` check
+    suite on that exact squash SHA;
 12. generate and lint the now-complete annotated-tag message including the inspection identity and
-    digests, obtain a separate explicit tag approval tied to the squash SHA and both digests, then use
+    digests, materialize a distinct tag-approval record tied to the squash SHA and both digests when
+    the direct owner instruction covers publication, then use
     the protected tag-publication workflow's environment-scoped deploy key to re-download and
-    independently verify the exact retained qualified artifact, then create the tag without
-    substituting a clean-checkout fallback build. Verify its remote
+    independently verify the exact retained qualified artifact, or rebuild and compare the artifact
+    for a non-inspected PATCH, then create the tag. Verify its remote
     identity and tag-triggered checks before deleting the epic branch.
 
 Interactive merge-message editing is forbidden. Repository settings allow squash merge only; merge

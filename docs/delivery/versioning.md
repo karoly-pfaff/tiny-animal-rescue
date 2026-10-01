@@ -90,9 +90,10 @@ breaking even when a field becomes "more optional."
   Settings reads that value through build metadata rather than duplicating a literal.
 - The bundled base pack version and release notes change in the same release pull request.
 - A milestone tag is annotated and named `v<MAJOR>.<MINOR>.<PATCH>`, for example `v0.4.0`. Protected
-  `v*` tags are created only by the validated tag-publication workflow after a separate owner approval
-  tied to the squash SHA, live-inspection comment, version, artifact digest, and asset-inventory
-  digest.
+  `v*` tags are created only by the validated tag-publication workflow after a distinct exact owner
+  authorization record tied to the squash SHA, live-inspection comment, version, artifact digest, and
+  asset-inventory digest. Under ADR-0014, the agent may materialize that record from a direct owner
+  instruction that covers tag publication.
 - Tags are immutable. A bad release is superseded by a new patch; tags and published artifacts are
   never replaced in place.
 - The release change includes the epic exit evidence, successful applicable aggregate gate
@@ -100,13 +101,18 @@ breaking even when a field becomes "more optional."
   verified asset-materialization receipt where production media is in scope, the ADR-0012 live
   production-preview inspection record, migration notes, dependency/license changes, and known
   limitations.
+- A non-player-visible governance PATCH explicitly declares that classification in its backlog item.
+  It does not fabricate ADR-0012 evidence: merge and tag publication bind clean rebuilt artifact and
+  asset-inventory digests instead. Every epic and player-visible patch still requires the retained
+  media qualification and live inspection.
 - Tag preparation consumes the exact retained media-qualified artifact named for the inspected head
   and both digests, proves its trusted workflow/receipt identity, validates the squash message/tree,
   and waits for the newest canonical exact-squash `main` workflow run. Tag-triggered CI downloads and
   independently verifies the same retained qualification artifact; it never substitutes a clean
   source-only fallback build. It is confirmation, never the first enforcement of those conditions.
 - Passing checks and inspection qualify a candidate but do not authorize publication. The user must
-  explicitly approve the merge and immutable tag before either action occurs.
+  explicitly approve the merge and immutable tag before either action occurs; one unambiguous direct
+  instruction may approve both, while their provider records and workflow runs remain distinct.
 - Version numbers are not bumped speculatively at epic start. Development builds derive the upcoming
   target from the backlog. After every story is behaviorally qualified, the metadata-only closure
   commit may stage the target as a candidate for final-head validation; this does not advance the

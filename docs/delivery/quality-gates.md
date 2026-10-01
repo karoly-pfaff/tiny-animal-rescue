@@ -143,6 +143,14 @@ never become Git inputs or direct browser downloads.
   artifact. Unexpected console errors and unhandled rejections fail the run.
 - Visual baselines are reviewed images, not auto-approved output. A baseline update belongs in the
   same change as the intentional UI change and names the affected locale and viewport.
+- Media-complete baselines use a reviewed, downsampled decoded-pixel RGB signature, never encoded PNG
+  byte hashes. Full-size captures remain retained test artifacts so R2 media is not copied into Git.
+  One signature exists per state and viewport; multiple accepted digests and non-empty-only exceptions
+  are forbidden. After `npm run validate:media`, inspect the retained full-size images under
+  `build/reports/playwright/test-results/`, then run `npm run generate:media-signatures`. The generator
+  accepts only the exact 40-contract screenshot set produced by the current visual matrix. A targeted
+  reviewed update may instead provide both `--screenshot` and `--contract`. Signature generation is an
+  explicit reviewed command and never runs in CI.
 - Automated accessibility checks run in component and Playwright layers on every pull request. They
   catch semantic/ARIA/focus defects but never replace the motor, audio/visual, sensory, reading, and
   observed-child checks required by this product.
@@ -160,7 +168,9 @@ materialization handoff. The finalizer reconstructs the receipt from tracked loc
 candidate code. It independently detects and measures every original and packaged binary, scans both
 copies for forbidden watermark/attribution metadata, injects the trusted bytes at their canonical
 pack-local paths, rejects remote production-media URLs, and requires the bundle to reference every
-locked object. The product/base-pack version must equal the trusted backlog target before merge.
+locked object. Application-owned generated assets outside pack asset trees are allowed only when an
+exact production HTML/CSS/JavaScript reference owns them; unreferenced application media still
+fails. The product/base-pack version must equal the trusted backlog target before merge.
 The implementer opens that exact retained build in a real browser and completes the
 backlog-declared journey set in Hungarian and English with mouse and touch input. Inspection covers the complete supported
 viewport matrix (1024x768, 1280x800, 1366x1024, and 768x1024) at full size and checks actual asset
@@ -224,6 +234,7 @@ The root `package.json` provides these stable scripts:
 ```text
 npm run format
 npm run format:check
+npm run generate:media-signatures
 npm run generate:squash
 npm run governance:apply
 npm run lint
@@ -258,6 +269,7 @@ npm run build
 npm run test:artifact
 npm run validate:quick
 npm run validate:full
+npm run validate:media
 npm run validate:release
 ```
 
@@ -276,6 +288,11 @@ regression, and built-artifact inspection.
 `validate:full` remains an automated aggregate. Passing it does not perform or imply the live epic
 product inspection; that separately recorded gate must also pass before an epic or player-visible
 patch is presented for merge approval.
+
+`validate:media` is the local preflight for an already materialized media-complete candidate. It runs
+the production visual suite and artifact scan, then verifies packaged lock objects and runtime asset
+closure with the same library used by hosted finalization. It does not mint or replace the protected
+R2 receipt and therefore cannot satisfy ADR-0012 by itself.
 
 `validate:release` is the M7, M8, M9, and GA-promotion gate: `validate:full` plus
 `test:content:release`, `test:assets:materialized`, SBOM, release metadata, artifact digest, and the
@@ -312,7 +329,10 @@ filters that leave a check absent. Concurrency cancellation may stop an obsolete
 commit for the same change has started its replacement run.
 
 Merge automation additionally requires a provider-backed owner approval whose exact body binds the
-PR number, current head SHA, version, and live-inspection comment. A dedicated GitHub App identity,
+PR number, current head SHA, version, and live-inspection comment. Under ADR-0014, a direct owner
+instruction is the authority and the agent may materialize this exact immutable provider record; one
+instruction may cover both merge and later tag publication when it unambiguously names both. A
+dedicated GitHub App identity,
 not the generic Actions integration, owns the required `authorization` context and is the main
 ruleset's only bypass actor. It executes trusted `main` policy on a fresh protected-environment runner,
 keeps authorization non-successful until its squash finishes, and never exposes its token to candidate
@@ -328,7 +348,8 @@ jobs alone cannot permit a normal merge.
 Protected `v*` tags reject
 direct creation, update, and deletion. Only creation has the
 dedicated release-deploy-key bypass; update and deletion have no bypass. The tag workflow exposes the
-key only in a second owner-reviewed job after unprivileged validation binds the squash SHA, artifact
+key only in a second environment-scoped job after unprivileged validation binds the squash SHA,
+artifact
 digest, and asset-inventory digest. Governance fixtures reject absent, stale,
 wrong-user, wrong-head, wrong-PR, failed, incomplete, and unbound inspection or approval evidence.
 
@@ -340,6 +361,12 @@ the successful run URL or equivalent local evidence from a clean checkout.
 A tool/config/schema/CI change that alters what is checked receives the same tests and independent
 audit as production code. It must include a failing fixture or other proof that the gate detects its
 target defect.
+
+Final qualification begins only after the candidate commits, version/release metadata, audit
+dispositions, and deterministic PR crosswalk are complete. Evidence is attached outside the Git tree.
+Two identical failures of an unchanged hosted step end blind retries. If the gate is defective, use
+ADR-0013's separate non-player-visible PATCH lane; do not weaken the epic candidate or manufacture a
+passing result.
 
 A suppression is allowed only when it is narrower and more truthful than changing production design.
 It names the reason, owner, backlog item, and removal milestone. Blanket legacy baselines, percentage

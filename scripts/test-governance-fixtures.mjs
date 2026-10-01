@@ -14,6 +14,7 @@ import { generateSquashMessage, validateHistoryPolicy } from './lib/history-poli
 import { tagRevisions, workItemFromBranch } from './lib/history-repository.mjs';
 import { expectedInspectionBody } from './lib/inspection-policy.mjs';
 import {
+  validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
   validateEvidenceVersion,
   validateMergeCandidate,
@@ -22,6 +23,7 @@ import {
 } from './lib/merge-policy.mjs';
 import { npmProcess } from './lib/npm-process.mjs';
 import {
+  applyFirstRepositoryMutation,
   fetchAllDeployKeys,
   fetchAllRepositorySecrets,
   qualityChecks,
@@ -156,6 +158,7 @@ function fixtureApprovalRecord({
 }
 
 function tagBaseline(input, message) {
+  const inspectionCommentId = input.item.requiresInspection ? 88 : undefined;
   const tag = {
     annotated: true,
     name: `v${input.item.version}`,
@@ -166,7 +169,7 @@ function tagBaseline(input, message) {
     observedArtifactDigest: `sha256:${'4'.repeat(64)}`,
     observedAssetInventoryDigest: `sha256:${'5'.repeat(64)}`,
     treeMatchesInspectedHead: true,
-    inspectionCommentId: 88,
+    inspectionCommentId,
     mergeApprovalCommentId: 98,
     approvalCommentId: 99,
     approver: approvalPolicy.approver,
@@ -196,29 +199,33 @@ function tagBaseline(input, message) {
     targetSha: input.pullRequest.headSha,
     inspectionCommentId: tag.inspectionCommentId,
   });
-  tag.inspection = fixtureInspectionRecord(input, {
-    commentId: tag.inspectionCommentId,
-    pullNumber: input.pullRequest.number,
-    targetSha: input.pullRequest.headSha,
-    version: input.item.version,
-    ownerLogin: approvalPolicy.approver,
-    artifactDigest: tag.artifactDigest,
-    assetInventoryDigest: tag.assetInventoryDigest,
-    repository: tag.repository,
-    requiredLocales: tag.requiredLocales,
-    requiredInputs: tag.requiredInputs,
-    requiredViewports: tag.requiredViewports,
-    requiredJourneys: input.item.inspectionJourneys,
-    artifactNamePrefix: tag.artifactNamePrefix,
-    artifactWorkflowPath: tag.artifactWorkflowPath,
-    artifactWorkflowEvent: tag.artifactWorkflowEvent,
-    artifactWorkflowBranch: tag.artifactWorkflowBranch,
-    artifactWorkflowHeadSha: tag.artifactWorkflowHeadSha,
-  });
+  tag.inspection = input.item.requiresInspection
+    ? fixtureInspectionRecord(input, {
+        commentId: tag.inspectionCommentId,
+        pullNumber: input.pullRequest.number,
+        targetSha: input.pullRequest.headSha,
+        version: input.item.version,
+        ownerLogin: approvalPolicy.approver,
+        artifactDigest: tag.artifactDigest,
+        assetInventoryDigest: tag.assetInventoryDigest,
+        repository: tag.repository,
+        requiredLocales: tag.requiredLocales,
+        requiredInputs: tag.requiredInputs,
+        requiredViewports: tag.requiredViewports,
+        requiredJourneys: input.item.inspectionJourneys,
+        artifactNamePrefix: tag.artifactNamePrefix,
+        artifactWorkflowPath: tag.artifactWorkflowPath,
+        artifactWorkflowEvent: tag.artifactWorkflowEvent,
+        artifactWorkflowBranch: tag.artifactWorkflowBranch,
+        artifactWorkflowHeadSha: tag.artifactWorkflowHeadSha,
+      })
+    : undefined;
   tag.message = [
     message.body,
     `Merge-Approval-Comment: #${tag.mergeApprovalCommentId}`,
-    `Inspection-Comment: #${tag.inspectionCommentId}`,
+    tag.inspectionCommentId === undefined
+      ? 'Inspection-Comment: none'
+      : `Inspection-Comment: #${tag.inspectionCommentId}`,
     `Approval-Comment: #${tag.approvalCommentId}`,
     `Squash: ${tag.squashSha}`,
     `Artifact-Digest: ${tag.artifactDigest}`,
@@ -369,6 +376,42 @@ function record(name, valid, findings) {
     failures.push(`${name}: expected valid=${valid}, got ${findings.join(' | ') || 'valid'}.`);
 }
 
+function repositoryPolicyCandidate() {
+  return {
+    settings: clone(settings),
+    ruleset: clone(ruleset),
+    tagRuleset: clone(tagRuleset),
+    tagImmutabilityRuleset: clone(tagImmutabilityRuleset),
+    workflow,
+    mergeWorkflow,
+    publishWorkflow,
+    qualifyMediaWorkflow,
+    approvalPolicy: clone(approvalPolicy),
+    inspectionPolicy: clone(inspectionPolicy),
+    authorizationPublisher: clone(authorizationPublisher),
+    releasePublisher: clone(releasePublisher),
+    mediaQualification: clone(mediaQualification),
+  };
+}
+
+async function invalidPolicyMutationFindings() {
+  const candidate = repositoryPolicyCandidate();
+  candidate.mediaQualification.requiresManualApproval = false;
+  let mutations = 0;
+  let rejected = false;
+  try {
+    await applyFirstRepositoryMutation(candidate, () => {
+      mutations += 1;
+    });
+  } catch {
+    rejected = true;
+  }
+  return [
+    ...(!rejected ? ['Invalid local governance was not rejected before mutation.'] : []),
+    ...(mutations !== 0 ? [`Invalid local governance caused ${mutations} mutation(s).`] : []),
+  ];
+}
+
 function commitlintCommandFindings(subject) {
   const invocation = npmProcess(['run', 'commitlint:raw', '--', '--verbose']);
   const result = spawnSync(invocation.command, invocation.arguments, {
@@ -501,13 +544,7 @@ function fixtureWorkflowRuns(mutation, checks, expectation) {
 function hostedPublisherEnvironment() {
   return {
     name: releasePublisher.environment,
-    protection_rules: [
-      {
-        type: 'required_reviewers',
-        prevent_self_review: releasePublisher.preventSelfReview,
-        reviewers: [{ type: 'User', reviewer: { login: releasePublisher.requiredReviewer } }],
-      },
-    ],
+    protection_rules: [],
     deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
   };
 }
@@ -558,37 +595,40 @@ async function hostedSecretIsolationFindings(fixture) {
 }
 
 function mergeRecordBaseline(input) {
+  const inspectionCommentId = input.item.requiresInspection ? 88 : undefined;
   const approvalExpectation = {
     operation: 'merge',
     commentId: 99,
     pullNumber: input.pullRequest.number,
     targetSha: input.headSha,
     version: input.item.version,
-    inspectionCommentId: 88,
+    inspectionCommentId,
     approver: approvalPolicy.approver,
   };
   const evidence = {
     artifactDigest: `sha256:${'4'.repeat(64)}`,
     assetInventoryDigest: `sha256:${'5'.repeat(64)}`,
   };
-  const inspectionExpectation = {
-    commentId: approvalExpectation.inspectionCommentId,
-    pullNumber: input.pullRequest.number,
-    targetSha: input.headSha,
-    version: input.item.version,
-    ownerLogin: approvalPolicy.approver,
-    repository: 'karoly-pfaff/tiny-animal-rescue',
-    requiredLocales: inspectionPolicy.requiredLocales,
-    requiredInputs: inspectionPolicy.requiredInputs,
-    requiredViewports: inspectionPolicy.requiredViewports,
-    requiredJourneys: input.item.inspectionJourneys,
-    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
-    artifactWorkflowPath: inspectionPolicy.artifactWorkflowPath,
-    artifactWorkflowEvent: inspectionPolicy.artifactWorkflowEvent,
-    artifactWorkflowBranch: inspectionPolicy.artifactWorkflowBranch,
-    artifactWorkflowHeadSha: 'a'.repeat(40),
-    ...evidence,
-  };
+  const inspectionExpectation = input.item.requiresInspection
+    ? {
+        commentId: approvalExpectation.inspectionCommentId,
+        pullNumber: input.pullRequest.number,
+        targetSha: input.headSha,
+        version: input.item.version,
+        ownerLogin: approvalPolicy.approver,
+        repository: 'karoly-pfaff/tiny-animal-rescue',
+        requiredLocales: inspectionPolicy.requiredLocales,
+        requiredInputs: inspectionPolicy.requiredInputs,
+        requiredViewports: inspectionPolicy.requiredViewports,
+        requiredJourneys: input.item.inspectionJourneys,
+        artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
+        artifactWorkflowPath: inspectionPolicy.artifactWorkflowPath,
+        artifactWorkflowEvent: inspectionPolicy.artifactWorkflowEvent,
+        artifactWorkflowBranch: inspectionPolicy.artifactWorkflowBranch,
+        artifactWorkflowHeadSha: 'a'.repeat(40),
+        ...evidence,
+      }
+    : undefined;
   const approval = {
     id: 99,
     issueNumber: input.pullRequest.number,
@@ -603,7 +643,10 @@ function mergeRecordBaseline(input) {
   return {
     approval,
     approvalExpectation,
-    inspection: fixtureInspectionRecord(input, inspectionExpectation),
+    inspection:
+      inspectionExpectation === undefined
+        ? undefined
+        : fixtureInspectionRecord(input, inspectionExpectation),
     inspectionExpectation,
     evidence,
   };
@@ -845,8 +888,13 @@ function hostedPublisherFindings(fixture) {
   if (fixture.mutation === 'extra-key')
     candidate.keys.push({ title: 'another-write-key', read_only: false, enabled: true });
   if (fixture.mutation === 'missing-secret') candidate.secrets = [];
-  if (fixture.mutation === 'wrong-reviewer')
-    candidate.environment.protection_rules[0].reviewers[0].reviewer.login = 'someone-else';
+  if (fixture.mutation === 'unexpected-reviewer') {
+    candidate.environment.protection_rules.push({
+      type: 'required_reviewers',
+      prevent_self_review: false,
+      reviewers: [{ type: 'User', reviewer: { login: approvalPolicy.approver } }],
+    });
+  }
   return validateHostedReleasePublisher(candidate);
 }
 
@@ -854,15 +902,7 @@ function hostedAuthorizationFindings(fixture) {
   const candidate = {
     environment: {
       name: authorizationPublisher.environment,
-      protection_rules: [
-        {
-          type: 'required_reviewers',
-          prevent_self_review: authorizationPublisher.preventSelfReview,
-          reviewers: [
-            { type: 'User', reviewer: { login: authorizationPublisher.requiredReviewer } },
-          ],
-        },
-      ],
+      protection_rules: [],
       deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
     },
     secrets: [
@@ -874,6 +914,13 @@ function hostedAuthorizationFindings(fixture) {
   if (fixture.mutation === 'missing-private-key') candidate.secrets.pop();
   if (fixture.mutation === 'unprotected-branches')
     candidate.environment.deployment_branch_policy.protected_branches = false;
+  if (fixture.mutation === 'unexpected-reviewer') {
+    candidate.environment.protection_rules.push({
+      type: 'required_reviewers',
+      prevent_self_review: false,
+      reviewers: [{ type: 'User', reviewer: { login: approvalPolicy.approver } }],
+    });
+  }
   return validateHostedAuthorizationPublisher(candidate);
 }
 
@@ -916,7 +963,10 @@ for (const fixture of cases.history) {
   mutateHistory(input, fixture.mutation);
   record(`history/${fixture.name}`, fixture.valid, validateHistoryPolicy(input));
 }
-for (const branch of ['fix/PATCH-001-v0.2.1-asset-evidence-correction']) {
+for (const branch of [
+  'fix/PATCH-001-v0.2.1-asset-evidence-correction',
+  'fix/PATCH-002-v0.3.1-release-governance-repair',
+]) {
   const item = workItemFromBranch(branch);
   for (const mode of ['branch', 'pull-request', 'main']) {
     record(`${item.id}/${mode}`, true, validateHistoryPolicy(maintenanceBaseline(item, mode)));
@@ -969,6 +1019,33 @@ for (const branch of ['fix/PATCH-001-v0.2.1-asset-evidence-correction']) {
     }),
   );
   record(
+    'merge/exact-candidate-checkout',
+    true,
+    validateCandidateCheckoutIdentity({
+      checkoutSha: headSha,
+      pullRequestHeadSha: headSha,
+      evidenceHeadSha: headSha,
+    }),
+  );
+  record(
+    'merge/stale-candidate-checkout',
+    false,
+    validateCandidateCheckoutIdentity({
+      checkoutSha: '4'.repeat(40),
+      pullRequestHeadSha: headSha,
+      evidenceHeadSha: headSha,
+    }),
+  );
+  record(
+    'merge/candidate-evidence-race',
+    false,
+    validateCandidateCheckoutIdentity({
+      checkoutSha: headSha,
+      pullRequestHeadSha: headSha,
+      evidenceHeadSha: '4'.repeat(40),
+    }),
+  );
+  record(
     'merge/racing-provider-snapshot',
     false,
     validateMergeSnapshot({
@@ -1006,25 +1083,55 @@ for (const branch of ['fix/PATCH-001-v0.2.1-asset-evidence-correction']) {
     }),
   );
 }
+{
+  const item = workItemFromBranch('fix/PATCH-002-v0.3.1-release-governance-repair');
+  const input = maintenanceBaseline(item, 'pull-request');
+  const records = mergeRecordBaseline(input);
+  const qualityExpectation = fixtureQualityExpectation(input);
+  const checks = fixtureCheckRuns('none', qualityExpectation);
+  record(
+    'PATCH-002/accept-merge-without-player-inspection',
+    true,
+    validateMergeCandidate(input, checks, {
+      ...records,
+      qualityExpectation,
+      qualityWorkflowRuns: fixtureWorkflowRuns('none', checks, qualityExpectation),
+    }),
+  );
+  records.inspection = fixtureInspectionRecord(historyBaseline('pull-request'), {
+    commentId: 88,
+    pullNumber: input.pullRequest.number,
+    targetSha: input.headSha,
+    version: input.item.version,
+    ownerLogin: approvalPolicy.approver,
+    repository: 'karoly-pfaff/tiny-animal-rescue',
+    requiredLocales: inspectionPolicy.requiredLocales,
+    requiredInputs: inspectionPolicy.requiredInputs,
+    requiredViewports: inspectionPolicy.requiredViewports,
+    requiredJourneys: [],
+    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
+    artifactWorkflowPath: inspectionPolicy.artifactWorkflowPath,
+    artifactWorkflowEvent: inspectionPolicy.artifactWorkflowEvent,
+    artifactWorkflowBranch: inspectionPolicy.artifactWorkflowBranch,
+    artifactWorkflowHeadSha: 'a'.repeat(40),
+    artifactDigest: records.evidence.artifactDigest,
+    assetInventoryDigest: records.evidence.assetInventoryDigest,
+  });
+  record(
+    'PATCH-002/reject-fabricated-player-inspection',
+    false,
+    validateMergeCandidate(input, checks, {
+      ...records,
+      qualityExpectation,
+      qualityWorkflowRuns: fixtureWorkflowRuns('none', checks, qualityExpectation),
+    }),
+  );
+}
 for (const fixture of cases.watermarks) {
   record(`watermark/${fixture.name}`, fixture.valid, validateWatermarkRecord(fixture.record));
 }
 for (const fixture of cases.repository) {
-  const candidate = {
-    settings: clone(settings),
-    ruleset: clone(ruleset),
-    tagRuleset: clone(tagRuleset),
-    tagImmutabilityRuleset: clone(tagImmutabilityRuleset),
-    workflow,
-    mergeWorkflow,
-    publishWorkflow,
-    qualifyMediaWorkflow,
-    approvalPolicy: clone(approvalPolicy),
-    inspectionPolicy: clone(inspectionPolicy),
-    authorizationPublisher: clone(authorizationPublisher),
-    releasePublisher: clone(releasePublisher),
-    mediaQualification: clone(mediaQualification),
-  };
+  const candidate = repositoryPolicyCandidate();
   if (fixture.mutation === 'merge-method') candidate.settings.allow_merge_commit = true;
   if (fixture.mutation === 'bypass')
     candidate.ruleset.bypass_actors.push({
@@ -1109,6 +1216,10 @@ for (const fixture of cases.repository) {
       /[ ]{6}approval_comment:\n(?:[ ]{8}.*\n){3}/u,
       '',
     );
+  if (fixture.mutation === 'approval-agent-materialization-disabled')
+    candidate.approvalPolicy.agentMaterializationRequiresDirectInstruction = false;
+  if (fixture.mutation === 'approval-combined-instruction-disabled')
+    candidate.approvalPolicy.combinedInstructionMayAuthorizeMergeAndTag = false;
   if (fixture.mutation === 'tag-ruleset-bypass') {
     candidate.tagRuleset.bypass_actors[0].actor_id = 15368;
     candidate.tagRuleset.bypass_actors[0].actor_type = 'Integration';
@@ -1143,6 +1254,11 @@ for (const fixture of cases.repository) {
     candidate.inspectionPolicy.requiredViewports = ['1024x768'];
   record(`repository/${fixture.name}`, fixture.valid, validateRepositoryPolicy(candidate));
 }
+record(
+  'repository/invalid-policy-causes-zero-provider-mutations',
+  true,
+  await invalidPolicyMutationFindings(),
+);
 for (const fixture of cases.hostedReleasePublisher) {
   record(`release-publisher/${fixture.name}`, fixture.valid, hostedPublisherFindings(fixture));
 }
@@ -1194,5 +1310,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `Validated ${cases.commitSubjects.length + cases.history.length + cases.watermarks.length + cases.repository.length + cases.hostedReleasePublisher.length + cases.deployKeyPagination.length + cases.mainCheckSuites.length + cases.hostedAuthorizationPublisher.length + cases.hostedMediaQualification.length + cases.hostedSecretIsolation.length + cases.adapters.length} governance fixture(s).`,
+  `Validated ${cases.commitSubjects.length + cases.history.length + cases.watermarks.length + cases.repository.length + cases.hostedReleasePublisher.length + cases.deployKeyPagination.length + cases.mainCheckSuites.length + cases.hostedAuthorizationPublisher.length + cases.hostedMediaQualification.length + cases.hostedSecretIsolation.length + cases.adapters.length + 1} governance fixture(s).`,
 );

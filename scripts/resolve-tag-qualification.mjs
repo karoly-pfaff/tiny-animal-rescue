@@ -10,6 +10,12 @@ if (event.ref === undefined || !event.ref.startsWith('refs/tags/v')) {
 }
 const tagName = event.ref.replace('refs/tags/', '');
 const message = git(['for-each-ref', `refs/tags/${tagName}`, '--format=%(contents)']).trim();
+const output = requiredEnvironment('GITHUB_OUTPUT');
+if (/^Inspection-Comment: none$/mu.test(message)) {
+  await appendFile(output, 'required=false\n');
+  console.log('Tag does not require retained media-qualification evidence.');
+  process.exit(0);
+}
 const inspectionCommentId = Number(/^Inspection-Comment: #(?<id>\d+)$/mu.exec(message)?.groups?.id);
 if (!Number.isInteger(inspectionCommentId) || inspectionCommentId <= 0) {
   throw new Error('Annotated tag crosswalk has no inspection-comment identity.');
@@ -28,8 +34,5 @@ if (
 ) {
   throw new Error('Tag inspection does not identify an exact retained qualification artifact.');
 }
-await appendFile(
-  requiredEnvironment('GITHUB_OUTPUT'),
-  `run_id=${runId}\nartifact_name=${artifactName}\n`,
-);
+await appendFile(output, `required=true\nrun_id=${runId}\nartifact_name=${artifactName}\n`);
 console.log(`Resolved qualification artifact ${artifactName} from run ${runId}.`);

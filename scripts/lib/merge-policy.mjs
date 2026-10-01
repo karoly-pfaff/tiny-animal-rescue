@@ -78,6 +78,16 @@ export function validateMergeSnapshot({ expectedBaseSha, expectedHeadSha, pullRe
     : ['Pull-request head or protected main changed during authorization.'];
 }
 
+export function validateCandidateCheckoutIdentity({
+  checkoutSha,
+  pullRequestHeadSha,
+  evidenceHeadSha,
+}) {
+  return checkoutSha === pullRequestHeadSha && checkoutSha === evidenceHeadSha
+    ? []
+    : ['Candidate metadata checkout does not match the exact authorized head.'];
+}
+
 export function validateEvidenceVersion(evidenceVersion, targetVersion) {
   return evidenceVersion === targetVersion
     ? []

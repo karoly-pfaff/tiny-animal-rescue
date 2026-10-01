@@ -13,10 +13,10 @@ export const qualityChecks = [
 const requiredChecks = [...qualityChecks, 'authorization'];
 const authorizationAppPlaceholder = '$AUTHORIZATION_APP_ID';
 const workflowSemanticFingerprints = {
-  ci: '157484f95ae90aeb69776861a06e8acf6f1d7d704e7f8655161dc4d00ac2a90c',
-  merge: 'd707bb99a685f9796505a8f34a85274ab63a47f15838e31db61febf20810f0ab',
-  publish: '5e6b78b9209f48c95743d97de6643945070abc5af93524faad6dabdf5c67c20a',
-  qualify: '43d4f1b8ecfad622f28a684012332a9310113f8a8a325aa95695c8e297d571ea',
+  ci: '30aa077fdc28127da6f99da661aea92d233e1a41c19eebd0d38c0f2804c71263',
+  merge: '555acbd0057d23f5b7f7b71f6633d0fee03cd6c49bd6060bfd8afc24c8e098e8',
+  publish: '71c83b2e98b41819123b84088091e1de2fefa044f3cbe165a738993430334398',
+  qualify: 'd6c977bab240d9c7a62871d881eef5c54194436ba3669ee47a60a8cf8411bc95',
 };
 
 function visitWorkflow(value, callback) {
@@ -193,8 +193,24 @@ function validateWorkflow(workflow) {
   return findings;
 }
 
+function validateApprovalPolicy(policy) {
+  const findings = [];
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u.test(policy.approver ?? ''))
+    findings.push('Approval policy must name one valid repository-owner login.');
+  if (
+    policy.agentMaterializationRequiresDirectInstruction !== true ||
+    policy.combinedInstructionMayAuthorizeMergeAndTag !== true
+  ) {
+    findings.push('Approval policy must preserve direct-owner agent materialization rules.');
+  }
+  return findings;
+}
+
 function validateMergeWorkflow(workflow, approvalPolicy, authorizationPublisher) {
-  const findings = validateWorkflowSemantics(workflow, 'merge');
+  const findings = [
+    ...validateWorkflowSemantics(workflow, 'merge'),
+    ...validateApprovalPolicy(approvalPolicy),
+  ];
   const permissions = authorizationPublisher.tokenPermissions ?? {};
   for (const input of [
     'pull_request:',
@@ -222,6 +238,7 @@ function validateMergeWorkflow(workflow, approvalPolicy, authorizationPublisher)
     'path: candidate',
     'ref: refs/heads/main',
     'ref: refs/pull/${{ inputs.pull_request }}/head',
+    '--candidate candidate',
     'npm run build',
     'node ../policy/scripts/validate-artifact.mjs',
     'node ../policy/scripts/validate-repository-policy.mjs',
@@ -245,14 +262,12 @@ function validateMergeWorkflow(workflow, approvalPolicy, authorizationPublisher)
     if (!workflow.includes(requirement))
       findings.push(`Merge workflow is missing exact-candidate step: ${requirement}.`);
   }
-  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u.test(approvalPolicy.approver ?? ''))
-    findings.push('Approval policy must name one valid repository-owner login.');
   if (/^\s{2}(?:contents|statuses): write$/mu.test(workflow))
     findings.push('Merge workflow may not grant its generic GitHub token write permission.');
   return findings;
 }
 
-function validateAuthorizationPublisher(policy, approvalPolicy) {
+function validateAuthorizationPublisher(policy) {
   const findings = [];
   const permissions = policy.tokenPermissions ?? {};
   const valid = [
@@ -268,7 +283,8 @@ function validateAuthorizationPublisher(policy, approvalPolicy) {
     permissions.statuses === 'write',
     Object.keys(permissions).sort().join(',') ===
       'actions,checks,contents,issues,pullRequests,statuses',
-    policy.requiredReviewer === approvalPolicy.approver,
+    policy.requiresManualApproval === false,
+    policy.requiredReviewer === undefined,
     policy.preventSelfReview === false,
   ].every(Boolean);
   if (!valid) findings.push('Authorization-app publisher policy is incomplete or inconsistent.');
@@ -344,12 +360,13 @@ function validateTagImmutabilityRuleset(ruleset) {
   return findings;
 }
 
-function validateReleasePublisherPolicy(policy, approvalPolicy) {
+function validateReleasePublisherPolicy(policy) {
   const findings = [];
   if (
     policy.environment !== 'release-tag-publication' ||
     policy.secretName !== 'RELEASE_TAG_DEPLOY_KEY' ||
-    policy.requiredReviewer !== approvalPolicy.approver ||
+    policy.requiresManualApproval !== false ||
+    policy.requiredReviewer !== undefined ||
     policy.preventSelfReview !== false ||
     !/^[a-z0-9][a-z0-9-]+$/u.test(policy.deployKeyTitle ?? '')
   ) {
@@ -398,6 +415,8 @@ function validatePublishWorkflow(workflow, releasePublisher) {
     validationSection.includes('run-id: ${{ inputs.qualification_run }}'),
     validationSection.includes('--qualification qualified-media'),
     validationSection.includes('--qualification-run ${{ inputs.qualification_run }}'),
+    validationSection.includes('--evidence build/release-evidence.json'),
+    validationSection.includes('node scripts/prepare-merge-evidence.mjs'),
     validationSection.includes('actions/upload-artifact@'),
   ].every(Boolean);
   if (!keyFollowsValidation) {
@@ -415,6 +434,7 @@ function validateMediaQualificationPolicy(policy, approvalPolicy, inspectionPoli
   ];
   const valid = [
     policy.environment === 'media-qualification',
+    policy.requiresManualApproval === true,
     policy.requiredReviewer === approvalPolicy.approver,
     policy.preventSelfReview === false,
     secretNames.every((name) => /^[A-Z][A-Z0-9_]+$/u.test(name ?? '')),
@@ -489,9 +509,10 @@ function validHostedEnvironment(environment, policy) {
   const reviewerRule = environment.protection_rules?.find(
     (rule) => rule.type === 'required_reviewers',
   );
+  if (environment.name !== policy.environment) return false;
+  if (!policy.requiresManualApproval) return reviewerRule === undefined;
   const reviewers = reviewerRule?.reviewers ?? [];
   return (
-    environment.name === policy.environment &&
     reviewerRule?.prevent_self_review === policy.preventSelfReview &&
     reviewers.length === 1 &&
     reviewers[0].type === 'User' &&
@@ -511,7 +532,7 @@ export function validateHostedReleasePublisher({ keys, environment, secrets, pol
   if (!validHostedDeployKeys(keys, policy))
     findings.push('Repository must have exactly one named write-enabled release deploy key.');
   if (!validHostedEnvironment(environment, policy))
-    findings.push('Release environment does not require the configured owner review.');
+    findings.push('Release environment must not require a duplicate manual review.');
   if (!validDeploymentBranchPolicy(environment))
     findings.push('Release environment must accept protected branches only.');
   if (!secrets.some((secret) => secret.name === policy.secretName))
@@ -522,7 +543,7 @@ export function validateHostedReleasePublisher({ keys, environment, secrets, pol
 export function validateHostedAuthorizationPublisher({ environment, secrets, policy }) {
   const findings = [];
   if (!validHostedEnvironment(environment, policy))
-    findings.push('Merge-authorization environment does not require the configured owner review.');
+    findings.push('Merge-authorization environment must not require a duplicate manual review.');
   if (!validDeploymentBranchPolicy(environment))
     findings.push('Merge-authorization environment must accept protected branches only.');
   for (const name of [policy.appIdSecretName, policy.privateKeySecretName]) {
@@ -620,13 +641,23 @@ export function validateRepositoryPolicy({
     ...validateStatusRules(ruleset, authorizationAppId),
     ...validateWorkflow(workflow),
     ...validateMergeWorkflow(mergeWorkflow, approvalPolicy, authorizationPublisher),
-    ...validateAuthorizationPublisher(authorizationPublisher, approvalPolicy),
+    ...validateAuthorizationPublisher(authorizationPublisher),
     ...validateInspectionPolicy(inspectionPolicy),
     ...validateMediaQualificationPolicy(mediaQualification, approvalPolicy, inspectionPolicy),
     ...validateQualifyMediaWorkflow(qualifyMediaWorkflow, mediaQualification),
     ...validateTagRuleset(tagRuleset),
     ...validateTagImmutabilityRuleset(tagImmutabilityRuleset),
-    ...validateReleasePublisherPolicy(releasePublisher, approvalPolicy),
+    ...validateReleasePublisherPolicy(releasePublisher),
     ...validatePublishWorkflow(publishWorkflow, releasePublisher),
   ];
+}
+
+export async function applyFirstRepositoryMutation(candidate, mutation) {
+  const findings = validateRepositoryPolicy(candidate);
+  if (findings.length > 0) {
+    throw new Error(
+      `Refusing provider mutation because local governance is invalid:\n${findings.join('\n')}`,
+    );
+  }
+  return mutation();
 }

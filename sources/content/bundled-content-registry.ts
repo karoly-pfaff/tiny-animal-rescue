@@ -14,22 +14,21 @@ const manifestModules = import.meta.glob<PackManifestSource>('../../content/*/pa
   eager: true,
   import: 'default',
 });
-const animalModules = import.meta.glob<AnimalRecord>('../../content/*/**/*.json', {
-  eager: true,
-  import: 'default',
-});
-const locationModules = import.meta.glob<LocationRecord>('../../content/*/**/*.json', {
-  eager: true,
-  import: 'default',
-});
-const missionModules = import.meta.glob<MissionRecord>('../../content/*/**/*.json', {
-  eager: true,
-  import: 'default',
-});
-const shelterAreaModules = import.meta.glob<ShelterAreaRecord>('../../content/*/**/*.json', {
-  eager: true,
-  import: 'default',
-});
+type BundledContentRecord = AnimalRecord | LocationRecord | MissionRecord | ShelterAreaRecord;
+
+const contentRecordModules = import.meta.glob<BundledContentRecord>(
+  [
+    '../../content/*/**/*.json',
+    '!../../content/*/assets/**',
+    '!../../content/*/locales/**',
+    '!../../content/*/pack.json',
+    '!../../content/examples/**',
+  ],
+  {
+    eager: true,
+    import: 'default',
+  },
+);
 const assetInventoryModules = import.meta.glob<AssetInventory>(
   '../../content/*/assets/manifest.json',
   { eager: true, import: 'default' },
@@ -88,12 +87,16 @@ export function assembleBundledContentRegistry(modules: BundledContentModules): 
 export const bundledContentRegistry = assembleBundledContentRegistry({
   manifests: manifestModules,
   assetInventories: assetInventoryModules,
-  animals: animalModules,
+  animals: contentRecordsAs<AnimalRecord>(),
   localizations: localizationModules,
-  locations: locationModules,
-  missions: missionModules,
-  shelterAreas: shelterAreaModules,
+  locations: contentRecordsAs<LocationRecord>(),
+  missions: contentRecordsAs<MissionRecord>(),
+  shelterAreas: contentRecordsAs<ShelterAreaRecord>(),
 });
+
+function contentRecordsAs<Entry>(): Readonly<Record<string, Entry>> {
+  return contentRecordModules as Readonly<Record<string, Entry>>;
+}
 
 function assetsWithin(
   inventories: Readonly<Record<string, AssetInventory>>,

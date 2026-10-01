@@ -12,9 +12,9 @@ story-commit history contract is defined in the
   non-epic patch or contract correction uses `fix/`, `docs/`, `chore/`, `refactor/`, or `test/` and a
   separately scoped backlog item. That item declares its exact branch, target/related version, commit
   type, aggregate gate, release intent, live-inspection requirement, and inspection journeys when
-  applicable so the same history validator can resolve it without an `epic/*` exception. Declare the
-  item on protected `main` before starting its implementation branch; the trusted authorization job
-  never accepts candidate-authored policy as its authority.
+  applicable so the same history validator can resolve it without an `epic/*` exception. Trusted
+  base-branch parser code reads this metadata from the exact read-only candidate checkout; it never
+  executes candidate code with authorization credentials.
 - One epic branch owns only that epic. Split independent product, refactor, dependency, and formatting
   work instead of hiding it in a story.
 - Keep the epic branch current by rebasing onto `main`; do not merge `main` into it. Force-push only
@@ -74,14 +74,17 @@ only for the latest reviewed commit.
   version declared by the trusted base-branch backlog item; a later tag failure is not a substitute.
 - A green branch, completed audit, or passing live product inspection is not merge authority. Obtain
   the user's explicit approval after presenting the final evidence and before invoking merge
-  automation or publishing a version tag.
+  automation or publishing a version tag. One direct instruction may authorize both operations; the
+  agent then materializes their distinct exact provider records under ADR-0014.
 - Repository settings enable squash merge only. Validated automation supplies the exact linted PR
   title and deterministic squash body plus the verified merge-approval comment footer; interactive
   message editing, merge commits, and rebase merges are disabled or forbidden.
 - A cancellation, timeout, neutral result, empty test collection, or retry-only pass does not satisfy
   the evidence contract even if the host UI labels it successful.
-- Emergency bypass requires explicit user authorization, a recorded reason, and an immediate follow-up
-  patch that restores the normal gate. It never moves or replaces an existing release tag.
+- There is no generic failed-gate bypass. After two identical failures on one unchanged head, stop
+  blind retries and diagnose the gate. A defective enforcement rule is repaired in a separate
+  non-player-visible PATCH under ADR-0013; the frozen epic resumes qualification only after that patch
+  lands. Tags are never moved or replaced.
 
 The checked-in provider configuration and reconciliation procedure are in
 [repository governance](repository-governance.md).
@@ -105,25 +108,28 @@ runs only from protected `main` and must:
 
 1. run a clean frozen install and the applicable aggregate gate on the exact closure head:
    `validate:full` through M6, and `validate:release` for M7, M8, M9, and GA promotion;
-2. materialize every required production asset, build and open the production preview, complete the
-   ADR-0012 live walkthrough, and retain the inspection record on that exact candidate;
+2. for every epic and player-visible patch, materialize every required production asset, run
+   `validate:media`, build and open the production preview, complete the ADR-0012 live walkthrough,
+   and retain the inspection record on that exact candidate; a non-player-visible PATCH instead binds
+   a clean rebuilt artifact under ADR-0013;
 3. validate the proposed squash title/body, present all evidence, and wait for explicit user approval;
 4. after approval, merge only through squash automation;
 5. verify protected `main` contains the exact candidate tree and a valid squash crosswalk;
 6. verify requested SemVer equals root `package.json` and bundled base-pack version and the annotated
    `vX.Y.Z` tag does not already exist;
-7. prove the exact squash has the inspected candidate tree, consume and independently verify the
-   immutable media-qualified build/receipt, and wait for the complete canonical exact-squash `main`
-   workflow run
+7. prove the exact squash has the approved candidate tree, verify either the immutable
+   media-qualified build/receipt or the non-inspected PATCH rebuild as applicable, and wait for the
+   complete canonical exact-squash `main` workflow run
    before creating a tag specification;
 8. generate and lint release notes and the proposed annotated-tag message including the inspection
-   identity, artifact digest, and asset-inventory digest, then request a separate exact-target
-   tag-approval comment from the user;
-9. after that approval, dispatch the protected tag-publication workflow; its unprivileged job validates
-   the exact squash and qualified artifact before the owner-reviewed publishing job can obtain the sole write
+   identity or explicit `none`, artifact digest, and asset-inventory digest, then materialize a
+   distinct exact-target tag-approval record when the owner's direct instruction covers publication;
+9. after that authorization record exists, dispatch the protected tag-publication workflow; its
+   unprivileged job validates the exact squash and qualified artifact before the environment-scoped
+   publishing job can obtain the sole write
    deploy key, which may create but cannot update or delete `v*` tags; then verify the remote annotated
-   tag identity and tag-triggered checks, including an independent re-download and verification of
-   the exact retained qualification artifact.
+   tag identity and tag-triggered checks, including independent revalidation of the retained
+   qualification artifact or rebuilt non-inspected artifact evidence.
 
 A failed or withdrawn release is followed by a new patch. Tags and published artifacts are never
 mutated in place.

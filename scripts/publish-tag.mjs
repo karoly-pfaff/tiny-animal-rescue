@@ -4,7 +4,11 @@ import { createGithubHistoryClient, deriveMainEvidence } from './lib/github-hist
 import { commitsBetween, git } from './lib/history-repository.mjs';
 import { mergeApprovalCommentIdFromBody, validateHistoryPolicy } from './lib/history-policy.mjs';
 import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
-import { verifyQualifiedMedia } from './lib/media-qualification.mjs';
+import {
+  assetInventoryDigest,
+  candidateVersion,
+  verifyQualifiedMedia,
+} from './lib/media-qualification.mjs';
 import { validateRequiredQualityChecks } from './lib/merge-policy.mjs';
 import { requiredEnvironment, requiredWorkflowArguments } from './lib/workflow-input.mjs';
 
@@ -12,7 +16,9 @@ function releaseMessage(input, tag) {
   return [
     input.pullRequest.body,
     `Merge-Approval-Comment: #${tag.mergeApprovalCommentId}`,
-    `Inspection-Comment: #${tag.inspectionCommentId}`,
+    tag.inspectionCommentId === undefined
+      ? 'Inspection-Comment: none'
+      : `Inspection-Comment: #${tag.inspectionCommentId}`,
     `Approval-Comment: #${tag.approvalCommentId}`,
     `Squash: ${tag.squashSha}`,
     `Artifact-Digest: ${tag.artifactDigest}`,
@@ -27,37 +33,66 @@ function requiredArgument(name) {
   return value;
 }
 
-async function releaseMetadata(qualification, expectedHeadSha, expectedPolicySha) {
+function optionalArgument(name) {
+  const index = process.argv.indexOf(name);
+  const value = index === -1 ? undefined : process.argv[index + 1];
+  return value === undefined || value.length === 0 ? undefined : value;
+}
+
+async function releaseFiles() {
   const [product, pack, approvalPolicy, inspectionPolicy] = await Promise.all([
     readFile('package.json', 'utf8').then(JSON.parse),
     readFile('content/base/pack.json', 'utf8').then(JSON.parse),
     readFile('deploy/github/approval-policy.json', 'utf8').then(JSON.parse),
     readFile('deploy/github/inspection-policy.json', 'utf8').then(JSON.parse),
   ]);
-  const evidence = await verifyQualifiedMedia({
-    source: '.',
-    qualification,
-    expectedHeadSha,
-    expectedPolicySha,
-    artifactNamePrefix: inspectionPolicy.artifactNamePrefix,
-  });
   if (product.version !== pack.version) throw new Error('Product and base-pack versions differ.');
   return {
     version: product.version,
     approver: approvalPolicy.approver,
     inspectionPolicy,
-    ...evidence,
   };
 }
 
-const { pullNumber, inspectionCommentId, approvalCommentId } =
-  requiredWorkflowArguments('publish-tag');
+async function qualifiedReleaseMetadata(qualification, expectedHeadSha, expectedPolicySha) {
+  const files = await releaseFiles();
+  const evidence = await verifyQualifiedMedia({
+    source: '.',
+    qualification,
+    expectedHeadSha,
+    expectedPolicySha,
+    artifactNamePrefix: files.inspectionPolicy.artifactNamePrefix,
+  });
+  return { ...files, ...evidence };
+}
+
+async function rebuiltReleaseMetadata(evidencePath, expectedHeadSha) {
+  const [files, evidence, version, inventoryDigest] = await Promise.all([
+    releaseFiles(),
+    readFile(evidencePath, 'utf8').then(JSON.parse),
+    candidateVersion('.'),
+    assetInventoryDigest('.'),
+  ]);
+  if (
+    evidence.headSha !== expectedHeadSha ||
+    evidence.version !== version ||
+    evidence.assetInventoryDigest !== inventoryDigest ||
+    !/^sha256:[0-9a-f]{64}$/u.test(evidence.artifactDigest ?? '')
+  ) {
+    throw new Error('Rebuilt release evidence does not match the exact non-inspected candidate.');
+  }
+  return { ...files, ...evidence };
+}
+
+const { pullNumber, inspectionCommentId, approvalCommentId } = requiredWorkflowArguments(
+  'publish-tag',
+  { inspectionRequired: false },
+);
 const repository = requiredEnvironment('GITHUB_REPOSITORY');
 const token = requiredEnvironment('GITHUB_TOKEN');
-const qualification = requiredArgument('--qualification');
-const qualificationRun = Number(requiredArgument('--qualification-run'));
-if (!Number.isInteger(qualificationRun) || qualificationRun <= 0)
-  throw new Error('Qualification run ID must be a positive integer.');
+const qualification = optionalArgument('--qualification');
+const evidencePath = requiredArgument('--evidence');
+const qualificationRun = Number(optionalArgument('--qualification-run'));
 const { github, pullRequestInput, trustedQualityChecksForCommit } = createGithubHistoryClient(
   repository,
   token,
@@ -68,16 +103,30 @@ if (pullRequest.merged !== true || pullRequest.merge_commit_sha === null)
 if (git(['rev-parse', 'HEAD']) !== pullRequest.merge_commit_sha)
   throw new Error('Workflow checkout does not match the merged squash SHA.');
 const qualificationPolicySha = git(['rev-parse', `${pullRequest.merge_commit_sha}^`]);
+const input = await pullRequestInput(pullRequest, 'tag');
+const requiresInspection = input.item.requiresInspection;
+if (
+  requiresInspection !== (inspectionCommentId !== undefined) ||
+  requiresInspection !==
+    (qualification !== undefined && Number.isInteger(qualificationRun) && qualificationRun > 0)
+) {
+  throw new Error('Tag inputs do not match the work-item inspection policy.');
+}
 const [approval, inspection, metadata] = await Promise.all([
   github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
-  github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
-    inspectionRecordFromGithub(comment, { github, repository }),
-  ),
-  releaseMetadata(qualification, pullRequest.head.sha, qualificationPolicySha),
+  inspectionCommentId === undefined
+    ? undefined
+    : github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
+        inspectionRecordFromGithub(comment, { github, repository }),
+      ),
+  requiresInspection
+    ? qualifiedReleaseMetadata(qualification, pullRequest.head.sha, qualificationPolicySha)
+    : rebuiltReleaseMetadata(evidencePath, pullRequest.merge_commit_sha),
 ]);
 if (
-  inspection.artifact?.workflowRun?.id !== qualificationRun ||
-  inspection.artifact?.name !== metadata.artifactName
+  requiresInspection &&
+  (inspection.artifact?.workflowRun?.id !== qualificationRun ||
+    inspection.artifact?.name !== metadata.artifactName)
 ) {
   throw new Error('Downloaded media qualification differs from the inspection provider artifact.');
 }
@@ -116,7 +165,6 @@ mainFindings.push(
 );
 if (mainFindings.length > 0) throw new Error(mainFindings.join('\n'));
 
-const input = await pullRequestInput(pullRequest, 'tag');
 const tagName = `v${metadata.version}`;
 input.tag = {
   annotated: true,

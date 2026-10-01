@@ -109,6 +109,23 @@ Repository convention: generated output belongs in `build/`; authored source bel
    completed story and update the pull-request story/commit map.
 10. Report what changed, what was verified, and any remaining risk or declined finding.
 
+## Candidate freeze and gate repair
+
+- Finish commits, version/release metadata, audit dispositions, and the deterministic PR crosswalk
+  before final qualification. That Git head and PR body are the frozen candidate.
+- Final gate, audit, qualification, and inspection evidence is retained in provider comments and
+  artifacts. Do not add an evidence-only commit after freeze.
+- An unchanged candidate may retry an interrupted infrastructure run. Two consecutive failures of the
+  same unchanged hosted step stop blind retries and require diagnosis.
+- A real fix creates a new head and invalidates affected evidence. Do not add accepted hashes, relax a
+  threshold, or amend closure metadata solely to turn a failing run green.
+- If trusted enforcement is defective, keep the epic frozen and create a separate governance PATCH.
+  A PATCH may set `Requires live inspection: no` only when it changes no player-visible runtime,
+  content, or production media. It still requires `validate:full`, independent audit, every required
+  exact-head check, explicit merge approval, and a distinct tag-approval record. One direct owner
+  instruction may authorize both operations, and the agent may materialize their exact provider
+  records, under ADR-0014. See ADR-0013 and ADR-0014.
+
 Do not silently reinterpret acceptance criteria. If two documents conflict, precedence is:
 
 1. accepted ADR

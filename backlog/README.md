@@ -83,3 +83,4 @@ Moving an item out of the icebox requires explicit user direction and, where app
 Post-release corrections use separately scoped records rather than being hidden in a later epic:
 
 - [PATCH-001: Correct v0.2 asset delivery and visual evidence](maintenance/PATCH-001-v0.2.1-asset-evidence-correction.md)
+- [PATCH-002: Repair release qualification governance](maintenance/PATCH-002-v0.3.1-release-governance-repair.md)

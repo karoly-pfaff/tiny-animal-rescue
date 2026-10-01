@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 
 export function git(arguments_) {
   const result = spawnSync(
@@ -56,7 +57,7 @@ function maintenanceDefaults(id) {
         commitType: 'fix',
         aggregateGate: 'validate:full',
         publishesRelease: true,
-        requiresInspection: true,
+        requiresInspection: undefined,
       }
     : {
         branchPrefix: 'docs/',
@@ -95,7 +96,8 @@ function assertMaintenancePolicy(values, branch, name) {
     values.commitType === defaults.commitType,
     values.aggregateGate === defaults.aggregateGate,
     values.publishesRelease === defaults.publishesRelease,
-    values.requiresInspection === defaults.requiresInspection,
+    defaults.requiresInspection === undefined ||
+      values.requiresInspection === defaults.requiresInspection,
     values.requiresInspection === values.inspectionJourneys.length > 0,
   ].every(Boolean);
   if (!valid) {
@@ -105,10 +107,11 @@ function assertMaintenancePolicy(values, branch, name) {
   }
 }
 
-function loadEpic(number, branch) {
-  const files = readdirSync('backlog/epics').filter((name) => name.startsWith(`EPIC-${number}-`));
+function loadEpic(number, branch, root) {
+  const epicDirectory = path.join(root, 'backlog/epics');
+  const files = readdirSync(epicDirectory).filter((name) => name.startsWith(`EPIC-${number}-`));
   if (files.length !== 1) throw new Error(`Expected one backlog file for EPIC-${number}.`);
-  const content = readFileSync(`backlog/epics/${files[0]}`, 'utf8');
+  const content = readFileSync(path.join(epicDirectory, files[0]), 'utf8');
   const title = /^# EPIC-\d{3}: (?<value>.+)$/mu.exec(content)?.groups?.value;
   const milestone = /^- Milestone: (?<value>.+)$/mu.exec(content)?.groups?.value;
   const version = /^- Target version: `(?<value>[^`]+)`$/mu.exec(content)?.groups?.value;
@@ -134,10 +137,14 @@ function loadEpic(number, branch) {
   };
 }
 
-function loadMaintenance(branch) {
-  const matches = readdirSync('backlog/maintenance')
+function loadMaintenance(branch, root) {
+  const maintenanceDirectory = path.join(root, 'backlog/maintenance');
+  const matches = readdirSync(maintenanceDirectory)
     .filter((name) => name.endsWith('.md'))
-    .map((name) => ({ name, content: readFileSync(`backlog/maintenance/${name}`, 'utf8') }))
+    .map((name) => ({
+      name,
+      content: readFileSync(path.join(maintenanceDirectory, name), 'utf8'),
+    }))
     .filter(({ content }) => metadata(content, 'Branch') === branch);
   if (matches.length !== 1)
     throw new Error(`Expected one maintenance backlog item declaring branch ${branch}.`);
@@ -160,9 +167,9 @@ function loadMaintenance(branch) {
   };
 }
 
-export function workItemFromBranch(branch) {
+export function workItemFromBranch(branch, root = '.') {
   const number = /^epic\/(?<number>\d{3})-[a-z0-9]+(?:-[a-z0-9]+)*$/u.exec(branch)?.groups?.number;
-  return number === undefined ? loadMaintenance(branch) : loadEpic(number, branch);
+  return number === undefined ? loadMaintenance(branch, root) : loadEpic(number, branch, root);
 }
 
 export function commitsBetween(base, head = 'HEAD') {

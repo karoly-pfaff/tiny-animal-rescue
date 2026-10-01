@@ -16,10 +16,11 @@ history contracts into reproducible provider settings rather than relying on rem
 - [release-tag immutability ruleset](../../deploy/github/tag-immutability-ruleset.json) blocks update
   and deletion of `v*` tags with no bypass actor, including the release deploy key;
 - [approval policy](../../deploy/github/approval-policy.json) names the repository owner whose exact
-  provider comment can authorize a candidate;
+  provider comment can authorize a candidate and records that an agent may materialize it only from a
+  direct owner instruction;
 - [release-publisher policy](../../deploy/github/release-publisher.json) names the protected
-  environment, its required owner reviewer, its private-key secret, and the only allowed write deploy
-  key;
+  environment, its private-key secret, the absence of duplicate manual review, and the only allowed
+  write deploy key;
 - [required CI](../../.github/workflows/ci.yml) runs without path filters for pull requests,
   merge-queue candidates, `main`, and milestone tags;
 - [merge automation](../../.github/workflows/merge-epic.yml) builds source-only work without secrets
@@ -41,7 +42,7 @@ history contracts into reproducible provider settings rather than relying on rem
 - [tag publication](../../.github/workflows/publish-tag.yml) consumes that exact qualified artifact,
   validates the actual squash subject/body/tree, waits for every exact-SHA trusted `main` check,
   validates inspection and separate tag approval against both digests, uploads a tag specification,
-  and only then lets a second owner-reviewed job obtain the dedicated deploy key.
+  and only then lets a second environment-scoped job obtain the dedicated deploy key.
 
 `npm run validate:repository` parses every required workflow as YAML and rejects any semantic drift
 from its exact reviewed definition, including extra commands/actions and `continue-on-error`.
@@ -90,8 +91,9 @@ verify the organization Actions-secret access list in GitHub whenever governance
 credentials are rotated, and retain that provider-side review with the governance evidence.
 
 The command patches repository merge settings, creates or updates the branch and both tag rulesets,
-configures all three protected environments to require `karoly-pfaff` approval and protected branches,
-and reads the result back. It paginates the complete deploy-key and repository-secret collections
+configures all three environments for protected branches, keeps owner review on media qualification,
+removes duplicate manual review from merge/tag publication, and reads the result back. It paginates
+the complete deploy-key and repository-secret collections
 before proving there is exactly one writer, no protected secret name is duplicated at repository
 scope, and every required environment secret exists. It fails closed when credentials, permissions,
 identity isolation, or provider retention are missing.
@@ -123,16 +125,18 @@ single non-merge squash and tree identity. The
 annotated milestone tag adds the squash SHA, artifact digest, and asset-inventory digest to the same
 crosswalk before publication. Tag preparation also validates the actual squash subject/body/tree and
 requires exactly one successful instance of all seven checks in the newest canonical exact-squash
-workflow run. Tag-triggered history resolves the retained qualification from the recorded inspection,
-downloads it by exact run/name, and independently verifies it instead of comparing a source-only
-fallback build to a media-complete digest.
+workflow run. For inspected releases, tag-triggered history resolves the retained qualification from
+the recorded inspection, downloads it by exact run/name, and independently verifies it. For a
+non-player-visible PATCH, it instead rebuilds the exact squash and compares its artifact and
+asset-inventory digests; it never invents an inspection record.
 
 The authorization App posts `pending` before validation. It keeps that status non-successful while it
 uses its narrow ruleset bypass to perform the already validated squash, and posts `success` only after
 the provider reports the merge complete. Candidate workflows cannot forge the App-pinned context, and
 there is no cached pre-merge success for an edited comment to reuse. Its contents-write token exists
-only in the fresh protected-environment job, after candidate validation, and that job checks out and
-runs policy from protected `main`, never candidate code. The initial adoption of this
+only in the fresh protected-environment job, after candidate validation. That job runs parser and
+authorization policy from protected `main` while reading backlog metadata from the exact read-only
+candidate checkout; it never executes candidate code. The initial adoption of this
 contract is a one-time bootstrap: before the trusted workflow exists on `main`, the complete diff and
 gates are presented for explicit user approval and merged under the preceding protection; only then is
 the App/ruleset reconciliation applied. This bootstrap is not reusable for later work items.
@@ -173,8 +177,9 @@ still represents that inspected content.
 
 ## Explicit approval records
 
-The owner records approval as an exact comment on the canonical pull request. The merge approval body
-is:
+The owner authorizes the operation directly. The exact provider record is then added to the canonical
+pull request by the owner or, under ADR-0014, by the implementation agent using the owner's
+authenticated session. The merge approval body is:
 
 ```text
 Tiny-Rescue-Approval: merge
@@ -203,17 +208,22 @@ timestamp, or missing comments fail. `created_at` and `updated_at` must be ident
 approval ID is bound into the squash commit; tag publication refetches and revalidates that comment,
 and the tag approval must have a different comment ID. A head change invalidates merge approval. A
 rebuilt artifact or asset-inventory change invalidates tag approval. Agents and automation may display
-the required template but must not create or edit the owner's approval comment.
+the required template. Under ADR-0014, an implementation agent may also create the exact comment with
+the owner's authenticated GitHub session after a direct, unambiguous owner instruction covers that
+operation. It must not infer authority, edit the comment, or reuse a stale record. One instruction may
+cover both merge and tag, but their comments and workflow runs remain distinct.
 
 Merge workflow dispatch supplies the PR, optional inspection-comment, qualification-run, and
 merge-approval-comment IDs.
 The inspection ID is required exactly when backlog metadata says `Requires live inspection: yes`;
-documentation-only work instead uses `Inspection-Comment: none` in its exact approval body. Tag
+documentation work and a qualifying non-player-visible PATCH instead use `Inspection-Comment: none`
+in the exact approval body. Tag
 workflow dispatch supplies the same PR/inspection/qualification identity and the separate
 tag-approval-comment ID.
 Direct provider merge, local tag push, auto-merge, and hand-edited release tags are forbidden even for
-an administrator. The publication workflow's SSH push is the sole allowed tag write and requires a
-separate protected-environment approval before its private deploy key becomes available. That key can
+an administrator. The publication workflow's SSH push is the sole allowed tag write. Its private
+deploy key becomes available only after the validation job succeeds, without a duplicate manual
+environment review. That key can
 create a new approved tag but cannot update or delete an existing `v*` tag.
 
 ## Watermark evidence boundary

@@ -73,7 +73,9 @@ export function deriveTagEvidence({
     squashSha: taggedValue(message, 'Squash', '[0-9a-f]{40}'),
     artifactDigest: taggedValue(message, 'Artifact-Digest', 'sha256:[0-9a-f]{64}'),
     assetInventoryDigest: taggedValue(message, 'Asset-Inventory-Digest', 'sha256:[0-9a-f]{64}'),
-    inspectionCommentId: taggedNumber(message, 'Inspection-Comment'),
+    inspectionCommentId: /^Inspection-Comment: none$/mu.test(message)
+      ? undefined
+      : taggedNumber(message, 'Inspection-Comment'),
     mergeApprovalCommentId: taggedNumber(message, 'Merge-Approval-Comment'),
     approvalCommentId: taggedNumber(message, 'Approval-Comment'),
     approval,
@@ -178,7 +180,7 @@ export async function fetchTrustedQualityChecks({
   };
 }
 
-export function createGithubHistoryClient(repository, token) {
+export function createGithubHistoryClient(repository, token, { workItemRoot = '.' } = {}) {
   async function github(pathname, options = {}) {
     const response = await fetch(`https://api.github.com/repos/${repository}${pathname}`, {
       ...options,
@@ -204,7 +206,7 @@ export function createGithubHistoryClient(repository, token) {
     fetchTrustedQualityChecks({ github, commitSha, event, headBranch });
 
   async function pullRequestInput(pullRequest, mode) {
-    const item = workItemFromBranch(pullRequest.head.ref);
+    const item = workItemFromBranch(pullRequest.head.ref, workItemRoot);
     const [commits, allPulls] = await Promise.all([
       github(`/pulls/${pullRequest.number}/commits?per_page=100`),
       allPullRequests(),

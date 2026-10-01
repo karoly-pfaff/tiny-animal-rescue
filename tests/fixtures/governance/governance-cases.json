@@ -239,6 +239,16 @@
       "valid": false
     },
     {
+      "name": "agent approval materialization loses direct-instruction guard",
+      "mutation": "approval-agent-materialization-disabled",
+      "valid": false
+    },
+    {
+      "name": "combined merge and tag instruction is rejected",
+      "mutation": "approval-combined-instruction-disabled",
+      "valid": false
+    },
+    {
       "name": "release tag ruleset allows the wrong bypass actor",
       "mutation": "tag-ruleset-bypass",
       "valid": false
@@ -283,7 +293,11 @@
     { "name": "dedicated hosted release identity", "mutation": "none", "valid": true },
     { "name": "second write deploy key", "mutation": "extra-key", "valid": false },
     { "name": "missing environment secret", "mutation": "missing-secret", "valid": false },
-    { "name": "wrong environment reviewer", "mutation": "wrong-reviewer", "valid": false }
+    {
+      "name": "release environment repeats manual approval",
+      "mutation": "unexpected-reviewer",
+      "valid": false
+    }
   ],
   "deployKeyPagination": [
     { "name": "sole writer after pagination", "mutation": "none", "valid": true },
@@ -332,6 +346,11 @@
     {
       "name": "authorization accepts unprotected branches",
       "mutation": "unprotected-branches",
+      "valid": false
+    },
+    {
+      "name": "authorization environment repeats manual approval",
+      "mutation": "unexpected-reviewer",
       "valid": false
     }
   ],
