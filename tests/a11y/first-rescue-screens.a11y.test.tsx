@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
+import { ParentSettingsScreen } from '../../sources/app/parent-settings-screen';
 import { SaveFailureScreen } from '../../sources/app/save-failure-screen';
 import { SaveRecoveryScreen } from '../../sources/app/save-recovery-screen';
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
@@ -119,4 +120,27 @@ describe('first rescue screen accessibility', () => {
     const results = await axe.run(container);
     expect(results.violations).toEqual([]);
   });
+
+  it('keeps the locked gate, reset choices, and confirmation accessible', async () => {
+    const { container } = render(
+      <ParentSettingsScreen
+        locale="en"
+        onBack={vi.fn()}
+        onResetAll={vi.fn(() => Promise.resolve())}
+        onResetProgress={vi.fn(() => Promise.resolve())}
+      />,
+    );
+    expect((await axe.run(container)).violations).toEqual([]);
+
+    vi.useFakeTimers();
+    const gate = screen.getByRole('button', { name: 'Press and hold' });
+    fireEvent.keyDown(gate, { key: 'Enter' });
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    vi.useRealTimers();
+    expect((await axe.run(container)).violations).toEqual([]);
+
+    fireEvent.click(screen.getByRole('button', { name: /Start the game again/u }));
+    expect(screen.getByRole('dialog', { name: 'Start the game again?' })).toBeVisible();
+    expect((await axe.run(container)).violations).toEqual([]);
+  }, 15_000);
 });

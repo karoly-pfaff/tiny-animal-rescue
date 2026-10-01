@@ -19,6 +19,7 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
   function createTransaction(): IDBTransaction {
     let completionScheduled = false;
     let forcedAbort = false;
+    const stagedDeletes = new Map<string, Set<string>>();
     const stagedWrites = new Map<string, Map<string, unknown>>();
     const transaction: {
       abort: () => void;
@@ -64,6 +65,12 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
           values.set(key, value);
         }
       }
+      for (const [storeName, keys] of stagedDeletes) {
+        const values = stores.get(storeName);
+        for (const key of keys) {
+          values?.delete(key);
+        }
+      }
     }
 
     function createObjectStoreApi(storeName: string, owner: typeof transaction): IDBObjectStore {
@@ -99,6 +106,13 @@ export function createIndexedDbHarness(options: HarnessOptions = {}) {
             }
           });
           return request as IDBRequest<number>;
+        },
+        delete: (key: IDBValidKey | IDBKeyRange) => {
+          const deletes = stagedDeletes.get(storeName) ?? new Set<string>();
+          stagedDeletes.set(storeName, deletes);
+          deletes.add(toStringKey(key as IDBValidKey));
+          scheduleCompletion();
+          return createRequest(undefined) as IDBRequest<undefined>;
         },
         put: (value: unknown, key?: IDBValidKey) => {
           const writes = stagedWrites.get(storeName) ?? new Map<string, unknown>();

@@ -96,4 +96,13 @@ is not a persisted unlock flag and does not participate in progression derivatio
 
 ## Reset
 
-Reset progress is behind the parent gate, requires a second confirmation, and preserves audio/language settings unless the parent selects a full reset.
+Reset progress is behind the parent gate and requires a second confirmation. The progress-only path
+removes completed missions, residents, flags, and resumable mission state in one serialized repository
+transaction while preserving the save locale, audio levels, reduced-motion choice, and original
+creation timestamp. The explicit full-reset path restores default save settings, clears the locale
+bootstrap only after the save reset succeeds, and returns to first-run language selection.
+
+A failed or interrupted save transaction leaves the previous authoritative save in place and the UI
+does not report success. If the save reset succeeds but clearing the separate locale bootstrap fails,
+the adult remains on the confirmed settings screen and can retry; first-run is never shown while the
+old progress is still authoritative.

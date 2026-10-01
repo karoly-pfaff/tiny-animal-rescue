@@ -284,6 +284,25 @@ describe('save game repository contract', () => {
     await expect(repository.reset('hu')).resolves.toEqual(createEmptySave('hu', secondTimestamp));
   });
 
+  it.each(['transaction', 'abort'] as const)(
+    'keeps the prior save when full reset is interrupted by an IndexedDB %s',
+    async (failureMode) => {
+      const existing = {
+        ...createEmptySave('en', firstTimestamp),
+        completedMissionIds: ['garden-kitten-tree'],
+      };
+      const harness = createIndexedDbHarness({
+        records: { [primaryStoreName]: { primary: existing } },
+      });
+      const repository = createIndexedDbSaveGameRepository(harness.factory, () => secondTimestamp);
+      await repository.load('en');
+      harness.setFailureMode(failureMode);
+
+      await expect(repository.reset('en')).rejects.toBeTruthy();
+      expect(harness.getValue(primaryStoreName, 'primary')).toEqual(existing);
+    },
+  );
+
   it('serializes concurrent transactions against the latest snapshot', async () => {
     const repository = createMemorySaveGameRepository(null, () => firstTimestamp);
     await repository.load('hu');

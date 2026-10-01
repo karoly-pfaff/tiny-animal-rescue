@@ -16,6 +16,8 @@ export type FirstRescueProgressStore = Readonly<{
   load: (locale: Locale) => Promise<FirstRescueProgressLoadStatus>;
   read: () => FirstRescueProgress;
   recoverCorrupt: (locale: Locale) => Promise<FirstRescueProgress>;
+  resetAll: (locale: Locale) => Promise<FirstRescueProgress>;
+  resetProgress: (locale: Locale) => Promise<FirstRescueProgress>;
 }>;
 
 export type FirstRescueProgressLoadStatus = 'corrupt' | 'ready' | 'unsupported-version';
@@ -83,6 +85,14 @@ export function createSessionFirstRescueProgressStore(
       progress = emptyFirstRescueProgress;
       return Promise.resolve(progress);
     },
+    resetAll: () => {
+      progress = emptyFirstRescueProgress;
+      return Promise.resolve(progress);
+    },
+    resetProgress: () => {
+      progress = emptyFirstRescueProgress;
+      return Promise.resolve(progress);
+    },
   };
 }
 
@@ -115,6 +125,27 @@ export function createPersistedFirstRescueProgressStore(
       progress = progressFromSave(await repository.recover(locale));
       return progress;
     },
+    async resetAll(locale) {
+      progress = progressFromSave(await repository.reset(locale));
+      return progress;
+    },
+    async resetProgress(locale) {
+      progress = progressFromSave(await repository.transaction(locale, saveWithoutPlayerProgress));
+      return progress;
+    },
+  };
+}
+
+function saveWithoutPlayerProgress(save: SaveGameV1): SaveGameV1 {
+  return {
+    completedMissionIds: [],
+    createdAt: save.createdAt,
+    locale: save.locale,
+    schemaVersion: save.schemaVersion,
+    settings: save.settings,
+    unlockedResidentIds: [],
+    updatedAt: save.updatedAt,
+    worldFlags: [],
   };
 }
 

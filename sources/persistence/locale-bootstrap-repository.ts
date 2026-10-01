@@ -2,6 +2,7 @@ import type { Locale } from '../i18n/localization';
 import { requestResult, transactionDone } from './indexed-db-helpers';
 
 export type LocaleBootstrapRepository = Readonly<{
+  clearLocale: () => Promise<void>;
   readLocale: () => Promise<Locale | null>;
   writeLocale: (locale: Locale) => Promise<void>;
 }>;
@@ -52,6 +53,19 @@ export function createIndexedDbLocaleBootstrapRepository(
   factory: IDBFactory | undefined,
 ): LocaleBootstrapRepository {
   return {
+    async clearLocale() {
+      if (factory === undefined) {
+        throw new Error('IndexedDB is unavailable.');
+      }
+      const database = await openDatabase(factory);
+      try {
+        const transaction = database.transaction(storeName, writeMode);
+        transaction.objectStore(storeName).delete(recordKey);
+        await transactionDone(transaction);
+      } finally {
+        database.close();
+      }
+    },
     async readLocale() {
       if (factory === undefined) {
         return null;
@@ -85,6 +99,10 @@ export function createMemoryLocaleBootstrapRepository(
 ): LocaleBootstrapRepository {
   let locale = initialLocale;
   return {
+    clearLocale: () => {
+      locale = null;
+      return Promise.resolve();
+    },
     readLocale: () => Promise.resolve(locale),
     writeLocale: (nextLocale) => {
       locale = nextLocale;

@@ -1143,6 +1143,154 @@
   font-weight: 800;
 }
 
+.parent-settings-shell {
+  padding: max(1rem, var(--safe-area-top)) max(1rem, var(--safe-area-right))
+    max(1rem, var(--safe-area-bottom)) max(1rem, var(--safe-area-left));
+  overflow: auto;
+  background: linear-gradient(160deg, #dce9dd, #f5e6c7);
+}
+
+.parent-settings-panel {
+  display: grid;
+  width: min(44rem, 100%);
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 0.25rem solid #fff8e8;
+  border-radius: 1.5rem;
+  color: #342c27;
+  background: #fffdf7;
+  box-shadow: 0 0.7rem 0 rgb(74 63 51 / 24%);
+}
+
+.parent-settings-panel header h1,
+.parent-settings-panel header p,
+.parent-gate h2,
+.parent-gate p {
+  margin-block: 0 0.6rem;
+}
+
+.parent-settings-panel h1 {
+  font-family: 'Baloo 2 Variable', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1;
+}
+
+.parent-gate {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: #f1eee4;
+}
+
+.parent-gate-action,
+.settings-back,
+.reset-choices button,
+.reset-confirmation-backdrop button {
+  min-height: 3.5rem;
+  padding: 0.75rem 1.15rem;
+  border: 0.18rem solid #335d58;
+  border-radius: 0.85rem;
+  color: #fff;
+  background: #386f68;
+  font-weight: 800;
+}
+
+.parent-gate-action.is-holding {
+  animation: parent-gate-fill 2s linear forwards;
+}
+
+.reset-choices {
+  display: grid;
+  gap: 1rem;
+}
+
+.reset-choices button {
+  display: grid;
+  gap: 0.3rem;
+  min-height: 5.5rem;
+  color: #342c27;
+  background: #f5e4bc;
+  text-align: left;
+}
+
+.reset-choices button:last-child {
+  border-color: #8b463b;
+  background: #f1d2c7;
+}
+
+.reset-choices button span {
+  font-weight: 600;
+}
+
+.settings-back {
+  justify-self: start;
+  min-width: 7rem;
+  color: #342c27;
+  background: #e9e6df;
+}
+
+.settings-error {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-left: 0.35rem solid #9f382f;
+  color: #6f211d;
+  background: #fde3df;
+  font-weight: 800;
+}
+
+.reset-confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  padding: 1rem;
+  place-items: center;
+  background: rgb(29 26 23 / 66%);
+}
+
+.reset-confirmation-backdrop section {
+  width: min(32rem, 100%);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 0.25rem solid #fff8e8;
+  border-radius: 1.25rem;
+  background: #fffdf7;
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 28%);
+}
+
+.reset-confirmation-backdrop h2 {
+  margin-top: 0;
+}
+
+.reset-confirmation-backdrop div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: flex-end;
+}
+
+.reset-confirmation-backdrop button:first-child {
+  color: #342c27;
+  background: #e9e6df;
+}
+
+.reset-confirmation-backdrop button[aria-disabled='true'] {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+@keyframes parent-gate-fill {
+  from {
+    background: #386f68;
+    box-shadow: inset 0 0 0 0 #244a46;
+  }
+
+  to {
+    background: #244a46;
+    box-shadow: inset 44rem 0 0 0 #244a46;
+  }
+}
+
 .mission-ladder {
   width: clamp(4.8rem, 9%, 7rem);
   height: clamp(12rem, 35%, 20rem);
@@ -1470,9 +1618,14 @@
   .celebration-mimi,
   .map-landmark[data-active-call='true'],
   .mission-kitten-rescue,
+  .parent-gate-action.is-holding,
   .shelter-resident-face,
   .shelter-resident-art {
     animation: none;
+  }
+
+  .parent-gate-action.is-holding {
+    background: #244a46;
   }
 
   .map-landmark[data-active-call='true'] {

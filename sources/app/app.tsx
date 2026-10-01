@@ -4,7 +4,6 @@ import { deferredBrowserEffectService, type EffectService } from '../audio/effec
 import { createBrowserNarrationService, type NarrationService } from '../audio/narration-service';
 import { bundledContentRegistry } from '../content/bundled-content-registry';
 import type { ContentRegistry } from '../content/content-registry';
-import { selectFirstRescueContent } from '../content/first-rescue-content';
 import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
@@ -16,8 +15,8 @@ import {
   type FirstRescueProgressStore,
 } from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
-import { PlayerRoute } from './player-route';
 import { type ProgressBootstrapStatus, useProgressBootstrap } from './progress-bootstrap';
+import { ReadyAppRoute } from './ready-app-route';
 import { resolveRoute } from './routes';
 import { SaveFailureScreen } from './save-failure-screen';
 import { SaveRecoveryScreen } from './save-recovery-screen';
@@ -92,7 +91,21 @@ function useLocaleBootstrap(repository: LocaleBootstrapRepository) {
     void persistLocale(nextLocale);
   }
 
-  return { locale, localeSaveFailed, localeSaving, selectLocale };
+  async function clearLocale(): Promise<void> {
+    setLocaleSaving(true);
+    setLocaleSaveFailed(false);
+    try {
+      await repository.clearLocale();
+      setLocale(null);
+    } catch (cause) {
+      setLocaleSaveFailed(true);
+      throw cause;
+    } finally {
+      setLocaleSaving(false);
+    }
+  }
+
+  return { clearLocale, locale, localeSaveFailed, localeSaving, selectLocale };
 }
 
 function navigate(nextPath: string): void {
@@ -168,9 +181,8 @@ function AppWithDependencies({
   localeRepository,
   narrationService,
 }: Required<AppProps>) {
-  const firstRescueContent = requireFirstRescueContent(contentRegistry);
   const path = useHashPath();
-  const { locale, localeSaveFailed, localeSaving, selectLocale } =
+  const { clearLocale, locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
   const progressBootstrap = useProgressBootstrap(firstRescueProgressStore, locale),
     activeLocale = locale ?? foundationLocale,
@@ -214,25 +226,15 @@ function AppWithDependencies({
   }
 
   return (
-    <PlayerRoute
+    <ReadyAppRoute
+      contentRegistry={contentRegistry}
       effectService={effectService}
-      firstRescueContent={firstRescueContent}
       firstRescueProgressStore={firstRescueProgressStore}
       locale={activeLocale}
       narrationService={narrationService}
+      onLocaleReset={clearLocale}
       onNavigate={navigate}
       route={route}
     />
   );
-}
-
-function requireFirstRescueContent(contentRegistry: ContentRegistry) {
-  assertContentAvailable(contentRegistry);
-  return selectFirstRescueContent(contentRegistry);
-}
-
-function assertContentAvailable(registry: ContentRegistry): void {
-  if (registry.packOrder.length === 0) {
-    throw new Error('The application requires at least one validated content pack.');
-  }
 }

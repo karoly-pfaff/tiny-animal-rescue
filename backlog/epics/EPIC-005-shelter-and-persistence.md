@@ -51,10 +51,10 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S06 — Reset progress
 
-- [ ] Reset sits behind the parent gate with second confirmation.
-- [ ] Progress-only reset preserves locale/audio settings.
-- [ ] Full reset is explicit and returns to first run.
-- [ ] Reset operations are tested under interrupted/failed storage conditions.
+- [x] Reset sits behind the parent gate with second confirmation.
+- [x] Progress-only reset preserves locale/audio settings.
+- [x] Full reset is explicit and returns to first run.
+- [x] Reset operations are tested under interrupted/failed storage conditions.
 
 ### E005-S07 — Full shelter proof
 

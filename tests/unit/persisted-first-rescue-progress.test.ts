@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createPersistedFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
+import { defaultSaveSettings } from '../../sources/persistence/default-save-settings';
+import { createMemorySaveGameRepository } from '../../sources/persistence/save-game-repository';
 import { createEmptySave, type SaveGameV1 } from '../../sources/persistence/save-game-schema';
 import { testFirstRescueReward } from '../support/first-rescue-content';
 
@@ -148,6 +150,72 @@ describe('persisted first rescue progress adapter', () => {
       completedMissionIds: [],
       unlockedResidentIds: [],
       worldFlags: [],
+    });
+  });
+
+  it('resets only progress while preserving locale and audio settings', async () => {
+    const settings = {
+      effectsVolume: 0.2,
+      musicVolume: 0.3,
+      narrationVolume: 0.4,
+      reducedMotion: true,
+    };
+    const repository = createMemorySaveGameRepository({
+      ...createEmptySave('en', 'created'),
+      completedMissionIds: ['garden-kitten-tree'],
+      currentMission: { completedStepIds: ['place-ladder'], missionId: 'other-mission' },
+      settings,
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    const store = createPersistedFirstRescueProgressStore(repository);
+    await store.load('en');
+
+    await expect(store.resetProgress('en')).resolves.toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+
+    await expect(repository.load('hu')).resolves.toMatchObject({
+      save: {
+        completedMissionIds: [],
+        createdAt: 'created',
+        locale: 'en',
+        settings,
+        unlockedResidentIds: [],
+        worldFlags: [],
+      },
+    });
+  });
+
+  it('uses repository full reset defaults and changes in-memory state only after success', async () => {
+    const completed = {
+      ...createEmptySave('en', 'created'),
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    };
+    const reset = vi.fn(() => Promise.resolve(createEmptySave('en', 'reset')));
+    const store = createPersistedFirstRescueProgressStore({
+      load: vi.fn(() => Promise.resolve({ save: completed, status: 'ready' as const })),
+      recover: vi.fn(),
+      replace: vi.fn(),
+      reset,
+      transaction: vi.fn(() => Promise.reject(new Error('write interrupted'))),
+    });
+    await store.load('en');
+
+    await expect(store.resetProgress('en')).rejects.toThrow('write interrupted');
+    expect(store.read().unlockedResidentIds).toEqual(['mimi-kitten']);
+    await expect(store.resetAll('en')).resolves.toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(reset).toHaveBeenCalledWith('en');
+    await expect(reset.mock.results[0]?.value).resolves.toMatchObject({
+      settings: defaultSaveSettings,
     });
   });
 });
