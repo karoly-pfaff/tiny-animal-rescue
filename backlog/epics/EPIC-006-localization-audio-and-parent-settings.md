@@ -72,6 +72,8 @@ Provide a complete HU/EN audio-first experience, self-hosted typography, determi
       music without depending on wall-clock audio duration for mission progression.
 - [ ] HU and EN voice coverage is equivalent, code-native speech is absent from the media-complete
       candidate, and mute/replay/background-resume behavior passes integration and browser checks.
+- [ ] The inherited E005 shelter set covers all three area-name cues and Mimi's resident-name cue in
+      HU and EN, including repeat/tap listening QA with mouse, touch, and every supported viewport.
 - [ ] The exact candidate passes asset/audio gates, the complete supported viewport/input journey
       matrix, listening QA, and ADR-0012 live production-preview inspection.
 

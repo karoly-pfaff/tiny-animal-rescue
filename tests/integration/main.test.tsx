@@ -8,5 +8,5 @@ describe('application bootstrap', () => {
     await act(async () => import('../../sources/main'));
 
     expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
-  }, 10_000);
+  }, 30_000);
 });

@@ -20,6 +20,9 @@ export type AnimalRecord = Readonly<{
   shelterReactions: readonly ShelterReactionId[];
 }>;
 
+export type NormalizedAnimalRecord = Omit<AnimalRecord, 'shelterSlot'> &
+  Readonly<{ shelterSlot: number }>;
+
 export type LocationRecord = Readonly<{
   id: string;
   nameKey: string;

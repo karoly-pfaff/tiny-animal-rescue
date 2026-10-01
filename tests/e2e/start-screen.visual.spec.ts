@@ -2,6 +2,7 @@ import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
+import { observeTimeoutArming, pauseAppClockAfterRendering } from './support/clock';
 import {
   completeFirstRescue,
   openFirstRescueCallSheet,
@@ -10,11 +11,6 @@ import {
 import { dragLadder } from './support/ladder-drag';
 import { expect, test } from './support/muted-test';
 import { settleVisual } from './support/settle-visual';
-
-async function pauseVisualClock(page: Page): Promise<void> {
-  const currentTime = await page.evaluate(() => Date.now());
-  await page.clock.pauseAt(currentTime + 1_000);
-}
 
 async function freezeRescueAtEnd(element: Locator): Promise<void> {
   await element.evaluate((animatedElement) => {
@@ -322,7 +318,7 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-hint-timer', 'armed');
-  await pauseVisualClock(page);
+  await pauseAppClockAfterRendering(page);
   await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(page.locator('.drag-ghost-hand')).toBeVisible();
   await settleVisual(page);
@@ -338,16 +334,7 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto('/');
-  await page.evaluate((hintDelayMs) => {
-    const originalSetTimeout = window.setTimeout.bind(window);
-    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...arguments_: unknown[]) => {
-      const timer = originalSetTimeout(handler, timeout, ...arguments_);
-      if (timeout === hintDelayMs) {
-        document.documentElement.dataset['reducedMotionHintTimer'] = 'armed';
-      }
-      return timer;
-    }) as typeof window.setTimeout;
-  }, firstMissionHintDelayMs);
+  await observeTimeoutArming(page, firstMissionHintDelayMs, 'data-reduced-motion-hint-count');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await openFirstRescueMission(page, {
@@ -357,8 +344,14 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const dragInteraction = page.locator('.drag-interaction');
 
-  await expect(page.locator('html')).toHaveAttribute('data-reduced-motion-hint-timer', 'armed');
-  await pauseVisualClock(page);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-reduced-motion-hint-count',
+    /^[1-9]\d*$/u,
+  );
+  const timerCountBeforeDrag = Number(
+    await page.locator('html').getAttribute('data-reduced-motion-hint-count'),
+  );
+  await pauseAppClockAfterRendering(page);
   await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(dragInteraction).toHaveAttribute('data-guidance', 'true');
   await expect(dragInteraction).toHaveAttribute('data-guidance-mode', 'static');
@@ -367,9 +360,6 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
   await settleVisual(page);
   await verifyReviewedVisual(page, 'mission-ladder-reduced-motion.png', testInfo);
 
-  await page.evaluate(() => {
-    delete document.documentElement.dataset['reducedMotionHintTimer'];
-  });
   await dragLadder({
     destination: 'target',
     ladder,
@@ -377,7 +367,12 @@ test('@visual shows clear reduced-motion guidance for both mission steps', async
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
   const mimi = page.getByRole('button', { name: 'Koppints Mimire!' });
-  await expect(page.locator('html')).toHaveAttribute('data-reduced-motion-hint-timer', 'armed');
+  const timersArmedByDragAndTapStep = testInfo.project.use.hasTouch ? 3 : 7;
+  await expect
+    .poll(async () =>
+      Number(await page.locator('html').getAttribute('data-reduced-motion-hint-count')),
+    )
+    .toBeGreaterThanOrEqual(timerCountBeforeDrag + timersArmedByDragAndTapStep);
   await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(dragInteraction).toHaveAttribute('data-guidance', 'false');
   await expect(mimi).toHaveAttribute('data-guidance', 'true');
@@ -399,7 +394,7 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
     hasTouch: Boolean(testInfo.project.use.hasTouch),
     locale: 'hu',
   });
-  await pauseVisualClock(page);
+  await pauseAppClockAfterRendering(page);
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
@@ -435,7 +430,7 @@ test('@visual shows Mimi descending before celebration', async ({ page }, testIn
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await pauseVisualClock(page);
+  await pauseAppClockAfterRendering(page);
   await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
   const rescueMotion = page.locator('.mission-kitten-rescue');
   await expect(rescueMotion).toBeVisible();
