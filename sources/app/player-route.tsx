@@ -1,4 +1,6 @@
+import type { EffectService } from '../audio/effect-service';
 import type { NarrationService } from '../audio/narration-service';
+import { firstRescueReward, type FirstRescueContent } from '../content/first-rescue-content';
 import type { Locale } from '../i18n/localization';
 import { CelebrationScreen } from './celebration-screen';
 import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-rescue-progress';
@@ -9,7 +11,9 @@ import { resolveRoute } from './routes';
 import { ShelterScreen } from './shelter-screen';
 
 type PlayerRouteProps = Readonly<{
+  effectService: EffectService;
   firstRescueProgressStore: FirstRescueProgressStore;
+  firstRescueContent: FirstRescueContent;
   locale: Locale;
   narrationService: NarrationService;
   onNavigate: (path: string) => void;
@@ -32,9 +36,10 @@ export function PlayerRoute(props: PlayerRouteProps) {
   return <FoundationScreen locale={props.locale} route={props.route} />;
 }
 
-function RescueMap({ locale, onNavigate }: PlayerRouteProps) {
+function RescueMap({ firstRescueContent, locale, onNavigate }: PlayerRouteProps) {
   return (
     <MapScreen
+      content={firstRescueContent}
       locale={locale}
       onOpenGardenMission={() => {
         onNavigate('/mission');
@@ -47,6 +52,8 @@ function RescueMap({ locale, onNavigate }: PlayerRouteProps) {
 }
 
 function Mission({
+  effectService,
+  firstRescueContent,
   firstRescueProgressStore,
   locale,
   narrationService,
@@ -54,13 +61,15 @@ function Mission({
 }: PlayerRouteProps) {
   return (
     <FirstMissionScreen
+      content={firstRescueContent}
+      effectService={effectService}
       locale={locale}
       narrationService={narrationService}
       onCelebrate={() => {
         onNavigate('/celebration');
       }}
       onCommitReward={async () => {
-        await firstRescueProgressStore.commitReward(locale);
+        await firstRescueProgressStore.commitReward(locale, firstRescueReward(firstRescueContent));
       }}
       onExit={() => {
         onNavigate('/map');
@@ -70,11 +79,17 @@ function Mission({
 }
 
 function Celebration(props: PlayerRouteProps) {
-  if (!hasFirstRescueReward(props.firstRescueProgressStore.read())) {
+  if (
+    !hasFirstRescueReward(
+      props.firstRescueProgressStore.read(),
+      firstRescueReward(props.firstRescueContent),
+    )
+  ) {
     return <RescueMap {...props} />;
   }
   return (
     <CelebrationScreen
+      content={props.firstRescueContent}
       locale={props.locale}
       narrationService={props.narrationService}
       onMap={() => {
@@ -87,9 +102,15 @@ function Celebration(props: PlayerRouteProps) {
   );
 }
 
-function Shelter({ firstRescueProgressStore, locale, onNavigate }: PlayerRouteProps) {
+function Shelter({
+  firstRescueContent,
+  firstRescueProgressStore,
+  locale,
+  onNavigate,
+}: PlayerRouteProps) {
   return (
     <ShelterScreen
+      content={firstRescueContent}
       locale={locale}
       onMap={() => {
         onNavigate('/map');

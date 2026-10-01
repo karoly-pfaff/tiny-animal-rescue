@@ -4,12 +4,29 @@
   "title": "Tiny Rescue animal",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "species", "nameKey", "shelterAreaId", "assets", "shelterReactions"],
+  "required": [
+    "id",
+    "species",
+    "nameKey",
+    "shelterAreaId",
+    "shelterLocalization",
+    "assets",
+    "shelterReactions"
+  ],
   "properties": {
     "id": { "$ref": "#/$defs/id" },
     "species": { "$ref": "#/$defs/id" },
     "nameKey": { "type": "string", "minLength": 1 },
-    "shelterAreaId": { "$ref": "#/$defs/id" },
+    "shelterAreaId": { "$ref": "#/$defs/reference" },
+    "shelterLocalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["happyKey", "tapLabelKey"],
+      "properties": {
+        "happyKey": { "type": "string", "minLength": 1 },
+        "tapLabelKey": { "type": "string", "minLength": 1 }
+      }
+    },
     "assets": {
       "type": "object",
       "additionalProperties": false,
@@ -18,6 +35,7 @@
         "portrait": { "$ref": "#/$defs/path" },
         "idle": { "$ref": "#/$defs/path" },
         "happy": { "$ref": "#/$defs/path" },
+        "mission": { "$ref": "#/$defs/path" },
         "sleeping": { "$ref": "#/$defs/path" }
       }
     },
@@ -30,6 +48,13 @@
   },
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+" }
+    "reference": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    }
   }
 }

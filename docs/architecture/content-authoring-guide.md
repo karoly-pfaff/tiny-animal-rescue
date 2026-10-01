@@ -87,7 +87,10 @@ remain separate runtime categories and channels.
 ## Localization checklist
 
 - Names and prompts use keys, not inline text.
-- HU and EN keys are added together.
+- Every locale declared by `pack.json` has a matching `locales/<locale>.json`; a missing file is a
+  discovery failure.
+- HU and EN keys are added together, including the pack title and every referenced animal, location,
+  shelter-area, mission, and step key.
 - Spoken lines are short, warm, direct, and avoid multi-step instructions.
 - The prompt describes only the active action.
 - The success line names the animal where appropriate.
@@ -98,7 +101,25 @@ remain separate runtime categories and channels.
 - Manifest contract version is supported.
 - Dependencies are explicit and acyclic.
 - IDs are unique in the assembled registry.
-- Assets are pack-owned or come from declared dependencies.
+- At most one pack declares `initialMissionId`; an application bundle has exactly one, and that ID
+  resolves inside its declaring pack to the supported ordered drag-then-tap Rescue shape.
+- Every declared locale file exists and resolves every localization key referenced by its pack.
+- Own asset references use unqualified pack-relative object keys. Dependency assets use
+  `<pack-id>:<object-key>`, and that pack is declared in `dependencies`; inventory keys are never
+  qualified.
+- Own animal, location, shelter-area, and prerequisite references use unqualified record IDs.
+  Dependency-owned records use `<pack-id>:<record-id>` and require that pack in `dependencies`; the
+  base pack may never depend on an expansion.
+- Drag steps declare normalized source position plus production and code-native fallback target
+  bounds. Keep the semantic target and safe path equivalent in both layouts.
+- Each animal owns localized shelter tap and gentle-reaction keys in every declared locale; do not
+  place a concrete resident name in application-shell copy.
+- Every referenced asset has exactly one inventory record. Image dimensions/transparency and audio
+  category/media type/duration/locale ownership match the delivered file.
+- Voice lives under `audio/voice/<locale>/`; music and effects live under `audio/shared/` without a
+  locale.
+- A claimed production asset has approved QA/license/provenance, `production-safe` classification,
+  an R2 lock, byte count, SHA-256 digest, and no draft/fallback/placeholder/temp marker.
 - Added residents have declared shelter capacity.
 - No scripts, expressions, dynamic imports, or pack-specific components are present.
 - Every approved visual asset has its prompt/provenance/QA record and correct production-safe or

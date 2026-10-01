@@ -1,0 +1,9 @@
+{
+  "id": "sample-meadow",
+  "nameKey": "location.sample-meadow.name",
+  "mapLabelKey": "location.sample-meadow.map-label",
+  "assets": {
+    "mapBackground": "base:images/map/garden-map.png",
+    "missionBackground": "base:images/missions/garden-kitten-tree/background.png"
+  }
+}

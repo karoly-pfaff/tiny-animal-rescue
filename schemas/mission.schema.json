@@ -12,13 +12,14 @@
     "scene",
     "steps",
     "reward",
-    "localization"
+    "localization",
+    "assets"
   ],
   "properties": {
     "id": { "$ref": "#/$defs/id" },
     "type": { "enum": ["rescue", "help", "world"] },
-    "locationId": { "$ref": "#/$defs/id" },
-    "subjectAnimalId": { "$ref": "#/$defs/id" },
+    "locationId": { "$ref": "#/$defs/reference" },
+    "subjectAnimalId": { "$ref": "#/$defs/reference" },
     "prerequisites": {
       "type": "array",
       "uniqueItems": true,
@@ -26,7 +27,7 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["completedMissionId"],
-        "properties": { "completedMissionId": { "$ref": "#/$defs/id" } }
+        "properties": { "completedMissionId": { "$ref": "#/$defs/reference" } }
       }
     },
     "scene": {
@@ -51,7 +52,7 @@
       "required": ["completeMission"],
       "properties": {
         "completeMission": { "const": true },
-        "unlockResidentId": { "$ref": "#/$defs/id" },
+        "unlockResidentId": { "$ref": "#/$defs/reference" },
         "worldFlags": {
           "type": "array",
           "uniqueItems": true,
@@ -68,11 +69,31 @@
         "introKey": { "type": "string", "minLength": 1 },
         "successKey": { "type": "string", "minLength": 1 }
       }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/path" }
+        }
+      }
     }
   },
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+" },
+    "reference": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*:)?(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[a-z0-9][a-z0-9./-]*$"
+    },
     "position": {
       "type": "object",
       "additionalProperties": false,
@@ -81,6 +102,36 @@
         "x": { "type": "number", "minimum": 0, "maximum": 1 },
         "y": { "type": "number", "minimum": 0, "maximum": 1 }
       }
+    },
+    "targetBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["center", "height", "width"],
+      "properties": {
+        "center": { "$ref": "#/$defs/position" },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      }
+    },
+    "hint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "delayMs"],
+      "properties": {
+        "type": { "const": "pulse-after-delay" },
+        "delayMs": { "type": "integer", "minimum": 1000, "maximum": 30000 }
+      }
+    },
+    "successCue": {
+      "enum": [
+        "effects.interaction.tap-remove",
+        "effects.interaction.obstacle-cleared",
+        "effects.interaction.drag-snap",
+        "effects.interaction.wipe-complete",
+        "effects.interaction.match-success",
+        "effects.interaction.trace-complete",
+        "effects.progress.step-complete"
+      ]
     },
     "baseStep": {
       "type": "object",
@@ -99,11 +150,13 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "type", "promptKey", "targetIds"],
+              "required": ["id", "type", "promptKey", "successCue", "hint", "targetIds"],
               "properties": {
                 "id": { "$ref": "#/$defs/id" },
                 "type": { "const": "tap" },
                 "promptKey": { "type": "string" },
+                "successCue": { "$ref": "#/$defs/successCue" },
+                "hint": { "$ref": "#/$defs/hint" },
                 "targetIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }
               }
             }
@@ -115,13 +168,31 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "type", "promptKey", "sourceId", "targetId", "snapTolerance"],
+              "required": [
+                "id",
+                "type",
+                "promptKey",
+                "successCue",
+                "hint",
+                "sourceId",
+                "sourcePosition",
+                "targetId",
+                "targetBounds",
+                "fallbackTargetBounds",
+                "snapTolerance"
+              ],
               "properties": {
                 "id": { "$ref": "#/$defs/id" },
                 "type": { "const": "drag" },
                 "promptKey": { "type": "string" },
+                "successCue": { "$ref": "#/$defs/successCue" },
+                "hint": { "$ref": "#/$defs/hint" },
                 "sourceId": { "$ref": "#/$defs/id" },
+                "sourceAsset": { "$ref": "#/$defs/path" },
+                "sourcePosition": { "$ref": "#/$defs/position" },
                 "targetId": { "$ref": "#/$defs/id" },
+                "targetBounds": { "$ref": "#/$defs/targetBounds" },
+                "fallbackTargetBounds": { "$ref": "#/$defs/targetBounds" },
                 "snapTolerance": { "type": "number", "minimum": 0.1, "maximum": 1 }
               }
             }
@@ -133,11 +204,21 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "type", "promptKey", "maskId", "completionRatio"],
+              "required": [
+                "id",
+                "type",
+                "promptKey",
+                "successCue",
+                "hint",
+                "maskId",
+                "completionRatio"
+              ],
               "properties": {
                 "id": { "$ref": "#/$defs/id" },
                 "type": { "const": "wipe" },
                 "promptKey": { "type": "string" },
+                "successCue": { "$ref": "#/$defs/successCue" },
+                "hint": { "$ref": "#/$defs/hint" },
                 "maskId": { "$ref": "#/$defs/id" },
                 "completionRatio": { "type": "number", "minimum": 0.5, "maximum": 0.85 }
               }
@@ -150,11 +231,13 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "type", "promptKey", "pairs"],
+              "required": ["id", "type", "promptKey", "successCue", "hint", "pairs"],
               "properties": {
                 "id": { "$ref": "#/$defs/id" },
                 "type": { "const": "match" },
                 "promptKey": { "type": "string" },
+                "successCue": { "$ref": "#/$defs/successCue" },
+                "hint": { "$ref": "#/$defs/hint" },
                 "pairs": {
                   "type": "array",
                   "minItems": 1,
@@ -179,11 +262,21 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "type", "promptKey", "pathId", "corridorWidth"],
+              "required": [
+                "id",
+                "type",
+                "promptKey",
+                "successCue",
+                "hint",
+                "pathId",
+                "corridorWidth"
+              ],
               "properties": {
                 "id": { "$ref": "#/$defs/id" },
                 "type": { "const": "trace" },
                 "promptKey": { "type": "string" },
+                "successCue": { "$ref": "#/$defs/successCue" },
+                "hint": { "$ref": "#/$defs/hint" },
                 "pathId": { "$ref": "#/$defs/id" },
                 "corridorWidth": { "type": "number", "minimum": 0.05, "maximum": 0.4 }
               }

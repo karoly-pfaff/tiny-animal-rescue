@@ -10,27 +10,19 @@ export const supportedLocales = {
 type Strings = Readonly<{
   appTitle: string;
   celebrationChoices: string;
-  celebrationTitle: string;
   chooseLanguageTitle: string;
   chooseLanguageHint: string;
   chooseLanguageSaveError: string;
   english: string;
   englishCode: string;
-  firstMissionTitle: string;
   garden: string;
-  gardenMissionLabel: string;
   holdToMap: string;
-  helpMimi: string;
-  indoorRoom: string;
   hungarian: string;
   hungarianCode: string;
   ladderLabel: string;
   ladderPlaced: string;
   map: string;
   mapHint: string;
-  mimiHappy: string;
-  mimiName: string;
-  mimiTapLabel: string;
   parentSettings: string;
   play: string;
   rewardSaveError: string;
@@ -48,27 +40,19 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
   hu: {
     appTitle: 'Kis Állatmentők',
     celebrationChoices: 'Hová menjünk tovább?',
-    celebrationTitle: 'Mimi megmenekült!',
     chooseLanguageTitle: 'Válassz nyelvet',
     chooseLanguageHint: 'Ezt később a szülői beállításokban is megváltoztathatod.',
     chooseLanguageSaveError: 'A beállítás nem menthető. Próbáld újra.',
     english: 'English',
     englishCode: 'EN',
-    firstMissionTitle: 'Mimi a fán',
     garden: 'Kert',
-    gardenMissionLabel: 'Kerti mentés: Mimi',
     holdToMap: 'Tartsd nyomva a térképhez',
-    helpMimi: 'Segíts Miminek lejönni',
-    indoorRoom: 'Belső szoba',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     ladderLabel: 'Tedd a létrát a fához',
     ladderPlaced: 'A létra a helyére került.',
     map: 'Térkép',
     mapHint: 'Az első mentés a Kertben vár.',
-    mimiHappy: 'Mimi boldogan dorombol.',
-    mimiName: 'Mimi',
-    mimiTapLabel: 'Simogasd meg Mimit',
     parentSettings: 'Szülői beállítások',
     play: 'Játék',
     rewardSaveError: 'A mentés most nem sikerült. Érintsd meg újra Mimit.',
@@ -91,27 +75,19 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
   en: {
     appTitle: 'Tiny Rescue',
     celebrationChoices: 'Where should we go next?',
-    celebrationTitle: 'Mimi is rescued!',
     chooseLanguageTitle: 'Choose a language',
     chooseLanguageHint: 'You can change this later in Parent Settings.',
     chooseLanguageSaveError: 'The setting could not be saved. Please try again.',
     english: 'English',
     englishCode: 'EN',
-    firstMissionTitle: 'Mimi in the tree',
     garden: 'Garden',
-    gardenMissionLabel: 'Garden rescue: Mimi',
     holdToMap: 'Hold to return to the map',
-    helpMimi: 'Help Mimi come down',
-    indoorRoom: 'Indoor Room',
     hungarian: 'Magyar',
     hungarianCode: 'HU',
     ladderLabel: 'Move the ladder to the tree',
     ladderPlaced: 'The ladder is in place.',
     map: 'Map',
     mapHint: 'The first rescue is waiting in the Garden.',
-    mimiHappy: 'Mimi purrs happily.',
-    mimiName: 'Mimi',
-    mimiTapLabel: 'Give Mimi a gentle pat',
     parentSettings: 'Parent settings',
     play: 'Play',
     rewardSaveError: 'The rescue could not be saved yet. Tap Mimi again.',

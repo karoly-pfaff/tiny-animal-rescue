@@ -168,7 +168,7 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
 
   await dragLadder({ destination: 'invalid', ladder, page, pointerType });
@@ -192,7 +192,7 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   const target = page.locator('.ladder-target');
   await expect(target).toHaveCSS('animation-name', 'none');
-  await page.clock.fastForward(4_000);
+  await page.clock.fastForward(5_000);
 
   const ghost = page.locator('.drag-ghost-hand');
   await expect(ghost).toBeVisible();
@@ -207,7 +207,7 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   }
   expect(endBox.x).toBeGreaterThan(startBox.x + 20);
 
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
@@ -230,7 +230,7 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
   await expect(page.getByRole('button', { name: 'Térkép' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Menhely' }), hasTouch);
   await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
   const shelterMimi = page.getByRole('button', { name: 'Simogasd meg Mimit' });
@@ -260,7 +260,7 @@ test('@preview completes the English rescue and restores Mimi after reload', asy
   await completeFirstRescue(page, hasTouch, 'en');
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Mimi is rescued!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mimi is safe!' })).toBeVisible();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Shelter' }), hasTouch);
   await expect(page.getByRole('heading', { name: 'Indoor Room' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Give Mimi a gentle pat' })).toBeVisible();
@@ -280,16 +280,16 @@ test('@preview recovers corrupt save data without crashing the child flow', asyn
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
   await expect.poll(async () => readRecoveryCount(page)).toBe(1);
   await expect
     .poll(async () => readPrimarySave(page))

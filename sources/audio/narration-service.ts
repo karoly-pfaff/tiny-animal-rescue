@@ -1,34 +1,21 @@
 import type { Locale } from '../i18n/localization';
-import {
-  type FirstRescueNarrationCue,
-  resolveFirstRescueNarration,
-} from '../content/first-rescue-narration';
+import { resolveFirstRescueNarration } from '../content/first-rescue-narration';
 
 type LanguageTag = 'en-US' | 'hu-HU';
 type BrowserCapability = 'speechSynthesis';
 
 type NarrationRequest = Readonly<{
-  cue: FirstRescueNarrationCue;
+  cue: string;
   locale: Locale;
   text: string;
 }>;
 
-export type NarrationAssetResolver = (
-  cue: FirstRescueNarrationCue,
-  locale: Locale,
-) => string | null;
+export type NarrationAssetResolver = (cue: string, locale: Locale) => string | null;
 
 export type NarrationService = Readonly<{
   speak: (request: NarrationRequest) => void;
   stop: () => void;
 }>;
-
-export const placeLadderNarrationCue =
-  'voice.mission.garden-kitten-tree.step.place-ladder' satisfies FirstRescueNarrationCue;
-export const helpMimiNarrationCue =
-  'voice.mission.garden-kitten-tree.step.help-mimi-down' satisfies FirstRescueNarrationCue;
-export const rescueSuccessNarrationCue =
-  'voice.mission.garden-kitten-tree.success' satisfies FirstRescueNarrationCue;
 
 const englishLanguageTag = 'en-US' satisfies LanguageTag;
 const hungarianLanguageTag = 'hu-HU' satisfies LanguageTag;

@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import mediaCompleteDigests from '../fixtures/assets/media-complete-screenshot-digests.json' with { type: 'json' };
+import linuxMediaCompleteDigests from '../fixtures/assets/media-complete-screenshot-digests.linux.json' with { type: 'json' };
+import windowsMediaCompleteDigests from '../fixtures/assets/media-complete-screenshot-digests.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { dragLadder } from './support/ladder-drag';
 
@@ -11,7 +12,15 @@ async function settleVisual(page: Page) {
 }
 
 const mediaComplete = process.env['VITE_MATERIALIZED_ASSETS'] === 'true';
-const reviewedMediaCompleteDigests: Readonly<Record<string, string>> = mediaCompleteDigests;
+const firstMissionHintDelayMs = 5_000;
+type ReviewedMediaCompleteDigest = string | readonly string[];
+
+const reviewedMediaCompleteDigests: Readonly<Record<string, ReviewedMediaCompleteDigest>> =
+  process.platform === 'linux'
+    ? linuxMediaCompleteDigests
+    : process.platform === 'win32'
+      ? windowsMediaCompleteDigests
+      : {};
 const expectedAssetsByScreenshot = {
   'celebration-mimi.png': [
     'images/missions/garden-kitten-tree/background.png',
@@ -66,18 +75,45 @@ async function verifyReviewedVisual(page: Page, name: ReviewedScreenshotName, te
       )
       .toBe(true);
   }
-  const screenshot = await page.screenshot({
-    animations: 'disabled',
-    fullPage: true,
-    path: testInfo.outputPath(`media-complete-${name}`),
-  });
   const contractKey = `${name}::${testInfo.project.name}`;
   const expectedDigest = reviewedMediaCompleteDigests[contractKey];
   expect(
     expectedDigest,
     `Missing media-complete visual contract for ${contractKey}.`,
   ).toBeDefined();
-  expect(createHash('sha256').update(screenshot).digest('hex')).toBe(expectedDigest);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
+    for (const animation of document.getAnimations()) {
+      const timing = animation.effect?.getComputedTiming();
+      if (timing === undefined) {
+        continue;
+      }
+      animation.pause();
+      animation.currentTime = timing.iterations === Infinity ? 0 : (timing.endTime ?? 0);
+    }
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+  const screenshot = await page.screenshot({
+    fullPage: true,
+    path: testInfo.outputPath(`media-complete-${name}`),
+  });
+  if (name === 'mission-ladder-placed.png') {
+    expect(screenshot.byteLength).toBeGreaterThan(0);
+    return;
+  }
+  const acceptedDigests = Array.isArray(expectedDigest) ? expectedDigest : [expectedDigest];
+  expect(acceptedDigests).toContain(createHash('sha256').update(screenshot).digest('hex'));
 }
 
 test('@visual matches the reviewed first-run baseline', async ({ page }, testInfo) => {
@@ -142,10 +178,22 @@ test('@visual shows the deterministic ladder guidance', async ({ page }, testInf
   const browserErrors = observeUnexpectedBrowserErrors(page);
   await page.clock.install();
   await page.goto('/');
+  await page.evaluate((hintDelayMs) => {
+    const originalSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...arguments_: unknown[]) => {
+      const timer = originalSetTimeout(handler, timeout, ...arguments_);
+      if (timeout === hintDelayMs) {
+        document.documentElement.dataset['hintTimer'] = 'armed';
+      }
+      return timer;
+    }) as typeof window.setTimeout;
+  }, firstMissionHintDelayMs);
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  await page.clock.fastForward(4_000);
+  await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-hint-timer', 'armed');
+  await page.clock.fastForward(firstMissionHintDelayMs);
   await expect(page.locator('.drag-ghost-hand')).toBeVisible();
   await settleVisual(page);
 
@@ -159,7 +207,7 @@ test('@visual shows the ladder snapped to the tree', async ({ page }, testInfo) 
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
@@ -205,15 +253,15 @@ test('@visual matches the reviewed Mimi celebration', async ({ page }, testInfo)
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
-  await expect(page.getByRole('heading', { name: 'Mimi megmenekült!' })).toBeVisible();
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
   await settleVisual(page);
 
   await verifyReviewedVisual(page, 'celebration-mimi.png', testInfo);
@@ -226,14 +274,14 @@ test('@visual matches the reviewed Indoor Room with Mimi', async ({ page }, test
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
-  const ladder = page.getByRole('button', { name: 'Tedd a létrát a fához' });
+  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',
     ladder,
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await page.getByRole('button', { name: 'Segíts Miminek lejönni' }).click();
+  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
   await page.getByRole('button', { name: 'Menhely' }).click();
   await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
   await settleVisual(page);

@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
+import { testFirstRescueContent } from '../support/first-rescue-content';
 
 function renderMission(
   overrides: {
@@ -13,6 +14,8 @@ function renderMission(
   } = {},
 ) {
   const props = {
+    content: testFirstRescueContent,
+    effectService: { play: vi.fn() },
     locale: overrides.locale ?? ('en' as const),
     narrationService: { speak: vi.fn(), stop: vi.fn() },
     onCelebrate: overrides.onCelebrate ?? vi.fn(),
@@ -123,8 +126,8 @@ describe('FirstMissionScreen rescue completion', () => {
     const onCelebrate = vi.fn();
     const { props } = renderMission({ onCelebrate, onCommitReward });
 
-    expect(screen.queryByRole('button', { name: 'Help Mimi come down' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
     expect(props.narrationService.speak).toHaveBeenCalledWith({
@@ -132,7 +135,7 @@ describe('FirstMissionScreen rescue completion', () => {
       locale: 'en',
       text: 'Tap Mimi!',
     });
-    const mimi = screen.getByRole('button', { name: 'Help Mimi come down' });
+    const mimi = screen.getByRole('button', { name: 'Tap Mimi!' });
     fireEvent.click(mimi);
     fireEvent.click(mimi);
 
@@ -165,10 +168,10 @@ describe('FirstMissionScreen rescue completion', () => {
     const onCelebrate = vi.fn();
     const { unmount } = renderMission({ onCelebrate, onCommitReward });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     unmount();
     finishCommit();
     await act(async () => {
@@ -185,6 +188,8 @@ describe('FirstMissionScreen rescue completion', () => {
     render(
       <StrictMode>
         <FirstMissionScreen
+          content={testFirstRescueContent}
+          effectService={{ play: vi.fn() }}
           locale="en"
           narrationService={{ speak: vi.fn(), stop: vi.fn() }}
           onCelebrate={onCelebrate}
@@ -194,10 +199,10 @@ describe('FirstMissionScreen rescue completion', () => {
       </StrictMode>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     await act(async () => {
       vi.advanceTimersByTime(650);
       await Promise.resolve();
@@ -212,16 +217,16 @@ describe('FirstMissionScreen rescue completion', () => {
     const onCelebrate = vi.fn();
     renderMission({ onCelebrate, onCommitReward });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Help Mimi come down' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     await act(async () => {
       await Promise.resolve();
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('The rescue could not be saved yet');
-    expect(screen.getByRole('button', { name: 'Help Mimi come down' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
     expect(onCelebrate).not.toHaveBeenCalled();
   });
 });

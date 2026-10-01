@@ -1,0 +1,4 @@
+const modules = import.meta.glob('../../content/*/pack.json', {
+  eager: true,
+  import: 'default',
+});

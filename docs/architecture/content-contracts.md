@@ -18,11 +18,13 @@ content/<pack-id>/
   locales/hu.json
   locales/en.json
   assets/
+    manifest.json
     images/
     audio/
       shared/
-      hu/
-      en/
+      voice/
+        hu/
+        en/
 ```
 
 ## Pack manifest
@@ -33,6 +35,7 @@ Required fields:
 - semantic `version`
 - supported contract version
 - localized pack title keys
+- optional `initialMissionId` for the one pack that owns the application entry mission
 - declared locale list
 - content directory declarations
 - optional dependency list
@@ -41,6 +44,30 @@ Required fields:
 bundled `base` pack follows the product version at release. `contractVersion` is a positive integer
 for breaking schema/normalization compatibility; compatible optional additions inside one contract
 version require deterministic normalization defaults.
+
+### Contract-version behavior
+
+The runtime supports exactly the contract versions it names; contract version 1 is the only supported
+version for M2. Structural validation runs before normalization. The normalizer rejects an unknown
+version with a parent-readable diagnostic and never guesses, coerces, or silently falls back.
+
+Within one contract version, a newly optional field is compatible only when the runtime applies one
+documented deterministic default and tests the omitted form. Removing or renaming a field, changing
+its meaning or default, making an optional field required, or changing an enum member's semantics
+requires the next integer contract version and a deliberate migration/compatibility decision. Pack
+SemVer records content releases; it does not replace the integer format contract.
+
+In contract version 1, an omitted pack `dependencies` field normalizes to an immutable empty list. An
+omitted `initialMissionId` means that the pack does not own the application entry mission. The bundled
+application requires exactly one declaration across its assembled packs; ambiguity is an error, never
+a pack- or filename-order choice. The declared mission must belong to that pack and be a
+prerequisite-free two-step Rescue whose ordered steps are authored drag then tap.
+
+Every locale named by the manifest must have exactly one `locales/<locale>.json` document. Discovery
+fails when a declared document is absent, and semantic validation requires the pack title plus every
+animal, location, shelter-area, mission, and step key referenced by that pack in every declared
+locale. The assembled registry exposes immutable localization documents; runtime content selects text
+from those documents rather than duplicating content copy in application code.
 
 The base pack ID is `base`. Cross-pack references require an explicit dependency and use qualified IDs. Base content is not allowed to depend on expansion content.
 In v1 the dependency list contains pack IDs only: every pack is bundled and validated in one build,
@@ -57,7 +84,8 @@ segments, and backslashes fail schema validation before discovery.
 - An ID is globally stable after a public release.
 - Display names are localized and may change.
 - Mission IDs begin with the location ID for base-game readability.
-- References are by ID, never array position or filename.
+- References are by ID, never array position or filename. Own-pack record references are unqualified;
+  dependency-owned records use `<pack-id>:<record-id>` and resolve only through a declared dependency.
 
 ## Animal record
 
@@ -65,7 +93,9 @@ An animal declares:
 
 - `id`, `species`, and localization keys
 - one `shelterAreaId`
-- portrait and scene/shelter animation assets
+- localized shelter tap and reaction keys owned by the animal's declaring pack
+- portrait and scene/shelter animation assets; `assets.mission` optionally selects a dedicated mission
+  cutout and otherwise falls back to the portrait
 - allowed shelter reactions from a fixed enum
 - language-neutral effect cues
 - optional tags used only for selection and validation
@@ -96,6 +126,17 @@ type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
 ```
 
 Every step has a stable step ID, prompt key, visual targets, success cue, and hint strategy. Per-type settings are constrained and defaulted during normalization.
+A drag step may declare a `sourceAsset` logical key when its movable source is authored media. The
+reference follows the same ownership rules as every other content asset and must exist in the owning
+inventory; omitting it means the reusable interaction supplies code-native presentation.
+Every drag step declares its normalized `sourcePosition`, production `targetBounds`, and
+`fallbackTargetBounds`; changing those values changes the reusable interaction layout without an
+application-code edit. The fallback bounds may differ only to align the code-native scene with the
+same semantic target.
+`snapTolerance` scales the authored target hit region from `0.1` through `1` relative to the contract
+version 1 baseline of `0.55`; larger values are more forgiving. The runtime consumes each step's
+ordered prompt, hint delay, source/target identifiers, and success cue. Production sound playback for
+those semantic cues is integrated only when its asset set has passed the audio workflow.
 
 ## Reward rules
 
@@ -127,12 +168,19 @@ Positions use normalized coordinates relative to a 1024×768 design surface. The
 
 ## Asset references
 
-Asset references are pack-relative logical object keys governed by
-[ADR-0011](adr/ADR-0011-local-content-asset-materialization.md). Production media binaries live
-outside Git and are distributed from R2; pack inventories, prompt provenance, QA, ownership, and
-delivery metadata remain versioned. A repository-owned sync step verifies and materializes them into
-the ignored local pack tree before build. The runtime resolver maps logical keys to packaged local
-URLs and rejects:
+Asset references are logical object keys governed by
+[ADR-0011](adr/ADR-0011-local-content-asset-materialization.md). An unqualified reference such as
+`images/residents/mimi/canonical.png` resolves only inside the declaring pack. A reference owned by a
+declared dependency uses `<pack-id>:<object-key>`, for example
+`base:images/residents/mimi/canonical.png`. Inventory `objectKey` values are always unqualified,
+lower-case, pack-relative paths; a pack prefix belongs only in a content-record reference. A
+qualified reference does not grant access by itself: the consumer must declare that pack in
+`dependencies`, and the referenced inventory record must be owned by that dependency.
+
+Production media binaries live outside Git and are distributed from R2; pack inventories, prompt
+provenance, QA, ownership, and delivery metadata remain versioned. A repository-owned sync step
+verifies and materializes them into the ignored local pack tree before build. The runtime resolver
+maps logical keys to packaged local URLs and rejects:
 
 - absolute URLs
 - parent-directory traversal
@@ -141,15 +189,30 @@ URLs and rejects:
 - wrong media types
 - locale audio stored in a shared directory
 
-Run `npm run assets:sync` from a clean checkout after setting the trusted `R2_ENDPOINT`, `R2_BUCKET`,
-`R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` environment variables. The command reads only tracked
-materialization locks, downloads each exact object, and writes verified media plus the secret-free
-receipt under the ignored candidate tree. `npm run test:assets:materialized` then checks lock,
-inventory, byte, digest, media-type, dimension/transparency, ownership, provenance, license, and QA
-parity before a media-complete build. Neither the downloaded binaries nor the receipt may be added to
-Git.
+For local synchronization, copy `.env.example` to the ignored `.env.local` and set the trusted
+`R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` values, then run
+`npm run assets:sync` from a clean checkout. The S3 origin is derived from the account ID;
+`R2_ENDPOINT` is an optional credential-free override. Existing process environment values take
+precedence over the local file, including the protected secrets injected by hosted qualification. The
+command reads only tracked materialization locks, downloads each exact object, and writes verified
+media plus the secret-free receipt under the ignored candidate tree.
+`npm run test:assets:materialized` then checks lock, inventory, byte, digest, media-type,
+dimension/transparency, ownership, provenance, license, and QA parity before a media-complete build.
+Neither the downloaded binaries, `.env.local`, nor the receipt may be added to Git.
 
-Required image metadata includes intended role, dimensions, and whether transparency is expected. Required audio metadata includes role, locale where applicable, and duration bounds where narration timing matters.
+Required image metadata includes category, intended role, media type, positive dimensions, and
+whether transparency is expected. Required audio metadata includes category, role, media type,
+positive duration bounds, and a locale for voice only. Voice objects live under
+`audio/voice/<locale>/`; shared music and effects live under `audio/shared/` and may not claim a
+locale. Every referenced key must have exactly one inventory record. A media-complete check also
+requires the file itself and verifies its detected media type, byte count, digest, dimensions or
+duration, and transparency against the inventory and materialization lock.
+
+Release validation rejects a referenced record unless QA, license, and provenance are approved; its
+classification is `production-safe`; delivery is `r2-locked`; positive byte count and a valid SHA-256
+digest are present; and its ID, role, and object key do not identify a draft, fallback, placeholder,
+or temporary asset. Source-only CI may omit external bytes, but `test:assets:materialized` is
+mandatory for any epic or patch that claims the affected production media complete.
 
 Ignored local working media may satisfy dimension and visual QA during development. A code-native
 fallback may cover an `r2-pending` decorative asset, but it does not make that asset epic- or
@@ -188,6 +251,8 @@ In addition to schema validation, CI verifies:
 
 - unique IDs across the assembled registry
 - all references resolve
+- every own-pack record reference is unqualified and every qualified record reference names a
+  declared dependency and the record's actual owner pack
 - prerequisite graph is acyclic
 - every base Rescue unlocks exactly one unique resident
 - Help missions depend on their resident's Rescue mission
@@ -196,6 +261,8 @@ In addition to schema validation, CI verifies:
 - only accepted interaction and reaction enums are used
 - base scope matches the normative catalog
 - every required asset is owned by the declaring pack or dependency
+- the assembled registry contains exactly one image with role `start-background`, and release
+  validation requires that shell asset to be production-qualified
 - all runtime localization and audio keys exist for HU and EN
 
 ## Examples and schemas

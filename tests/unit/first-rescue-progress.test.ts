@@ -6,25 +6,26 @@ import {
   emptyFirstRescueProgress,
   hasFirstRescueReward,
 } from '../../sources/app/first-rescue-progress';
+import { testFirstRescueReward } from '../support/first-rescue-content';
 
 describe('first rescue reward', () => {
   it('adds the mission, Mimi, and world flag exactly once', async () => {
     const store = createSessionFirstRescueProgressStore();
 
-    expect(hasFirstRescueReward(store.read())).toBe(false);
-    await store.commitReward('en');
-    await store.commitReward('en');
+    expect(hasFirstRescueReward(store.read(), testFirstRescueReward)).toBe(false);
+    await store.commitReward('en', testFirstRescueReward);
+    await store.commitReward('en', testFirstRescueReward);
 
     expect(store.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: ['mimi-kitten'],
       worldFlags: ['mimi-rescued'],
     });
-    expect(hasFirstRescueReward(store.read())).toBe(true);
+    expect(hasFirstRescueReward(store.read(), testFirstRescueReward)).toBe(true);
   });
 
   it('does not mutate the previous progress snapshot', () => {
-    const rewarded = applyFirstRescueReward(emptyFirstRescueProgress);
+    const rewarded = applyFirstRescueReward(emptyFirstRescueProgress, testFirstRescueReward);
 
     expect(emptyFirstRescueProgress).toEqual({
       completedMissionIds: [],

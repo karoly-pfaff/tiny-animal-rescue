@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-22
+- Last amended: 2026-09-27
 - Amends: ADR-0009
 
 ## Context
@@ -21,9 +22,19 @@ Every epic and every patch with player-visible impact requires a live product in
 candidate commit after the applicable automated aggregate gate and independent audit pass. Audit fixes
 rerun their affected gates before inspection.
 
+Production-media qualification follows explicit backlog ownership. Media owned, changed, or claimed
+complete by the candidate must be materialized and inspected as production media. Media assigned to a
+later epic may remain on a deterministic development fallback only when the current backlog item names
+the exact owning story, does not change or claim completion of that media, preserves required audio and
+visual guidance plus HU/EN equivalence, and inventories the deferral in its exact-head backlog item.
+The later owning epic must declare and inspect every inherited journey that exercises the media. This
+bounded deferral records an incomplete media dependency; it is not a media-complete claim or a waiver
+of the later production inspection.
+
 The implementer must:
 
-1. synchronize and verify every production asset required by the changed journeys;
+1. synchronize and verify every production asset owned, changed, or claimed complete by the candidate,
+   and inventory any explicitly deferred media dependency with its owning future story;
 2. create the production build and start its static preview;
 3. open that preview in a real browser rather than inspecting source, isolated components, or stored
    screenshots alone;
@@ -31,9 +42,11 @@ The implementer must:
    mouse and touch input;
 5. inspect the complete supported viewport matrix at full size: 1024x768, 1280x800, 1366x1024, and
    768x1024;
-6. confirm that real production media loaded, no placeholder or fallback is visible, composition and
-   hierarchy are coherent, required targets and safe paths remain clear, and no watermark, baked text,
-   clipping, overlap, loading failure, console error, or unintended visual state appears;
+6. confirm that real production media loaded for every owned, changed, or claimed-complete asset; no
+   unexpected placeholder or fallback is present; each explicitly deferred fallback matches its
+   inventory; composition and hierarchy are coherent; required targets and safe paths remain clear;
+   and no watermark, baked text, clipping, overlap, loading failure, console error, or unintended
+   visual state appears;
 7. record findings, correct them, rebuild, and repeat the affected inspection before sign-off; and
 8. add a retained inspection record before asking the user to approve merge.
 
@@ -42,7 +55,9 @@ request comment and a non-expired, non-empty GitHub Actions visual artifact prod
 inspected head. It identifies the epic or patch, exact commit SHA and
 product version, build and preview commands, browser, locale/input/viewport matrix, journeys
 inspected, asset-inventory and artifact digests, evidence paths, findings and dispositions, inspector,
-timestamp, and final result. Screenshots support this record but never replace the live walkthrough.
+timestamp, and final result. The exact head binds the record to the versioned backlog deferral;
+`Findings: none` means no deviation from that declared deferral, not that the dependency is complete.
+Screenshots support this record but never replace the live walkthrough.
 The later explicit approval names the inspection-comment identity and exact candidate SHA. This avoids
 changing the commit after inspecting it while leaving a provider-verifiable evidence chain.
 
@@ -63,6 +78,9 @@ defects visible at the point where they can still block closure.
 - A visual baseline may pass while live product inspection fails; the live finding blocks closure.
 - Evidence must distinguish behavioral automation, regression baselines, asset delivery, and live
   product judgment instead of presenting one as proof of another.
+- An explicitly deferred, non-owned media dependency remains visible in the inspection record and
+  blocks the later owning epic until its real production asset passes qualification on every inherited
+  journey.
 - Fixes made after inspection invalidate that sign-off for every affected journey and require a new
   candidate build and focused reinspection.
 - The versioned audit document may define the planned matrix and summarize historical findings, but
@@ -81,3 +99,5 @@ defects visible at the point where they can still block closure.
   player experience.
 - **Perform the inspection after merge:** discovers blockers after the immutable milestone history was
   already advanced.
+- **Force the first epic that exercises a shared journey to finish every later-owned media asset:**
+  hides the delivery sequence, expands milestone scope, and makes a scheduled media epic redundant.

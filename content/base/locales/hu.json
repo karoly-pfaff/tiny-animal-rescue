@@ -1,0 +1,14 @@
+{
+  "animal.mimi-kitten.name": "Mimi",
+  "animal.mimi-kitten.shelter.happy": "Mimi boldogan dorombol.",
+  "animal.mimi-kitten.shelter.tap-label": "Simogasd meg Mimit",
+  "location.garden.map-label": "Kerti mentés: Mimi",
+  "location.garden.name": "Kert",
+  "mission.garden-kitten-tree.intro": "Mimi segítségre vár.",
+  "mission.garden-kitten-tree.step.help-mimi-down": "Koppints Mimire!",
+  "mission.garden-kitten-tree.step.place-ladder": "Húzd a létrát a fához!",
+  "mission.garden-kitten-tree.success": "Mimi biztonságban van!",
+  "mission.garden-kitten-tree.title": "Mimi a fán",
+  "pack.base.title": "Kis Állatmentők",
+  "shelter-area.indoor-room.name": "Belső szoba"
+}

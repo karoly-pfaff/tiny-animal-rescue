@@ -247,6 +247,9 @@
   padding: 0;
   cursor: pointer;
   box-shadow: 0 0 0 0.45rem rgb(255 240 151 / 72%);
+}
+
+.mission-kitten-action.is-guidance {
   animation: mimi-ready 1.35s ease-in-out infinite;
 }
 

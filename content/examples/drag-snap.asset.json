@@ -1,0 +1,13 @@
+{
+  "id": "drag-snap",
+  "category": "effect",
+  "objectKey": "audio/shared/effects/interactions/drag-snap.ogg",
+  "role": "interaction-feedback",
+  "ownership": "base",
+  "mediaType": "audio/ogg",
+  "qaStatus": "not-produced",
+  "licenseStatus": "pending-production",
+  "provenanceStatus": "pending-production",
+  "promptRecord": "prompts/effects/interaction-primitives.md",
+  "durationBoundsSeconds": { "min": 0.2, "max": 0.9 }
+}

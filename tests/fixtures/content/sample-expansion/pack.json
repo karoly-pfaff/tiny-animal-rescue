@@ -1,10 +1,10 @@
 {
-  "id": "base",
-  "version": "0.2.0",
+  "id": "sample-expansion",
+  "version": "0.0.0",
   "contractVersion": 1,
-  "titleKey": "pack.base.title",
+  "titleKey": "pack.sample-expansion.title",
   "locales": ["hu", "en"],
-  "dependencies": [],
+  "dependencies": ["base"],
   "content": {
     "animals": "animals",
     "missions": "missions",
