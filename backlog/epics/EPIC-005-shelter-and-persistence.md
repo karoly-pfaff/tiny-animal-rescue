@@ -29,10 +29,10 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S03 — Atomic completion and resume
 
-- [ ] Step completion persists according to the documented policy.
-- [ ] Mission completion, resident unlock, world flags, and current-mission cleanup commit atomically.
-- [ ] Repeated completion events are idempotent.
-- [ ] Background/foreground and browser refresh cases are integration-tested.
+- [x] Step completion persists according to the documented policy.
+- [x] Mission completion, resident unlock, world flags, and current-mission cleanup commit atomically.
+- [x] Repeated completion events are idempotent.
+- [x] Background/foreground and browser refresh cases are integration-tested.
 
 ### E005-S04 — Three shelter areas
 

@@ -163,7 +163,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Tap Mimi!' }));
 
     expect(progressStore.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],
@@ -252,6 +252,59 @@ describe('App', () => {
     expect(
       screen.queryByRole('heading', { name: 'Mimi biztonságban van!' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('resumes a checkpoint after backgrounding and a browser-style remount', async () => {
+    window.location.hash = '/mission/garden-kitten-tree';
+    const harness = createIndexedDbHarness();
+    const createProgressStore = () =>
+      createPersistedFirstRescueProgressStore(
+        createIndexedDbSaveGameRepository(harness.factory, () => 'checkpoint-time'),
+      );
+    let hidden = false;
+    const hiddenProperty = vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const firstRender = render(
+      <App
+        firstRescueProgressStore={createProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Move the ladder to the tree!' }), {
+      detail: 0,
+    });
+    expect(await screen.findByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      currentMission: {
+        completedStepIds: ['place-ladder'],
+        missionId: 'garden-kitten-tree',
+      },
+    });
+
+    hidden = true;
+    await act(() => Promise.resolve(document.dispatchEvent(new Event('visibilitychange'))));
+    hidden = false;
+    await act(() => Promise.resolve(document.dispatchEvent(new Event('visibilitychange'))));
+    firstRender.unmount();
+
+    render(
+      <App
+        firstRescueProgressStore={createProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+    const mimi = await screen.findByRole('button', { name: 'Tap Mimi!' });
+    expect(screen.queryByRole('button', { name: 'Move the ladder to the tree!' })).toBeNull();
+    fireEvent.click(mimi);
+    expect(await screen.findByRole('heading', { name: 'Mimi is safe!' })).toBeVisible();
+
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    expect(harness.getValue('save-games', 'primary')).not.toHaveProperty('currentMission');
+    hiddenProperty.mockRestore();
   });
 
   it('blocks play and retries after a transient save load failure', async () => {

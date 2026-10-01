@@ -136,6 +136,24 @@ describe('mission step orchestrator', () => {
     expect(mounted[0]?.controller.resume).toHaveBeenCalledOnce();
   });
 
+  it('queues a valid completion while paused and applies it exactly once on resume', () => {
+    const { mounted, orchestrator } = createHarness();
+    orchestrator.start();
+    orchestrator.pause();
+
+    mounted[0]?.emit({ stepId: 'remove-branch', type: 'complete' });
+    mounted[0]?.emit({ stepId: 'remove-branch', type: 'complete' });
+    expect(orchestrator.getState()).toMatchObject({ activeStepIndex: 0, status: 'paused' });
+    expect(mounted).toHaveLength(1);
+
+    orchestrator.resume();
+    expect(mounted[0]?.controller.resume).not.toHaveBeenCalled();
+    expect(mounted[0]?.controller.dispose).toHaveBeenCalledOnce();
+    expect(mounted).toHaveLength(2);
+    expect(mounted[1]?.stepId).toBe('move-basket');
+    expect(orchestrator.getState()).toMatchObject({ activeStepIndex: 1, status: 'active' });
+  });
+
   it('resets to a fresh first interaction and disposes permanently', () => {
     const { mounted, orchestrator } = createHarness();
     orchestrator.start();

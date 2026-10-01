@@ -39,7 +39,8 @@ export function createMissionStepOrchestrator(
 ): MissionStepOrchestrator {
   let state = initialMissionStepState,
     interaction: InteractionController | null = null,
-    interactionGeneration = 0;
+    interactionGeneration = 0,
+    pendingCompletion: PendingCompletion | null = null;
 
   const transition = (action: MissionStepAction) => {
     const nextState = reduceMissionStepState(options.steps, state, action);
@@ -59,10 +60,11 @@ export function createMissionStepOrchestrator(
     });
     interaction.start();
   };
-  const receive = (event: MissionInteractionEvent, generation: number) => {
+  const applyCompletion = (event: MissionInteractionEvent, generation: number) => {
     if (generation !== interactionGeneration || !transition(event)) {
-      return;
+      return false;
     }
+    pendingCompletion = null;
     interactionGeneration += 1;
     disposeInteraction(interaction);
     interaction = null;
@@ -71,42 +73,73 @@ export function createMissionStepOrchestrator(
     } else {
       mountActive();
     }
+    return true;
   };
-  const start = () => {
-    if (transition({ type: startAction })) {
-      mountActive();
+  const receive = (event: MissionInteractionEvent, generation: number) => {
+    if (generation !== interactionGeneration) {
+      return;
     }
-  };
-  const pause = () => {
-    if (transition({ type: pauseAction })) {
-      interaction?.pause();
+    if (state.status === 'paused') {
+      if (options.steps[state.activeStepIndex]?.id === event.stepId) {
+        pendingCompletion = { event, generation };
+      }
+      return;
     }
+    applyCompletion(event, generation);
   };
   const resume = () => {
     if (transition({ type: resumeAction })) {
-      interaction?.resume();
+      const completion = pendingCompletion;
+      pendingCompletion = null;
+      if (completion === null || !applyCompletion(completion.event, completion.generation)) {
+        interaction?.resume();
+      }
     }
   };
   const reset = () => {
     if (!transition({ type: resetAction })) {
       return;
     }
+    pendingCompletion = null;
     interactionGeneration += 1;
     disposeInteraction(interaction);
     interaction = null;
-    start();
+    if (transition({ type: startAction })) {
+      mountActive();
+    }
   };
   const dispose = () => {
     if (!transition({ type: disposeAction })) {
       return;
     }
+    pendingCompletion = null;
     interactionGeneration += 1;
     disposeInteraction(interaction);
     interaction = null;
   };
 
-  return { dispose, getState: () => state, pause, reset, resume, start };
+  return {
+    dispose,
+    getState: () => state,
+    pause: () => {
+      if (transition({ type: pauseAction })) {
+        interaction?.pause();
+      }
+    },
+    reset,
+    resume,
+    start: () => {
+      if (transition({ type: startAction })) {
+        mountActive();
+      }
+    },
+  };
 }
+
+type PendingCompletion = Readonly<{
+  event: MissionInteractionEvent;
+  generation: number;
+}>;
 
 function disposeInteraction(interaction: InteractionController | null): void {
   interaction?.dispose();

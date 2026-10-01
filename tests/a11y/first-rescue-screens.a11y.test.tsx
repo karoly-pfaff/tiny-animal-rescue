@@ -35,9 +35,11 @@ describe('first rescue screen accessibility', () => {
       key="mission"
       content={testFirstRescueContent}
       effectService={{ play: vi.fn() }}
+      initialCompletedStepIds={[]}
       locale="en"
       onCelebrate={vi.fn()}
       onCommitReward={vi.fn(() => Promise.resolve())}
+      onCommitStep={vi.fn(() => Promise.resolve())}
       onExit={vi.fn()}
       narrationService={{ speak: vi.fn(), stop: vi.fn() }}
     />,

@@ -445,6 +445,38 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
   expect(browserErrors).toEqual([]);
 });
 
+test('@preview resumes the first incomplete step after a browser reload', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  const mimi = await openMimiTapStep(page, hasTouch);
+  await expect(mimi).toBeVisible();
+  await expect
+    .poll(async () => readPrimarySave(page))
+    .toMatchObject({
+      currentMission: {
+        completedStepIds: ['place-ladder'],
+        missionId: 'garden-kitten-tree',
+      },
+    });
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Húzd a létrát a fához!' })).toHaveCount(0);
+  await activateWithPrimaryPointer(
+    page.getByRole('button', { name: 'Koppints Mimire!' }),
+    hasTouch,
+  );
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+  await expect
+    .poll(async () => {
+      const save = await readPrimarySave(page);
+      return typeof save === 'object' && save !== null && 'currentMission' in save;
+    })
+    .toBe(false);
+  expect(browserErrors).toEqual([]);
+});
+
 test('@preview completes the English rescue and restores Mimi after reload', async ({
   page,
 }, testInfo) => {

@@ -5,6 +5,66 @@ import { createEmptySave, type SaveGameV1 } from '../../sources/persistence/save
 import { testFirstRescueReward } from '../support/first-rescue-content';
 
 describe('persisted first rescue progress adapter', () => {
+  it('commits a resumable step and clears it in the same reward transaction', async () => {
+    let save: SaveGameV1 = createEmptySave('en', 'created');
+    const snapshots: SaveGameV1[] = [];
+    const transaction = vi.fn((_locale, transform: (current: SaveGameV1) => SaveGameV1) => {
+      save = transform(save);
+      snapshots.push(save);
+      return Promise.resolve(save);
+    });
+    const store = createPersistedFirstRescueProgressStore({
+      load: () => Promise.resolve({ save, status: 'ready' }),
+      recover: vi.fn(),
+      replace: vi.fn(),
+      reset: vi.fn(),
+      transaction,
+    });
+    await store.load('en');
+
+    await store.commitStep('en', testFirstRescueReward.missionId, 'place-ladder');
+    await store.commitStep('en', testFirstRescueReward.missionId, 'place-ladder');
+    expect(save.currentMission).toEqual({
+      completedStepIds: ['place-ladder'],
+      missionId: 'garden-kitten-tree',
+    });
+
+    await store.commitReward('en', testFirstRescueReward);
+    expect(save).not.toHaveProperty('currentMission');
+    expect(save).toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    expect(snapshots).toHaveLength(3);
+  });
+
+  it('preserves an unrelated current mission while applying the reward', async () => {
+    let save: SaveGameV1 = {
+      ...createEmptySave('en', 'created'),
+      currentMission: { completedStepIds: ['other-step'], missionId: 'other-mission' },
+    };
+    const transaction = vi.fn((_locale, transform: (current: SaveGameV1) => SaveGameV1) => {
+      save = transform(save);
+      return Promise.resolve(save);
+    });
+    const store = createPersistedFirstRescueProgressStore({
+      load: () => Promise.resolve({ save, status: 'ready' }),
+      recover: vi.fn(),
+      replace: vi.fn(),
+      reset: vi.fn(),
+      transaction,
+    });
+    await store.load('en');
+
+    await store.commitReward('en', testFirstRescueReward);
+
+    expect(save.currentMission).toEqual({
+      completedStepIds: ['other-step'],
+      missionId: 'other-mission',
+    });
+  });
+
   it('loads saved Mimi progress and keeps replay rewards idempotent', async () => {
     let save: SaveGameV1 = {
       ...createEmptySave('en', 'created'),

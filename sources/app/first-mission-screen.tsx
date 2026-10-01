@@ -22,8 +22,10 @@ type FirstMissionScreenProps = Readonly<{
   content: FirstRescueContent;
   effectService: EffectService;
   locale: Locale;
+  initialCompletedStepIds: readonly string[];
   onCelebrate: () => void;
   onCommitReward: () => Promise<void>;
+  onCommitStep: (stepId: string) => Promise<void>;
   onExit: () => void;
   narrationService: NarrationService;
 }>;
@@ -35,12 +37,18 @@ const savingPhase = 'saving' satisfies MissionPhase;
 export function FirstMissionScreen({
   content,
   effectService,
+  initialCompletedStepIds,
   locale,
   onCelebrate,
   onCommitReward,
+  onCommitStep,
   onExit,
   narrationService,
 }: FirstMissionScreenProps) {
+  const missionSteps = useMemo(
+    () => resumableMissionSteps(content.mission.steps, initialCompletedStepIds),
+    [content.mission.steps, initialCompletedStepIds],
+  );
   const missionCopy = firstRescuePresentation(content, locale);
   const strings = getStrings(locale),
     rescue = useRescueCompletion({
@@ -48,9 +56,9 @@ export function FirstMissionScreen({
       onCommitReward,
       tapSuccessCue: content.tapStep.successCue,
     });
-  const mission = useMissionStepOrchestrator(content.mission.steps, onCelebrate),
+  const mission = useMissionStepOrchestrator(missionSteps, onCelebrate),
     activeInteraction = mission.active,
-    phase = missionPhase(activeInteraction?.step.type, rescue.saving);
+    phase = missionPhase(activeInteraction?.step.type, rescue.finishing);
   const guidance = useFirstMissionGuidance({
     content,
     locale,
@@ -65,9 +73,15 @@ export function FirstMissionScreen({
     }
     switch (activeInteraction.step.type) {
       case dragStepType:
-        guidance.complete();
-        effectService.play(activeInteraction.step.successCue);
-        activeInteraction.complete();
+        rescue.checkpoint(
+          () => onCommitStep(activeInteraction.step.id),
+          () => {
+            guidance.complete();
+            effectService.play(activeInteraction.step.successCue);
+            activeInteraction.complete();
+          },
+          mission.reset,
+        );
         return;
       case tapStepType:
         guidance.complete();
@@ -95,6 +109,14 @@ export function FirstMissionScreen({
   );
 }
 
+function resumableMissionSteps<Step extends Readonly<{ id: string }>>(
+  steps: readonly Step[],
+  completedStepIds: readonly string[],
+): readonly Step[] {
+  const firstIncompleteIndex = steps.findIndex((step) => !completedStepIds.includes(step.id));
+  return firstIncompleteIndex <= 0 ? steps : steps.slice(firstIncompleteIndex);
+}
+
 function assertNever(value: never): never {
   throw new Error(`Unsupported initial Rescue step: ${JSON.stringify(value)}`);
 }
@@ -116,3 +138,4 @@ function firstRescuePresentation(content: FirstRescueContent, locale: Locale) {
     tapPrompt: firstRescueText(content, locale, content.tapStep.promptKey),
   } as const;
 }
+import { useMemo } from 'react';
