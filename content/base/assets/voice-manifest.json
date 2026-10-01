@@ -146,6 +146,29 @@
       "audioQaStatus": "not-produced",
       "licenseStatus": "pending-production",
       "provenanceStatus": "pending-production"
+    },
+    {
+      "cue": "voice.resident.mimi-kitten.name",
+      "role": "required-instruction",
+      "ownership": "base",
+      "narratorRole": "primary",
+      "durationBoundsSeconds": { "min": 0.4, "max": 2.5 },
+      "objectKeys": {
+        "hu": "audio/voice/hu/residents/mimi-kitten-name.ogg",
+        "en": "audio/voice/en/residents/mimi-kitten-name.ogg"
+      },
+      "fallbackText": {
+        "hu": "Mimi",
+        "en": "Mimi"
+      },
+      "promptInventories": {
+        "hu": "prompts/voice/scripts/voice-lines.hu.json",
+        "en": "prompts/voice/scripts/voice-lines.en.json"
+      },
+      "promptQaStatus": "approved",
+      "audioQaStatus": "not-produced",
+      "licenseStatus": "pending-production",
+      "provenanceStatus": "pending-production"
     }
   ]
 }

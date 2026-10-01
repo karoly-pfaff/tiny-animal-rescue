@@ -105,7 +105,12 @@ export function ShelterScreen({
         ) : (
           <div className="shelter-residents">
             {activeArea.residents.map((resident) => (
-              <ShelterResident key={resident.id} {...resident} />
+              <ShelterResident
+                key={resident.id}
+                {...resident}
+                locale={locale}
+                narrationService={narrationService}
+              />
             ))}
           </div>
         )}

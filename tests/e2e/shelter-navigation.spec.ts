@@ -9,9 +9,16 @@ test('@preview navigates all shelter areas by arrows and scene-only swipe', asyn
   page,
 }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
+  const lockedResidentRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/images/residents/')) {
+      lockedResidentRequests.push(request.url());
+    }
+  });
   await openShelter(page, 'en', []);
 
   await expect(page.getByRole('heading', { name: 'Indoor Room' })).toBeVisible();
+  await expect(page.locator('.shelter-resident')).toHaveCount(0);
   await page.getByRole('button', { name: 'Next shelter area' }).click();
   await expect(page.getByRole('heading', { name: 'Garden' })).toBeVisible();
   await expect(page.getByText('The first rescued animal will live here.')).toBeVisible();
@@ -35,6 +42,7 @@ test('@preview navigates all shelter areas by arrows and scene-only swipe', asyn
   await expect(page.getByRole('heading', { name: 'Pondside' })).toBeVisible();
   await page.getByRole('button', { name: 'Previous shelter area' }).click();
   await expect(page.getByRole('heading', { name: 'Garden' })).toBeVisible();
+  expect(lockedResidentRequests).toEqual([]);
   expect(browserErrors).toEqual([]);
 });
 
@@ -54,6 +62,9 @@ test('@preview keeps four shelter resident hit regions and controls disjoint', a
         throw new Error('The resident clone must be an HTML element.');
       }
       clone.setAttribute('aria-label', `Geometry resident ${String(index)}`);
+      clone.dataset['shelterSlot'] = String(index);
+      clone.style.gridColumn = String(((index - 1) % 2) + 1);
+      clone.style.gridRow = String(Math.floor((index - 1) / 2) + 1);
       container.append(clone);
     }
   });

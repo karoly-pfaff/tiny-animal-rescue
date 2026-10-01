@@ -3,6 +3,7 @@
   "species": "kitten",
   "nameKey": "animal.mimi-kitten.name",
   "shelterAreaId": "indoor-room",
+  "shelterSlot": 1,
   "shelterLocalization": {
     "happyKey": "animal.mimi-kitten.shelter.happy",
     "tapLabelKey": "animal.mimi-kitten.shelter.tap-label"

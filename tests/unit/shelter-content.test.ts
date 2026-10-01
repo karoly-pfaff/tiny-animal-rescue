@@ -19,6 +19,12 @@ describe('shelter content', () => {
       'pondside',
     ]);
     expect(presentations[0]?.residents).toHaveLength(4);
+    expect(presentations[0]?.residents.map(({ id }) => id)).toEqual([
+      'resident-1',
+      'resident-2',
+      'resident-3',
+      'resident-4',
+    ]);
   });
 
   it('fails loudly when an invalid assembled area exceeds capacity', () => {
@@ -68,6 +74,29 @@ describe('shelter content', () => {
     expect(indoorRoom?.residents.map(({ id }) => id)).toEqual(['winter-kitten']);
   });
 
+  it('normalizes omitted v1 slots by stable ID after reserving authored slots', () => {
+    const original = registryWithResidents(3);
+    const animals = Object.fromEntries(
+      Object.values(original.animals).map((animal) => [
+        animal.id,
+        animal.id === 'resident-2' ? { ...animal, shelterSlot: 1 } : withoutShelterSlot(animal),
+      ]),
+    );
+    const registry = { ...original, animals };
+
+    const indoorRoom = selectShelterAreaPresentations(registry, 'en', {
+      completedMissionIds: [],
+      unlockedResidentIds: Object.keys(animals),
+      worldFlags: [],
+    }).find(({ id }) => id === 'indoor-room');
+
+    expect(indoorRoom?.residents.map(({ id, shelterSlot }) => [id, shelterSlot])).toEqual([
+      ['resident-2', 1],
+      ['resident-1', 2],
+      ['resident-3', 3],
+    ]);
+  });
+
   it('rejects shelter records without a declaring pack', () => {
     const registry: ContentRegistry = {
       ...testContentRegistry,
@@ -85,6 +114,28 @@ describe('shelter content', () => {
       }),
     ).toThrow(/has no declaring pack/u);
   });
+
+  it('does not resolve assets or expose presentation for a locked resident', () => {
+    const mimi = requiredMimi();
+    const registry: ContentRegistry = {
+      ...testContentRegistry,
+      animals: {
+        ...testContentRegistry.animals,
+        [mimi.id]: {
+          ...mimi,
+          assets: { ...mimi.assets, happy: 'images/locked-happy.png', idle: 'images/locked.png' },
+        },
+      },
+    };
+
+    const presentations = selectShelterAreaPresentations(registry, 'en', {
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+
+    expect(presentations.flatMap(({ residents }) => residents)).toEqual([]);
+  });
 });
 
 function registryWithResidents(count: number): ContentRegistry {
@@ -92,8 +143,8 @@ function registryWithResidents(count: number): ContentRegistry {
   const animals = Object.fromEntries(
     Array.from({ length: count }, (_, index) => {
       const id = `resident-${String(index + 1)}`;
-      return [id, { ...mimi, id }];
-    }),
+      return [id, { ...mimi, id, shelterSlot: index + 1 }] as const;
+    }).reverse(),
   );
   return {
     ...testContentRegistry,
@@ -117,6 +168,7 @@ function registryWithDependencyResident(): ContentRegistry {
     shelterAreaId: 'base:indoor-room',
     assets: {
       ...mimi.assets,
+      happy: `base:${mimi.assets.happy}`,
       idle: `base:${mimi.assets.idle}`,
     },
   };
@@ -169,4 +221,12 @@ function requiredMimi() {
     throw new Error('The test registry requires Mimi.');
   }
   return mimi;
+}
+
+function withoutShelterSlot(
+  animal: ContentRegistry['animals'][string],
+): ContentRegistry['animals'][string] {
+  const copy = structuredClone(animal);
+  Reflect.deleteProperty(copy, 'shelterSlot');
+  return copy;
 }

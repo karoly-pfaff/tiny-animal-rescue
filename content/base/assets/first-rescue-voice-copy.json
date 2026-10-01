@@ -45,6 +45,13 @@
         "hu": "Tópart",
         "en": "Pondside"
       }
+    },
+    {
+      "cue": "voice.resident.mimi-kitten.name",
+      "fallbackText": {
+        "hu": "Mimi",
+        "en": "Mimi"
+      }
     }
   ]
 }

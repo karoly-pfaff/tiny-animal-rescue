@@ -31,6 +31,7 @@ describe('content asset validation', () => {
           species: 'animal',
           nameKey: 'animal.name',
           shelterAreaId: 'area',
+          shelterSlot: 1,
           shelterLocalization: {
             happyKey: 'animal.shelter.happy',
             tapLabelKey: 'animal.shelter.tap-label',

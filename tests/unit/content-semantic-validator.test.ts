@@ -165,10 +165,22 @@ describe('content semantic validation', () => {
     {
       name: 'over-capacity shelter',
       packs: validPacks({
-        animals: [makeAnimal(), makeAnimal({ id: 'second-animal' })],
+        animals: [makeAnimal(), makeAnimal({ id: 'second-animal', shelterSlot: 2 })],
         shelterAreas: [makeShelterArea({ capacity: 1 })],
       }),
       message: /capacity 1 but 2 residents/u,
+    },
+    {
+      name: 'duplicate shelter slot',
+      packs: validPacks({
+        animals: [makeAnimal(), makeAnimal({ id: 'second-animal' })],
+      }),
+      message: /both use shelter slot 1/u,
+    },
+    {
+      name: 'shelter slot outside area capacity',
+      packs: validPacks({ animals: [makeAnimal({ shelterSlot: 5 })] }),
+      message: /slot 5 outside indoor-room capacity 4/u,
     },
   ])('rejects $name', ({ packs, message }) => {
     expect(validateContentSemantics(packs).join('\n')).toMatch(message);
@@ -574,6 +586,7 @@ function makeAnimal(overrides: Partial<AnimalRecord> = {}): AnimalRecord {
     species: 'kitten',
     nameKey: 'animal.mimi-kitten.name',
     shelterAreaId: 'indoor-room',
+    shelterSlot: 1,
     shelterLocalization: {
       happyKey: 'animal.mimi-kitten.shelter.happy',
       tapLabelKey: 'animal.mimi-kitten.shelter.tap-label',
@@ -721,9 +734,12 @@ function makeV1Pack(): ContentPackSource {
       .filter(({ type }) => type === 'rescue')
       .map(({ id, subjectAnimalId }) => [subjectAnimalId, id]),
   );
-  const animals = v1ReleaseCatalog.animals.map(([id, shelterAreaId, species]) =>
-    makeAnimal({ id, species, shelterAreaId, nameKey: `animal.${id}.name` }),
-  );
+  const nextShelterSlot = new Map<string, number>();
+  const animals = v1ReleaseCatalog.animals.map(([id, shelterAreaId, species]) => {
+    const shelterSlot = (nextShelterSlot.get(shelterAreaId) ?? 0) + 1;
+    nextShelterSlot.set(shelterAreaId, shelterSlot);
+    return makeAnimal({ id, species, shelterAreaId, shelterSlot, nameKey: `animal.${id}.name` });
+  });
   const locations = v1ReleaseCatalog.locations.map((id) =>
     makeLocation({ id, nameKey: `location.${id}.name`, mapLabelKey: `location.${id}.map-label` }),
   );

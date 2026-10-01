@@ -5,6 +5,7 @@ const runtimeVoiceCues = Object.freeze([
   'voice.shelter.indoor-room.name',
   'voice.shelter.shelter-garden.name',
   'voice.shelter.pondside.name',
+  'voice.resident.mimi-kitten.name',
 ]);
 
 const locales = Object.freeze(['hu', 'en']);

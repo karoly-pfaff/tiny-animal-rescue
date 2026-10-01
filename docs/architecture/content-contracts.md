@@ -93,6 +93,8 @@ An animal declares:
 
 - `id`, `species`, and localization keys
 - one `shelterAreaId`
+- an optional positive `shelterSlot`, unique within that area and no greater than its declared
+  capacity; authors declare it for intentional placement
 - localized shelter tap and reaction keys owned by the animal's declaring pack
 - portrait and scene/shelter animation assets; `assets.mission` optionally selects a dedicated mission
   cutout and otherwise falls back to the portrait
@@ -101,6 +103,12 @@ An animal declares:
 - optional tags used only for selection and validation
 
 An animal does not define mission logic or arbitrary animation callbacks.
+For contract-v1 compatibility, an omitted `shelterSlot` is normalized deterministically: explicit
+slots are reserved first, then residents without a slot are ordered by stable animal ID and receive
+the lowest unused slot. File and pack discovery order therefore cannot move a resident.
+Shelter taps speak the localized resident name and cycle only through the record's finite allowed
+reaction list. Reaction state is presentation-only, expires automatically, and is never persisted as
+a need, meter, obligation, or decay state.
 
 ## Map landmark presentation
 

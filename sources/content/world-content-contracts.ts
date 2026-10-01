@@ -1,10 +1,11 @@
-type ShelterReactionId = 'greet' | 'pet' | 'feed' | 'play';
+export type ShelterReactionId = 'greet' | 'pet' | 'feed' | 'play';
 
 export type AnimalRecord = Readonly<{
   id: string;
   species: string;
   nameKey: string;
   shelterAreaId: string;
+  shelterSlot?: number;
   shelterLocalization: Readonly<{
     happyKey: string;
     tapLabelKey: string;

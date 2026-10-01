@@ -44,10 +44,10 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S05 — Resident presentation and reactions
 
-- [ ] Unlocked residents appear in deterministic content-defined positions.
-- [ ] A tap speaks the name and triggers a short allowed reaction.
-- [ ] Pet/feed/play moments end cleanly and create no persistent need state.
-- [ ] Locked residents do not leak through asset preloading or focus order.
+- [x] Unlocked residents appear in deterministic content-defined positions.
+- [x] A tap speaks the name and triggers a short allowed reaction.
+- [x] Pet/feed/play moments end cleanly and create no persistent need state.
+- [x] Locked residents do not leak through asset preloading or focus order.
 
 ### E005-S06 — Reset progress
 

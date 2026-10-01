@@ -935,6 +935,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
   gap: 0.8rem 3rem;
   pointer-events: none;
 }
@@ -998,9 +999,24 @@
   right: -5%;
 }
 
-.shelter-resident.is-happy .shelter-resident-face,
-.shelter-resident.is-happy .shelter-resident-art {
+.shelter-resident[data-reaction] .shelter-resident-face,
+.shelter-resident[data-reaction] .shelter-resident-art {
   animation: shelter-resident-happy 450ms ease-in-out 2;
+}
+
+.shelter-resident[data-reaction='pet'] .shelter-resident-face,
+.shelter-resident[data-reaction='pet'] .shelter-resident-art {
+  animation-name: shelter-resident-pet;
+}
+
+.shelter-resident[data-reaction='feed'] .shelter-resident-face,
+.shelter-resident[data-reaction='feed'] .shelter-resident-art {
+  animation-name: shelter-resident-feed;
+}
+
+.shelter-resident[data-reaction='play'] .shelter-resident-face,
+.shelter-resident[data-reaction='play'] .shelter-resident-art {
+  animation-name: shelter-resident-play;
 }
 
 .shelter-area-arrow {
@@ -1321,6 +1337,29 @@
     translate: 0 -0.8rem;
     rotate: -3deg;
     scale: 1.05;
+  }
+}
+
+@keyframes shelter-resident-pet {
+  50% {
+    translate: -0.35rem -0.25rem;
+    rotate: -6deg;
+    scale: 1.04;
+  }
+}
+
+@keyframes shelter-resident-feed {
+  50% {
+    translate: 0 0.18rem;
+    scale: 1.08 0.96;
+  }
+}
+
+@keyframes shelter-resident-play {
+  50% {
+    translate: 0 -1rem;
+    rotate: 5deg;
+    scale: 1.08;
   }
 }
 
