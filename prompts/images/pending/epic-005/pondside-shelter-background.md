@@ -18,8 +18,10 @@ Create a calm shallow pond edge where four rescued residents can be displayed an
 comfortably. Use clear friendly water, rounded warm stones, sparse reeds, low waterside plants and
 soft sunlit ripples. The shoreline must feel safe, shallow and welcoming, without danger or urgency.
 
-Reserve four distinct non-overlapping resident zones: lower-left dry warm stone; upper-left low bank
-beside sparse reeds; upper-right broad lily-pad/open-water zone; lower-right shallow shoreline stone.
+Reserve four distinct non-overlapping resident zones in the runtime's row-major slot order: slot 1
+upper-left dry warm stone for Totó/Toto; slot 2 upper-right low shallow bank for Kiki; slot 3
+lower-left broad lily-pad and wet-bank zone for Breki/Hoppy; slot 4 lower-right visible open shallow
+water for Habi/Bubbles, whose transparent resident cutout contains no water.
 Keep the top area-name region and both side navigation regions quiet. Empty zones must read as
 ordinary natural environment, never locked slots.
 

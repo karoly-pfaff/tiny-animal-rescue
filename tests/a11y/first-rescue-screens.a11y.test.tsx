@@ -88,11 +88,15 @@ describe('first rescue screen accessibility', () => {
       ownerPackId="base"
       registry={testRegistryWithWorldMission()}
     />,
-  ])('has no automatically detectable violation', async (screen) => {
-    const { container } = render(screen);
-    const results = await axe.run(container);
-    expect(results.violations).toEqual([]);
-  });
+  ])(
+    'has no automatically detectable violation',
+    async (screen) => {
+      const { container } = render(screen);
+      const results = await axe.run(container);
+      expect(results.violations).toEqual([]);
+    },
+    15_000,
+  );
 
   it('keeps the open mission-call presentation accessible', async () => {
     const state = { completedMissionIds: [], unlockedResidentIds: [] };

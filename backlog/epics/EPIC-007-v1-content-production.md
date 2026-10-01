@@ -41,36 +41,49 @@ Individual mission work may add content, art, audio, composition data, and tests
 - [ ] Mimi, Morzsi/Biscuit, and Breki/Hoppy resident assets are complete.
 - [ ] Garden location/map/shelter-compatible art and HU/EN audio pass validation.
 - [ ] Mission 1 remains the polished tutorial baseline.
+- [ ] The inherited `shelter` journey is inspected in HU/EN with mouse, touch, and every supported
+      viewport using materialized Morzsi/Biscuit and Breki/Hoppy media.
 
 ### E007-S03 — Forest content set
 
 - [ ] `forest-hedgehog-branches`, `forest-bird-nest`, `forest-squirrel-lost-acorns`, `forest-fawn-stuck-twig`, and `forest-suni-picnic` are complete.
 - [ ] Süni/Prickle, Csipi/Peep, Makk/Acorn, and Rozi/Rosie resident assets are complete.
 - [ ] Layered vegetation never hides active targets or drag corridors.
+- [ ] The inherited `shelter` journey is inspected in HU/EN with mouse, touch, and every supported
+      viewport using materialized Süni/Prickle, Csipi/Peep, Makk/Acorn, and Rozi/Rosie media.
 
 ### E007-S04 — Farm content set
 
 - [ ] `farm-chick-find-mother`, `farm-lamb-fence`, and `farm-piglet-mud-wash` are complete.
 - [ ] Pipi and Pamacs/Floss resident assets are complete.
 - [ ] The visiting piglet is clearly a mission subject, not an omitted shelter resident.
+- [ ] The inherited `shelter` journey is inspected in HU/EN with mouse, touch, and every supported
+      viewport using materialized Pipi and Pamacs/Floss media.
 
 ### E007-S05 — Pond content set
 
 - [ ] `pond-turtle-find-water`, `pond-duckling-reeds`, `pond-fish-small-puddle`, and `pond-clear-litter` are complete.
 - [ ] Totó/Toto, Kiki, and Habi/Bubbles resident assets are complete.
 - [ ] Water boundaries, safe paths, and trace corridors are visually unambiguous.
+- [ ] The inherited `shelter` journey is inspected in HU/EN with mouse, touch, and every supported
+      viewport using materialized Totó/Toto, Kiki, and Habi/Bubbles media.
 
 ### E007-S06 — Shelter final art and resident placement
 
 - [ ] Indoor Room, Garden, and Pondside final backgrounds are integrated.
 - [ ] Twelve residents fit at supported viewports with distinct idle silhouettes.
 - [ ] Resident animations and reaction anchors do not overlap navigation controls.
+- [ ] E007-S02 through E007-S05 resident media is complete, and the inherited `shelter` journey passes
+      ADR-0012 live inspection in HU/EN with mouse, touch, and every supported viewport.
 
 ### E007-S07 — Localized content completion
 
 - [ ] Every mission and resident key exists in HU and EN.
 - [ ] Every required narration file is final, correctly mapped, and within agreed loudness/duration bounds.
 - [ ] No machine placeholder or temporary voice remains in release mode.
+- [ ] The eleven resident-name cues deferred by EPIC-005 are recorded in HU and EN and pass the
+      inherited `shelter` resident-tap listening journey with mouse and touch after all twelve
+      residents' production art is locally materialized.
 
 ### E007-S08 — Catalog and full-playthrough gate
 

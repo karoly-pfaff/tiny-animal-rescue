@@ -1,0 +1,17 @@
+{
+  "id": "pamacs-lamb",
+  "species": "lamb",
+  "nameKey": "animal.pamacs-lamb.name",
+  "shelterAreaId": "shelter-garden",
+  "shelterSlot": 3,
+  "shelterLocalization": {
+    "happyKey": "animal.pamacs-lamb.shelter.happy",
+    "tapLabelKey": "animal.pamacs-lamb.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/pamacs/canonical.png",
+    "idle": "images/residents/pamacs/shelter-idle.png",
+    "happy": "images/residents/pamacs/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

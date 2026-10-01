@@ -39,11 +39,6 @@ type ResidentAreaSelection = Readonly<{
   shelterAreaReference: string;
 }>;
 
-type ShelterSlotAssignment = Readonly<{
-  animal: ContentRegistry['animals'][string];
-  shelterSlot: number;
-}>;
-
 export function selectShelterAreaPresentations(
   registry: ContentRegistry,
   locale: Locale,
@@ -90,20 +85,18 @@ function selectResidents(
   context: ShelterSelectionContext,
   shelterArea: OwnedRecord<ShelterAreaRecord>,
 ): readonly ShelterResidentPresentation[] {
-  const assignedResidents = assignShelterSlots(
-    Object.values(context.registry.animals).filter((animal) =>
-      residentBelongsToArea(context, {
-        animalId: animal.id,
-        expected: shelterArea,
-        shelterAreaReference: animal.shelterAreaId,
-      }),
-    ),
-    shelterArea.record,
+  const assignedResidents = Object.values(context.registry.animals).filter((animal) =>
+    residentBelongsToArea(context, {
+      animalId: animal.id,
+      expected: shelterArea,
+      shelterAreaReference: animal.shelterAreaId,
+    }),
   );
+  requireResidentCapacity(assignedResidents, shelterArea.record);
   return assignedResidents
-    .filter(({ animal }) => hasResident(context.progress, animal.id))
+    .filter((animal) => hasResident(context.progress, animal.id))
     .sort(compareShelterResidents)
-    .map(({ animal, shelterSlot }) => {
+    .map((animal) => {
       const ownerPackId = requiredOwner(context.registry.recordOwners.animals, animal.id);
       return {
         happyAssetUrl: resolveContentAsset(context.registry, ownerPackId, animal.assets.happy),
@@ -118,7 +111,7 @@ function selectResidents(
           ownerPackId,
         }),
         reactions: animal.shelterReactions,
-        shelterSlot,
+        shelterSlot: animal.shelterSlot,
         tapLabel: resolveContentText(context.registry, context.locale, {
           key: animal.shelterLocalization.tapLabelKey,
           ownerPackId,
@@ -128,31 +121,10 @@ function selectResidents(
 }
 
 function compareShelterResidents(
-  left: ShelterSlotAssignment,
-  right: ShelterSlotAssignment,
+  left: ContentRegistry['animals'][string],
+  right: ContentRegistry['animals'][string],
 ): number {
-  return left.shelterSlot - right.shelterSlot || left.animal.id.localeCompare(right.animal.id);
-}
-
-function assignShelterSlots(
-  residents: readonly ContentRegistry['animals'][string][],
-  area: Pick<ShelterAreaRecord, 'capacity' | 'id'>,
-): readonly ShelterSlotAssignment[] {
-  requireResidentCapacity(residents, area);
-  const reservedSlots = collectReservedSlots(residents, area);
-  const availableSlots = Array.from({ length: area.capacity }, (_, index) => index + 1).filter(
-    (slot) => !reservedSlots.has(slot),
-  );
-  const fallbackSlots = new Map(
-    residents
-      .filter(({ shelterSlot }) => shelterSlot === undefined)
-      .sort(({ id: left }, { id: right }) => left.localeCompare(right))
-      .map((resident, index) => [resident.id, requiredSlot(availableSlots, index, area.id)]),
-  );
-  return residents.map((animal) => ({
-    animal,
-    shelterSlot: animal.shelterSlot ?? requiredAssignedSlot(fallbackSlots, animal.id, area.id),
-  }));
+  return left.shelterSlot - right.shelterSlot || left.id.localeCompare(right.id);
 }
 
 function requireResidentCapacity(
@@ -162,54 +134,6 @@ function requireResidentCapacity(
   if (residents.length > area.capacity) {
     throw new Error(`Shelter area ${area.id} exceeds its declared capacity.`);
   }
-}
-
-function collectReservedSlots(
-  residents: readonly ContentRegistry['animals'][string][],
-  area: Pick<ShelterAreaRecord, 'capacity' | 'id'>,
-): ReadonlySet<number> {
-  const slots = new Set<number>();
-  for (const resident of residents.filter(hasAuthoredSlot)) {
-    requireValidAuthoredSlot(resident.shelterSlot, slots, area);
-    slots.add(resident.shelterSlot);
-  }
-  return slots;
-}
-
-function hasAuthoredSlot(
-  resident: ContentRegistry['animals'][string],
-): resident is ContentRegistry['animals'][string] & Readonly<{ shelterSlot: number }> {
-  return resident.shelterSlot !== undefined;
-}
-
-function requireValidAuthoredSlot(
-  slot: number,
-  reservedSlots: ReadonlySet<number>,
-  area: Pick<ShelterAreaRecord, 'capacity' | 'id'>,
-): void {
-  if (slot < 1 || slot > area.capacity || reservedSlots.has(slot)) {
-    throw new Error(`Shelter area ${area.id} has an invalid authored resident slot.`);
-  }
-}
-
-function requiredSlot(slots: readonly number[], index: number, areaId: string): number {
-  const slot = slots[index];
-  if (slot === undefined) {
-    throw new Error(`Shelter area ${areaId} has no free compatibility slot.`);
-  }
-  return slot;
-}
-
-function requiredAssignedSlot(
-  slots: ReadonlyMap<string, number>,
-  residentId: string,
-  areaId: string,
-): number {
-  const slot = slots.get(residentId);
-  if (slot === undefined) {
-    throw new Error(`Resident ${residentId} has no normalized slot in ${areaId}.`);
-  }
-  return slot;
 }
 
 function residentBelongsToArea(

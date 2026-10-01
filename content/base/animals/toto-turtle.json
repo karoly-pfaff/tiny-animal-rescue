@@ -1,0 +1,17 @@
+{
+  "id": "toto-turtle",
+  "species": "turtle",
+  "nameKey": "animal.toto-turtle.name",
+  "shelterAreaId": "pondside",
+  "shelterSlot": 1,
+  "shelterLocalization": {
+    "happyKey": "animal.toto-turtle.shelter.happy",
+    "tapLabelKey": "animal.toto-turtle.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/toto/canonical.png",
+    "idle": "images/residents/toto/shelter-idle.png",
+    "happy": "images/residents/toto/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

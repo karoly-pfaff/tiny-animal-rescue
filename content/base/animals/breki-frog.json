@@ -1,0 +1,17 @@
+{
+  "id": "breki-frog",
+  "species": "frog",
+  "nameKey": "animal.breki-frog.name",
+  "shelterAreaId": "pondside",
+  "shelterSlot": 3,
+  "shelterLocalization": {
+    "happyKey": "animal.breki-frog.shelter.happy",
+    "tapLabelKey": "animal.breki-frog.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/breki/canonical.png",
+    "idle": "images/residents/breki/shelter-idle.png",
+    "happy": "images/residents/breki/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

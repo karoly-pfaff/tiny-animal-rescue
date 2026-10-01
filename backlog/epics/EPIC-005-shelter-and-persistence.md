@@ -58,9 +58,53 @@ Create the persistent three-area shelter for twelve residents and harden version
 
 ### E005-S07 — Full shelter proof
 
-- [ ] A seeded save renders all twelve residents in their catalog areas.
-- [ ] Capacity validator rejects a fifth base resident in any area.
-- [ ] Screenshots cover empty, partially filled, and complete shelter states.
+- [x] A seeded save renders all twelve residents in their catalog areas.
+- [x] Capacity validator rejects a fifth base resident in any area.
+- [x] Screenshots cover empty, partially filled, and complete shelter states.
+
+#### Bounded resident-media deferral
+
+E005-S07 proves the declarative twelve-resident population, deterministic placement, capacity,
+localization, and fallback layout. It does not claim that the pending resident cutouts or the two
+pending shelter backgrounds are production-complete. Under ADR-0012, production and final live
+inspection are owned exactly as follows:
+
+- E007-S02 owns Morzsi/Biscuit and Breki/Hoppy production resident media;
+- E007-S03 owns Süni/Prickle, Csipi/Peep, Makk/Acorn, and Rozi/Rosie production resident media;
+- E007-S04 owns Pipi and Pamacs/Floss production resident media;
+- E007-S05 owns Totó/Toto, Kiki, and Habi/Bubbles production resident media; and
+- E007-S06 owns the final Garden and Pondside shelter backgrounds plus assembled placement of all
+  twelve residents, including already-approved Mimi.
+
+Each owning story must carry the inherited `shelter` journey through HU and EN, mouse and touch, and
+the complete supported viewport matrix with its owned R2 media locked and locally materialized.
+E007-S06 may not close until the resident media owned by E007-S02 through E007-S05 has passed those
+checks. Until then the deterministic development fallback is expected evidence, not production-media
+approval.
+
+#### Bounded shelter-voice deferral
+
+E005-S04 and E005-S05 prove semantic cue dispatch, localized fallback copy, repeat controls, and
+code-native speech fallback. They do not claim production-complete recorded shelter narration.
+Ownership and inherited evidence are exact:
+
+- E006-S07 owns `voice.shelter.indoor-room.name`,
+  `voice.shelter.shelter-garden.name`, `voice.shelter.pondside.name`, and
+  `voice.resident.mimi-kitten.name` in Hungarian and English as part of the bounded first-rescue
+  audio set.
+- E007-S07 owns the Hungarian and English production recordings for
+  `voice.resident.morzsi-puppy.name`, `voice.resident.pipi-chick.name`,
+  `voice.resident.csipi-bird.name`, `voice.resident.suni-hedgehog.name`,
+  `voice.resident.makk-squirrel.name`, `voice.resident.pamacs-lamb.name`,
+  `voice.resident.rozi-fawn.name`, `voice.resident.toto-turtle.name`,
+  `voice.resident.kiki-duckling.name`, `voice.resident.breki-frog.name`, and
+  `voice.resident.habi-fish.name`.
+
+Both owning stories inherit E005's `shelter` journey in Hungarian and English, including listening
+QA for area-name repeat and resident taps with mouse and touch. E006-S07 must additionally cover the
+complete supported viewport matrix for the first-rescue shelter state; E007-S07 must cover all twelve
+residents after their owning production art is materialized. Until those stories close, browser
+speech is an expected bounded dependency and is not production-media approval.
 
 ## Exit criteria
 

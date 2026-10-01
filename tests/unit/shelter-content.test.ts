@@ -2,9 +2,71 @@ import { describe, expect, it } from 'vitest';
 
 import { selectShelterAreaPresentations } from '../../sources/app/shelter-content';
 import type { ContentPackSource, ContentRegistry } from '../../sources/content/content-registry';
+import { validateShelterPopulation } from '../../sources/content/shelter-population-validator';
+import type { AnimalRecord } from '../../sources/content/world-content-contracts';
 import { testContentRegistry } from '../support/first-rescue-content';
 
 describe('shelter content', () => {
+  it('renders the complete seeded v1 resident catalog in stable area slots', () => {
+    const presentations = selectShelterAreaPresentations(testContentRegistry, 'en', {
+      completedMissionIds: [],
+      unlockedResidentIds: Object.keys(testContentRegistry.animals),
+      worldFlags: [],
+    });
+
+    expect(
+      Object.fromEntries(
+        presentations.map((area) => [
+          area.id,
+          area.residents.map(({ id, shelterSlot }) => [id, shelterSlot]),
+        ]),
+      ),
+    ).toEqual({
+      'indoor-room': [
+        ['mimi-kitten', 1],
+        ['morzsi-puppy', 2],
+        ['pipi-chick', 3],
+        ['csipi-bird', 4],
+      ],
+      'shelter-garden': [
+        ['suni-hedgehog', 1],
+        ['makk-squirrel', 2],
+        ['pamacs-lamb', 3],
+        ['rozi-fawn', 4],
+      ],
+      pondside: [
+        ['toto-turtle', 1],
+        ['kiki-duckling', 2],
+        ['breki-frog', 3],
+        ['habi-fish', 4],
+      ],
+    });
+  });
+
+  it.each(['indoor-room', 'shelter-garden', 'pondside'])(
+    'rejects a fifth base resident in %s',
+    (areaId) => {
+      const area = testContentRegistry.shelterAreas[areaId];
+      if (area === undefined) {
+        throw new Error(`Missing base shelter area ${areaId}.`);
+      }
+      const residents = Object.values(testContentRegistry.animals).filter(
+        (animal) => animal.shelterAreaId === areaId,
+      );
+      const first = residents[0];
+      if (first === undefined) {
+        throw new Error(`Missing a base resident for ${areaId}.`);
+      }
+
+      expect(
+        validateShelterPopulation(area, [
+          ...residents,
+          withoutShelterSlot({ ...first, id: `${areaId}-overflow` }),
+        ]),
+      ).toContain(`Shelter area ${areaId} has capacity 4 but 5 residents.`);
+    },
+  );
+
   it('orders the three authored areas and renders four valid residents', () => {
     const registry = registryWithResidents(4);
     const presentations = selectShelterAreaPresentations(registry, 'en', {
@@ -72,29 +134,6 @@ describe('shelter content', () => {
     }).find(({ id }) => id === 'indoor-room');
 
     expect(indoorRoom?.residents.map(({ id }) => id)).toEqual(['winter-kitten']);
-  });
-
-  it('normalizes omitted v1 slots by stable ID after reserving authored slots', () => {
-    const original = registryWithResidents(3);
-    const animals = Object.fromEntries(
-      Object.values(original.animals).map((animal) => [
-        animal.id,
-        animal.id === 'resident-2' ? { ...animal, shelterSlot: 1 } : withoutShelterSlot(animal),
-      ]),
-    );
-    const registry = { ...original, animals };
-
-    const indoorRoom = selectShelterAreaPresentations(registry, 'en', {
-      completedMissionIds: [],
-      unlockedResidentIds: Object.keys(animals),
-      worldFlags: [],
-    }).find(({ id }) => id === 'indoor-room');
-
-    expect(indoorRoom?.residents.map(({ id, shelterSlot }) => [id, shelterSlot])).toEqual([
-      ['resident-2', 1],
-      ['resident-1', 2],
-      ['resident-3', 3],
-    ]);
   });
 
   it('rejects shelter records without a declaring pack', () => {
@@ -223,9 +262,7 @@ function requiredMimi() {
   return mimi;
 }
 
-function withoutShelterSlot(
-  animal: ContentRegistry['animals'][string],
-): ContentRegistry['animals'][string] {
+function withoutShelterSlot(animal: ContentRegistry['animals'][string]): AnimalRecord {
   const copy = structuredClone(animal);
   Reflect.deleteProperty(copy, 'shelterSlot');
   return copy;

@@ -19,8 +19,10 @@ comfortably. Use soft grass, small flowers, low rounded shrubs, warm stepping st
 and one broad-canopy tree. Keep the mood restful and cared-for without bowls, chores, gauges or any
 suggestion of ongoing need.
 
-Reserve four distinct non-overlapping resident zones: lower-left grass under soft shade; upper-left
-flat moss beside flowers; upper-right open grass near a low shrub; lower-right warm stepping stones.
+Reserve four distinct non-overlapping resident zones in the runtime's row-major slot order: slot 1
+upper-left flat moss for Süni/Prickle; slot 2 upper-right open grass near a low shrub for Makk/Acorn;
+slot 3 lower-left grass under soft shade for Pamacs/Floss; slot 4 lower-right warm stepping stones for
+Rozi/Rosie.
 Keep the top area-name region and both side navigation regions quiet. Empty zones must read as
 ordinary natural environment, never locked slots.
 

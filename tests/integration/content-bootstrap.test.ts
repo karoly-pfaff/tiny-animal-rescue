@@ -16,12 +16,13 @@ describe('bundled content bootstrap', () => {
       locations: 'locations',
       shelterAreas: 'shelter-areas',
     });
-    expect(Object.keys(bundledContentRegistry.assets)).toHaveLength(17);
+    expect(Object.keys(bundledContentRegistry.assets)).toHaveLength(50);
     expect(bundledContentRegistry.assets['start-background']?.objectKey).toBe(
       'images/start/welcome-garden.png',
     );
     expect(Object.isFrozen(bundledContentRegistry.assets['start-background'])).toBe(true);
     expect(bundledContentRegistry.animals['mimi-kitten']?.species).toBe('kitten');
+    expect(Object.keys(bundledContentRegistry.animals)).toHaveLength(12);
     expect(bundledContentRegistry.locations['garden']?.nameKey).toBe('location.garden.name');
     expect(Object.keys(bundledContentRegistry.locations).sort()).toEqual([
       'farm',
