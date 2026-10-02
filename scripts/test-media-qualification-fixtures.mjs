@@ -70,6 +70,30 @@ const manifestRecords = [
   },
 ];
 const fixtureLockObjects = [lockObject, audioLockObject];
+const pendingManifestRecord = {
+  id: 'future-background',
+  role: 'future-background',
+  objectKey: 'images/future.png',
+  width: 1,
+  height: 1,
+  transparent: false,
+  mediaType: 'image/png',
+  promptRecord: 'prompts/images/pending/future-background.md',
+  classification: 'production-safe',
+  qaStatus: 'not-produced',
+  ownership: 'base',
+  licenseStatus: 'pending-production',
+  provenanceStatus: 'pending-production',
+  delivery: 'r2-pending',
+};
+const pendingAssetPath = `content/base/assets/${pendingManifestRecord.objectKey}`;
+const pendingLockObject = { ...lockObject, objectKey: pendingManifestRecord.objectKey };
+const lockedWithoutLockManifestRecord = {
+  ...manifestRecords[0],
+  id: 'future-locked-image',
+  role: 'future-locked-image',
+  objectKey: 'images/future-locked.png',
+};
 const failures = [];
 
 async function writeFixtureManifest(records = manifestRecords) {
@@ -194,13 +218,34 @@ try {
   } catch {
     failures.push('valid trusted candidate asset contract was rejected');
   }
-  await writeFixtureManifest([
-    { ...manifestRecords[0], delivery: 'r2-pending' },
-    manifestRecords[1],
-  ]);
-  if (!(await rejects(verifyFixtureContract))) {
-    failures.push('trusted validator accepted a pending required asset');
+  await writeFixtureManifest([...manifestRecords, pendingManifestRecord]);
+  try {
+    await verifyFixtureContract();
+  } catch {
+    failures.push('trusted validator rejected an unlocked optional pending asset');
   }
+  const verifyRequiredPendingRole = () =>
+    verifyCandidateAssetContract({
+      sourceRoot,
+      assetRoot,
+      requiredRoles: [...fixtureRequiredRoles, pendingManifestRecord.role],
+    });
+  if (!(await rejects(verifyRequiredPendingRole))) {
+    failures.push('trusted validator accepted a pending asset for a required role');
+  }
+  await writeFixtureLock([...fixtureLockObjects, pendingLockObject]);
+  await mkdir(path.dirname(path.join(assetRoot, pendingAssetPath)), { recursive: true });
+  await writeFile(path.join(assetRoot, pendingAssetPath), asset);
+  if (!(await rejects(verifyFixtureContract))) {
+    failures.push('trusted validator accepted a pending asset with a materialization lock');
+  }
+  await rm(path.join(assetRoot, pendingAssetPath));
+  await writeFixtureManifest([...manifestRecords, lockedWithoutLockManifestRecord]);
+  await writeFixtureLock();
+  if (!(await rejects(verifyFixtureContract))) {
+    failures.push('trusted validator accepted a locked asset without a materialization lock');
+  }
+  await writeFixtureManifest();
   await writeFixtureManifest([
     { ...manifestRecords[0], digest: `sha256:${'a'.repeat(64)}` },
     manifestRecords[1],
