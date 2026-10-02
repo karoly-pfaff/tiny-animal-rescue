@@ -1,5 +1,6 @@
 import { loadRepositoryPolicyFiles } from './lib/repository-policy-files.mjs';
 import {
+  applyFirstRepositoryMutation,
   fetchAllDeployKeys,
   fetchAllRepositorySecrets,
   validateHostedAuthorizationPublisher,
@@ -58,7 +59,23 @@ async function githubApi(pathname, method = 'GET', body) {
 const github = (pathname, method = 'GET', body) =>
   githubApi(`/repos/${repository}${pathname}`, method, body);
 
-await github('', 'PATCH', settings);
+const localPolicy = {
+  settings,
+  ruleset: hostedMainRuleset,
+  workflow,
+  mergeWorkflow,
+  publishWorkflow,
+  qualifyMediaWorkflow,
+  tagRuleset,
+  tagImmutabilityRuleset,
+  approvalPolicy,
+  inspectionPolicy,
+  authorizationPublisher,
+  releasePublisher,
+  mediaQualification,
+  authorizationAppId,
+};
+await applyFirstRepositoryMutation(localPolicy, () => github('', 'PATCH', settings));
 const rulesets = await github('/rulesets');
 async function applyRuleset(candidate) {
   const existing = rulesets.find((hosted) => hosted.name === candidate.name);
@@ -71,13 +88,16 @@ const [applied, appliedTags, appliedTagImmutability] = await Promise.all([
   applyRuleset(tagRuleset),
   applyRuleset(tagImmutabilityRuleset),
 ]);
-const reviewer = await githubApi(`/users/${encodeURIComponent(releasePublisher.requiredReviewer)}`);
+const reviewer = await githubApi(
+  `/users/${encodeURIComponent(mediaQualification.requiredReviewer)}`,
+);
 async function configureEnvironment(policy) {
   const path = `/environments/${encodeURIComponent(policy.environment)}`;
+  const reviewers = policy.requiresManualApproval ? [{ type: 'User', id: reviewer.id }] : [];
   await github(path, 'PUT', {
     wait_timer: 0,
     prevent_self_review: policy.preventSelfReview,
-    reviewers: [{ type: 'User', id: reviewer.id }],
+    reviewers,
     deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
   });
   return path;

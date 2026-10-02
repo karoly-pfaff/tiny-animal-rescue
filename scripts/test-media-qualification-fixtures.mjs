@@ -603,10 +603,57 @@ try {
     failures.push('qualified product accepted an extra unlocked media binary');
   }
   await rm(path.join(product, 'build/app', extraPath), { force: true });
+  const applicationAssetPath = 'assets/favicon-fixture.svg';
+  const applicationAsset = Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><path d="M0 0h1v1H0z"/></svg>',
+  );
+  await mkdir(path.dirname(path.join(product, 'build/app', applicationAssetPath)), {
+    recursive: true,
+  });
+  await writeFile(path.join(product, 'build/app', applicationAssetPath), applicationAsset);
   await writeFile(
     path.join(product, 'build/app/index.html'),
     `<!doctype html><img src="./${assetPath}"><audio src="./${audioPath}"></audio>`,
   );
+  for (const metadataFile of ['application-assets.json', 'application-assets.txt']) {
+    await writeFile(path.join(product, 'build/app', metadataFile), `${applicationAssetPath}\n`);
+    if (
+      !(await rejects(() =>
+        stageQualifiedMedia({
+          source: sourceRoot,
+          product,
+          materialized: assetRoot,
+          policy: sourceRoot,
+          output: path.join(root, `metadata-owned-${path.extname(metadataFile).slice(1)}`),
+          artifactNamePrefix: 'media-qualified-',
+        }),
+      ))
+    ) {
+      failures.push(`qualified product accepted application media owned only by ${metadataFile}`);
+    }
+    await rm(path.join(product, 'build/app', metadataFile));
+  }
+  await writeFile(
+    path.join(product, 'build/app/index.html'),
+    `<!doctype html><link rel="icon" href="./${applicationAssetPath}"><img src="./${assetPath}"><audio src="./${audioPath}"></audio>`,
+  );
+  const unreferencedApplicationAssetPath = 'assets/unreferenced.png';
+  await writeFile(path.join(product, 'build/app', unreferencedApplicationAssetPath), asset);
+  if (
+    !(await rejects(() =>
+      stageQualifiedMedia({
+        source: sourceRoot,
+        product,
+        materialized: assetRoot,
+        policy: sourceRoot,
+        output: path.join(root, 'unreferenced-application-media'),
+        artifactNamePrefix: 'media-qualified-',
+      }),
+    ))
+  ) {
+    failures.push('qualified product accepted an unreferenced application-owned media file');
+  }
+  await rm(path.join(product, 'build/app', unreferencedApplicationAssetPath), { force: true });
   const staged = await stageQualifiedMedia({
     source: sourceRoot,
     product,
@@ -711,5 +758,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  'Media qualification fixtures rejected stale, substituted, duplicate, escaping, mismeasured, watermarked, unreferenced, remote, nested, unlocked, and corrupted expansion evidence.',
+  'Media qualification fixtures accepted executable-referenced application assets and rejected JSON/TXT-only ownership, stale, substituted, duplicate, escaping, mismeasured, watermarked, unreferenced, remote, nested, unlocked, and corrupted expansion evidence.',
 );

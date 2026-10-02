@@ -1,5 +1,6 @@
 {
   "environment": "media-qualification",
+  "requiresManualApproval": true,
   "requiredReviewer": "karoly-pfaff",
   "preventSelfReview": false,
   "accountIdSecretName": "R2_ACCOUNT_ID",

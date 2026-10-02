@@ -95,10 +95,14 @@ function isComparisonValue(node) {
 }
 
 function isTechnicalCallArgument(node) {
-  const parent = node.parent;
+  let argument = node;
+  while (ts.isArrayLiteralExpression(argument.parent)) {
+    argument = argument.parent;
+  }
+  const parent = argument.parent;
   if (
     ts.isCallExpression(parent) &&
-    parent.arguments.includes(node) &&
+    parent.arguments.includes(argument) &&
     ts.isPropertyAccessExpression(parent.expression) &&
     technicalCalls.has(parent.expression.name.text)
   ) {

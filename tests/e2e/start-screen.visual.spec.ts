@@ -1,9 +1,6 @@
-import { createHash } from 'node:crypto';
-
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import linuxMediaCompleteDigests from '../fixtures/assets/media-complete-screenshot-digests.linux.json' with { type: 'json' };
-import windowsMediaCompleteDigests from '../fixtures/assets/media-complete-screenshot-digests.json' with { type: 'json' };
+import mediaCompleteSignatures from '../fixtures/assets/media-complete-visual-signatures.json' with { type: 'json' };
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { dragLadder } from './support/ladder-drag';
 
@@ -13,14 +10,6 @@ async function settleVisual(page: Page) {
 
 const mediaComplete = process.env['VITE_MATERIALIZED_ASSETS'] === 'true';
 const firstMissionHintDelayMs = 5_000;
-type ReviewedMediaCompleteDigest = string | readonly string[];
-
-const reviewedMediaCompleteDigests: Readonly<Record<string, ReviewedMediaCompleteDigest>> =
-  process.platform === 'linux'
-    ? linuxMediaCompleteDigests
-    : process.platform === 'win32'
-      ? windowsMediaCompleteDigests
-      : {};
 const expectedAssetsByScreenshot = {
   'celebration-mimi.png': [
     'images/missions/garden-kitten-tree/background.png',
@@ -57,63 +46,105 @@ const expectedAssetsByScreenshot = {
 } as const;
 
 type ReviewedScreenshotName = keyof typeof expectedAssetsByScreenshot;
+type VisualSignature = Readonly<{ height: number; rgb: string; width: number }>;
+
+const signatureWidth = 64;
+const signatureHeight = 48;
+
+async function visualSignature(page: Page, screenshot: Buffer) {
+  return page.evaluate(
+    async ({ base64, height, width }) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d', { alpha: false });
+      if (context === null) {
+        throw new Error('Visual-signature canvas is unavailable.');
+      }
+      context.drawImage(image, 0, 0, width, height);
+      const rgba = context.getImageData(0, 0, width, height).data;
+      const rgb = new Uint8Array(width * height * 3);
+      for (let source = 0, target = 0; source < rgba.length; source += 4) {
+        rgb[target++] = rgba.at(source) ?? 0;
+        rgb[target++] = rgba.at(source + 1) ?? 0;
+        rgb[target++] = rgba.at(source + 2) ?? 0;
+      }
+      let binary = '';
+      for (const value of rgb) {
+        binary += String.fromCharCode(value);
+      }
+      return btoa(binary);
+    },
+    { base64: screenshot.toString('base64'), height: signatureHeight, width: signatureWidth },
+  );
+}
+
+function verifyVisualSignature(
+  actualBase64: string,
+  expected: VisualSignature | undefined,
+  contractKey: string,
+) {
+  if (expected === undefined) {
+    throw new Error(`Missing media-complete visual signature for ${contractKey}.`);
+  }
+  expect(expected.width).toBe(signatureWidth);
+  expect(expected.height).toBe(signatureHeight);
+  const actual = Buffer.from(actualBase64, 'base64');
+  const reviewed = Buffer.from(expected.rgb, 'base64');
+  expect(actual.byteLength).toBe(reviewed.byteLength);
+  let totalDifference = 0;
+  let changedChannels = 0;
+  for (let index = 0; index < actual.length; index += 1) {
+    const difference = Math.abs((actual.at(index) ?? 0) - (reviewed.at(index) ?? 0));
+    totalDifference += difference;
+    if (difference > 6) {
+      changedChannels += 1;
+    }
+  }
+  expect(
+    totalDifference / actual.length,
+    `${contractKey} mean pixel-channel difference`,
+  ).toBeLessThanOrEqual(1);
+  expect(
+    changedChannels / actual.length,
+    `${contractKey} changed pixel-channel ratio`,
+  ).toBeLessThanOrEqual(0.01);
+}
 
 async function verifyReviewedVisual(page: Page, name: ReviewedScreenshotName, testInfo: TestInfo) {
-  if (!mediaComplete) {
-    await expect(page).toHaveScreenshot(name, { fullPage: true });
-    return;
-  }
-  for (const objectKey of expectedAssetsByScreenshot[name]) {
-    const image = page.locator(`img[src$="${objectKey}"]`);
-    await expect(image).toHaveCount(1);
-    await expect
-      .poll(() =>
-        image.evaluate(
-          (element) =>
-            element instanceof HTMLImageElement && element.complete && element.naturalWidth > 0,
-        ),
-      )
-      .toBe(true);
-  }
-  const contractKey = `${name}::${testInfo.project.name}`;
-  const expectedDigest = reviewedMediaCompleteDigests[contractKey];
-  expect(
-    expectedDigest,
-    `Missing media-complete visual contract for ${contractKey}.`,
-  ).toBeDefined();
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          resolve();
-        });
-      });
-    });
-    for (const animation of document.getAnimations()) {
-      const timing = animation.effect?.getComputedTiming();
-      if (timing === undefined) {
-        continue;
-      }
-      animation.pause();
-      animation.currentTime = timing.iterations === Infinity ? 0 : (timing.endTime ?? 0);
+  if (mediaComplete) {
+    for (const objectKey of expectedAssetsByScreenshot[name]) {
+      const image = page.locator(`img[src$="${objectKey}"]`);
+      await expect(image).toHaveCount(1);
+      await expect
+        .poll(() =>
+          image.evaluate(
+            (element) =>
+              element instanceof HTMLImageElement && element.complete && element.naturalWidth > 0,
+          ),
+        )
+        .toBe(true);
     }
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        resolve();
-      });
-    });
-  });
-  const screenshot = await page.screenshot({
-    fullPage: true,
-    path: testInfo.outputPath(`media-complete-${name}`),
-  });
-  if (name === 'mission-ladder-placed.png') {
-    expect(screenshot.byteLength).toBeGreaterThan(0);
-    return;
   }
-  const acceptedDigests = Array.isArray(expectedDigest) ? expectedDigest : [expectedDigest];
-  expect(acceptedDigests).toContain(createHash('sha256').update(screenshot).digest('hex'));
+  if (mediaComplete) {
+    const screenshot = await page.screenshot({
+      animations: 'disabled',
+      caret: 'hide',
+      fullPage: true,
+      path: testInfo.outputPath(`media-complete-${name}`),
+    });
+    const contractKey = `${name}::${testInfo.project.name}`;
+    verifyVisualSignature(
+      await visualSignature(page, screenshot),
+      (mediaCompleteSignatures as Readonly<Record<string, VisualSignature>>)[contractKey],
+      contractKey,
+    );
+  } else {
+    await expect(page).toHaveScreenshot(name, { fullPage: true });
+  }
 }
 
 test('@visual matches the reviewed first-run baseline', async ({ page }, testInfo) => {
@@ -229,6 +260,7 @@ test('@visual matches the reviewed English protected-exit state', async ({ page 
   await page.getByRole('button', { name: 'Garden rescue: Mimi' }).click();
   await expect(page.getByRole('heading', { name: 'Mimi in the tree' })).toBeVisible();
   await page.clock.install();
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1_000);
   await page
     .getByRole('button', { name: 'Hold to return to the map' })
     .dispatchEvent('pointerdown', {

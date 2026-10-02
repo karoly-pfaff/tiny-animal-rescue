@@ -11,6 +11,9 @@ const shaPattern = /^[0-9a-f]{40}$/u;
 const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/u;
 const safeKeyPattern = /^[a-z0-9][a-z0-9._/-]*$/u;
 const mediaExtensionPattern = /\.(?:aac|flac|gif|jpe?g|m4a|mp3|mp4|ogg|png|svg|wav|webm|webp)$/iu;
+const applicationAssetExtensionPattern =
+  /\.(?:aac|eot|flac|gif|jpe?g|m4a|mp3|mp4|ogg|otf|png|svg|ttf|wav|webm|webp|woff2?)$/iu;
+const packAssetPathPattern = /^content\/[a-z0-9-]+\/assets\//u;
 const requiredFirstRescueAssetRoles = Object.freeze([
   'garden-ladder',
   'garden-map-background',
@@ -415,29 +418,59 @@ async function verifyPackagedObjects(root, objects) {
   }
 }
 
-async function verifyArtifactFileClosure(file, artifactRoot, allowedPaths, packPrefixes) {
+async function verifyArtifactFileClosure(
+  file,
+  artifactRoot,
+  allowedPaths,
+  referencedApplicationAssets,
+) {
   const relative = path.relative(artifactRoot, file).replaceAll('\\', '/');
-  const inPackAssetTree = packPrefixes.some((prefix) => relative.startsWith(prefix));
+  const inPackAssetTree = packAssetPathPattern.test(relative);
   const detectedType = await detectedMediaType(await readFile(file));
-  const detectedMedia = /^(?:audio|image|video)\//u.test(detectedType ?? '');
+  const detectedStaticAsset = /^(?:audio|font|image|video)\//u.test(detectedType ?? '');
   if (
     !allowedPaths.has(relative) &&
-    (mediaExtensionPattern.test(relative) || inPackAssetTree || detectedMedia)
+    !referencedApplicationAssets.has(relative) &&
+    (applicationAssetExtensionPattern.test(relative) || inPackAssetTree || detectedStaticAsset)
   ) {
     throw new Error(`Production artifact contains unlocked media: ${relative}.`);
   }
 }
 
-function verifyRuntimeReferences(text, allowedPaths, allowedKeys) {
-  const references =
+function runtimeReferences(text) {
+  return (
     text.match(
-      /(?:\.\.\/|\.\/|\/)?[a-z0-9][a-z0-9._/-]*\.(?:aac|flac|gif|jpe?g|m4a|mp3|mp4|ogg|png|svg|wav|webm|webp)/giu,
-    ) ?? [];
-  for (const reference of references) {
-    const normalized = reference.replace(/^(?:\.\.\/|\.\/|\/)+/u, '');
-    if (!allowedPaths.has(normalized) && !allowedKeys.has(normalized)) {
+      /(?:\.\.\/|\.\/|\/)?[a-z0-9][a-z0-9._/-]*\.(?:aac|eot|flac|gif|jpe?g|m4a|mp3|mp4|ogg|otf|png|svg|ttf|wav|webm|webp|woff2?)/giu,
+    ) ?? []
+  );
+}
+
+function verifyRuntimeReferences(textEntries, artifactPaths, allowedPaths, allowedKeys) {
+  const referencedApplicationAssets = new Set();
+  for (const { relative: source, text } of textEntries) {
+    for (const reference of runtimeReferences(text)) {
+      const normalized = reference.replace(/^(?:\.\.\/|\.\/|\/)+/u, '');
+      if (allowedPaths.has(normalized) || allowedKeys.has(normalized)) continue;
+      const resolved = reference.startsWith('/')
+        ? normalized
+        : path.posix.normalize(path.posix.join(path.posix.dirname(source), reference));
+      if (artifactPaths.has(resolved) && !packAssetPathPattern.test(resolved)) {
+        referencedApplicationAssets.add(resolved);
+        continue;
+      }
       throw new Error(`Production artifact references unlocked media: ${reference}.`);
     }
+  }
+  return referencedApplicationAssets;
+}
+
+function verifyNoRemoteMediaReferences(text) {
+  const references =
+    text.match(
+      /https?:\/\/[^\s"')]+\.(?:aac|eot|flac|gif|jpe?g|m4a|mp3|mp4|ogg|otf|png|svg|ttf|wav|webm|webp|woff2?)/giu,
+    ) ?? [];
+  for (const reference of references) {
+    throw new Error(`Production artifact references remote media: ${reference}.`);
   }
 }
 
@@ -456,14 +489,47 @@ async function verifyRuntimeAssetClosure(root, objects) {
   if (findings.length > 0) throw new Error(findings.join('\n'));
   const allowedPaths = new Set(objects.map((object) => object.path));
   const allowedKeys = new Set(objects.map((object) => object.objectKey));
-  const packPrefixes = [...new Set(objects.map(({ packId }) => `content/${packId}/assets/`))];
-  await Promise.all(
-    files.map((file) => verifyArtifactFileClosure(file, artifactRoot, allowedPaths, packPrefixes)),
+  const artifactPaths = new Set(
+    files.map((file) => path.relative(artifactRoot, file).replaceAll('\\', '/')),
   );
   const textFiles = files.filter((file) => /\.(?:css|html|[cm]?js|json|txt)$/iu.test(file));
-  const text = (await Promise.all(textFiles.map((file) => readFile(file, 'utf8')))).join('\n');
-  verifyRuntimeReferences(text, allowedPaths, allowedKeys);
-  verifyRequiredObjectReferences(text, objects);
+  const textEntries = await Promise.all(
+    textFiles.map(async (file) => ({
+      relative: path.relative(artifactRoot, file).replaceAll('\\', '/'),
+      text: await readFile(file, 'utf8'),
+    })),
+  );
+  const combinedText = textEntries.map(({ text }) => text).join('\n');
+  verifyNoRemoteMediaReferences(combinedText);
+  const executableEntries = textEntries.filter(({ relative }) =>
+    /\.(?:css|html|[cm]?js)$/iu.test(relative),
+  );
+  const referencedApplicationAssets = verifyRuntimeReferences(
+    executableEntries,
+    artifactPaths,
+    allowedPaths,
+    allowedKeys,
+  );
+  await Promise.all(
+    files.map((file) =>
+      verifyArtifactFileClosure(file, artifactRoot, allowedPaths, referencedApplicationAssets),
+    ),
+  );
+  verifyRequiredObjectReferences(executableEntries.map(({ text }) => text).join('\n'), objects);
+}
+
+export async function verifyLocalMediaCandidate({ source, product, materialized, requiredRoles }) {
+  const objects = await materializationPlan(source);
+  await verifyCandidateAssetContract({
+    sourceRoot: source,
+    assetRoot: materialized,
+    requiredRoles,
+  });
+  await verifyPackagedObjects(product, objects);
+  await verifyRuntimeAssetClosure(product, objects);
+  const { findings, report } = await analyzeArtifact(product);
+  if (findings.length > 0) throw new Error(findings.join('\n'));
+  return report;
 }
 
 export function qualifiedArtifactName(evidence, prefix) {

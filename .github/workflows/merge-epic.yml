@@ -110,6 +110,11 @@ jobs:
         with:
           fetch-depth: 0
           ref: refs/heads/main
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: candidate
+          ref: refs/pull/${{ inputs.pull_request }}/head
       - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
@@ -137,6 +142,7 @@ jobs:
           --inspection-comment ${{ inputs.inspection_comment }}
           --approval-comment ${{ inputs.approval_comment }}
           --qualification-run ${{ inputs.qualification_run }}
+          --candidate candidate
           --evidence build/merge-evidence/release-evidence.json
         env:
           GITHUB_TOKEN: ${{ steps.authorization-app.outputs.token }}

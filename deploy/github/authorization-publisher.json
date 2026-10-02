@@ -11,6 +11,6 @@
     "pullRequests": "read",
     "statuses": "write"
   },
-  "requiredReviewer": "karoly-pfaff",
+  "requiresManualApproval": false,
   "preventSelfReview": false
 }

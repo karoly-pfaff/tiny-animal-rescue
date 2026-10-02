@@ -1,3 +1,5 @@
 {
-  "approver": "karoly-pfaff"
+  "approver": "karoly-pfaff",
+  "agentMaterializationRequiresDirectInstruction": true,
+  "combinedInstructionMayAuthorizeMergeAndTag": true
 }

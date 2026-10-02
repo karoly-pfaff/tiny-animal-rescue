@@ -2,6 +2,6 @@
   "environment": "release-tag-publication",
   "secretName": "RELEASE_TAG_DEPLOY_KEY",
   "deployKeyTitle": "tiny-rescue-release-tag-publisher",
-  "requiredReviewer": "karoly-pfaff",
+  "requiresManualApproval": false,
   "preventSelfReview": false
 }

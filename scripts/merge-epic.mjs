@@ -4,6 +4,7 @@ import { createGithubHistoryClient } from './lib/github-history.mjs';
 import { git } from './lib/history-repository.mjs';
 import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
 import {
+  validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
   validateEvidenceVersion,
   validateMergeCandidate,
@@ -29,10 +30,12 @@ if (requiredEnvironment('GITHUB_REF') !== 'refs/heads/main') {
 }
 const evidencePath = requiredArgument('--evidence');
 const qualificationRun = Number(requiredArgument('--qualification-run'));
+const candidateRoot = requiredArgument('--candidate');
 const digestPattern = /^sha256:[0-9a-f]{64}$/u;
 const { github, pullRequestInput, trustedQualityChecksForCommit } = createGithubHistoryClient(
   repository,
   token,
+  { workItemRoot: candidateRoot },
 );
 
 const [pullRequest, approvalPolicy, inspectionPolicy, evidence] = await Promise.all([
@@ -64,6 +67,14 @@ try {
     comparison,
   });
   if (ancestryFindings.length > 0) throw new Error(ancestryFindings.join('\n'));
+  const candidateIdentityFindings = validateCandidateCheckoutIdentity({
+    checkoutSha: git(['-C', candidateRoot, 'rev-parse', 'HEAD']),
+    pullRequestHeadSha: pullRequest.head.sha,
+    evidenceHeadSha: evidence.headSha,
+  });
+  if (candidateIdentityFindings.length > 0) {
+    throw new Error(candidateIdentityFindings.join('\n'));
+  }
   const currentHistory = await pullRequestInput(pullRequest, 'pull-request');
   if (currentHistory.headSha !== currentHistory.pullRequest.headSha)
     throw new Error('Canonical pull-request head identity is inconsistent.');

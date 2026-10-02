@@ -1,6 +1,6 @@
 {
   "name": "tiny-animal-rescue",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -26,6 +26,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "generate:voice-copy": "node scripts/generate-first-rescue-voice-copy.mjs",
+    "generate:media-signatures": "node scripts/generate-media-visual-signatures.mjs",
     "generate:squash": "node scripts/generate-squash-message.mjs",
     "governance:apply": "node scripts/apply-github-governance.mjs",
     "commitlint:raw": "commitlint",
@@ -65,6 +66,7 @@
     "sbom": "node scripts/generate-sbom.mjs",
     "validate:quick": "node scripts/run-validation.mjs quick",
     "validate:full": "node scripts/run-validation.mjs full",
+    "validate:media": "node scripts/run-local-media-qualification.mjs",
     "validate:release": "node scripts/run-validation.mjs release"
   },
   "dependencies": {

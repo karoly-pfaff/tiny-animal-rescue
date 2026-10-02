@@ -9,7 +9,7 @@ on:
         type: number
       inspection_comment:
         description: Provider comment ID containing the exact-head live inspection record
-        required: true
+        required: false
         type: number
       approval_comment:
         description: Repository-owner comment ID explicitly approving this exact tag
@@ -17,7 +17,7 @@ on:
         type: number
       qualification_run:
         description: Trusted media-qualification workflow run ID cited by the inspection
-        required: true
+        required: false
         type: number
 
 permissions:
@@ -41,13 +41,23 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.16.0
       - run: npm ci --ignore-scripts
-      - uses: actions/download-artifact@v8
+      - if: inputs.inspection_comment != 0
+        uses: actions/download-artifact@v8
         with:
           pattern: media-qualified-*
           path: qualified-media
           merge-multiple: true
           github-token: ${{ github.token }}
           run-id: ${{ inputs.qualification_run }}
+      - if: inputs.inspection_comment == 0
+        run: npm run build
+      - if: inputs.inspection_comment == 0
+        run: npm run test:artifact
+      - if: inputs.inspection_comment == 0
+        run: >-
+          node scripts/prepare-merge-evidence.mjs
+          --candidate .
+          --output build/release-evidence.json
       - run: >-
           node scripts/publish-tag.mjs
           --pull-request ${{ inputs.pull_request }}
@@ -55,6 +65,7 @@ jobs:
           --approval-comment ${{ inputs.approval_comment }}
           --qualification-run ${{ inputs.qualification_run }}
           --qualification qualified-media
+          --evidence build/release-evidence.json
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@v7

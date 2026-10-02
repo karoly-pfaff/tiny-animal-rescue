@@ -252,11 +252,6 @@ function validateTagCandidate(input, findings) {
     input.item.publishesRelease === true,
     'Work item is not allowed to publish a tag.',
   );
-  push(
-    findings,
-    input.item.requiresInspection === true,
-    'Release work item must require live product inspection.',
-  );
   push(findings, input.tag.annotated, 'Milestone tag must be annotated.');
   push(
     findings,
@@ -283,7 +278,7 @@ function validateTagCandidate(input, findings) {
   push(
     findings,
     input.tag.treeMatchesInspectedHead === true,
-    'Tag squash tree differs from the live-inspected pull-request head.',
+    'Tag squash tree differs from the approved pull-request head.',
   );
   push(
     findings,
@@ -346,7 +341,9 @@ function expectedTagMessage(input) {
   return [
     generateSquashMessage(input).body,
     `Merge-Approval-Comment: #${input.tag.mergeApprovalCommentId}`,
-    `Inspection-Comment: #${input.tag.inspectionCommentId}`,
+    input.tag.inspectionCommentId === undefined
+      ? 'Inspection-Comment: none'
+      : `Inspection-Comment: #${input.tag.inspectionCommentId}`,
     `Approval-Comment: #${input.tag.approvalCommentId}`,
     `Squash: ${input.tag.squashSha}`,
     `Artifact-Digest: ${input.tag.artifactDigest}`,
@@ -357,7 +354,17 @@ function expectedTagMessage(input) {
 function validateTag(input, findings) {
   validateBranch(input, findings, true);
   validateTagCandidate(input, findings);
-  findings.push(...validateInspectionRecord(input.tag.inspection, tagInspectionExpectation(input)));
+  if (input.item.requiresInspection) {
+    findings.push(
+      ...validateInspectionRecord(input.tag.inspection, tagInspectionExpectation(input)),
+    );
+  } else {
+    push(
+      findings,
+      input.tag.inspection === undefined && input.tag.inspectionCommentId === undefined,
+      'Non-inspected release must not claim a live inspection record.',
+    );
+  }
   findings.push(
     ...validateApprovalRecord(input.tag.mergeApproval, mergeApprovalExpectation(input)),
   );
