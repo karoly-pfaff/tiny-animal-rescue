@@ -25,6 +25,7 @@ type Strings = Readonly<{
   mapHint: string;
   parentSettings: string;
   play: string;
+  repeatPrompt: string;
   rewardSaveError: string;
   saveRecovered: string;
   saveUnavailable: string;
@@ -55,6 +56,7 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     mapHint: 'Az első mentés a Kertben vár.',
     parentSettings: 'Szülői beállítások',
     play: 'Játék',
+    repeatPrompt: 'Hallgasd újra',
     rewardSaveError: 'A mentés most nem sikerült. Érintsd meg újra Mimit.',
     saveRecovered: 'A korábbi mentés sérült volt. Biztonságos új mentés indult.',
     saveUnavailable: 'A mentés most nem érhető el. Kérj meg egy felnőttet, hogy próbálja újra.',
@@ -90,6 +92,7 @@ const stringsByLocale: Readonly<Record<Locale, Strings>> = {
     mapHint: 'The first rescue is waiting in the Garden.',
     parentSettings: 'Parent settings',
     play: 'Play',
+    repeatPrompt: 'Hear again',
     rewardSaveError: 'The rescue could not be saved yet. Tap Mimi again.',
     saveRecovered: 'The earlier save was damaged. A safe new save has started.',
     saveUnavailable: 'Saving is unavailable right now. Ask a grown-up to try again.',

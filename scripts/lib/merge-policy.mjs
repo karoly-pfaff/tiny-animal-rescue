@@ -80,12 +80,41 @@ export function validateMergeSnapshot({ expectedBaseSha, expectedHeadSha, pullRe
 
 export function validateCandidateCheckoutIdentity({
   checkoutSha,
+  checkoutStatus = '',
   pullRequestHeadSha,
   evidenceHeadSha,
 }) {
-  return checkoutSha === pullRequestHeadSha && checkoutSha === evidenceHeadSha
+  const findings = [];
+  if (checkoutStatus !== '') findings.push('Candidate checkout contains uncommitted changes.');
+  if (checkoutSha !== pullRequestHeadSha || checkoutSha !== evidenceHeadSha) {
+    findings.push('Candidate metadata checkout does not match the exact authorized head.');
+  }
+  return findings;
+}
+
+export function validateOwnerEvidenceProvenance({
+  requiresInspection,
+  source,
+  qualificationRunId,
+  evidenceQualificationRunId,
+}) {
+  if (requiresInspection) {
+    return source === 'trusted-qualified-media' &&
+      Number.isInteger(qualificationRunId) &&
+      qualificationRunId > 0 &&
+      evidenceQualificationRunId === qualificationRunId
+      ? []
+      : ['Owner-session evidence is not a freshly verified provider qualification artifact.'];
+  }
+  return ['Owner-session merge is unavailable for non-inspected work.'];
+}
+
+export function validateMergedCommitIdentity({ expectedBaseSha, expectedTreeSha, commit }) {
+  return commit?.parents?.length === 1 &&
+    commit.parents[0]?.sha === expectedBaseSha &&
+    commit.tree?.sha === expectedTreeSha
     ? []
-    : ['Candidate metadata checkout does not match the exact authorized head.'];
+    : ['Provider merge result does not preserve the authorized base parent and candidate tree.'];
 }
 
 export function validateEvidenceVersion(evidenceVersion, targetVersion) {

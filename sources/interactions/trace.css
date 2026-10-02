@@ -1,0 +1,132 @@
+.trace {
+  --trace-focus-color: #173f65;
+  --trace-ring-color: #fff7df;
+  --trace-hint-color: #245c75;
+  --trace-affordance-shadow: 0 0.25rem 0.7rem rgb(23 63 101 / 24%);
+  --trace-hint-duration: 1.4s;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  touch-action: none;
+}
+
+.trace-canvas,
+.trace-hint {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.trace-affordance,
+.trace-tracer,
+.trace-hint-dot {
+  position: absolute;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.trace-affordance {
+  z-index: 2;
+  display: grid;
+  width: clamp(4rem, 13%, 6.5rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0.35rem solid var(--trace-ring-color);
+  border-radius: 50%;
+  box-shadow: var(--trace-affordance-shadow);
+}
+
+.trace-tracer {
+  z-index: 4;
+  display: grid;
+  width: clamp(3.5rem, 11%, 5.5rem);
+  aspect-ratio: 1;
+  place-items: center;
+  transition:
+    left 80ms linear,
+    top 80ms linear;
+}
+
+.trace-tracer[data-complete='true'] {
+  scale: 1.08;
+}
+
+.trace-hint-dot {
+  z-index: 3;
+  width: clamp(0.7rem, 2.2%, 1.15rem);
+  aspect-ratio: 1;
+  border: 0.18rem solid var(--trace-ring-color);
+  border-radius: 50%;
+  background: var(--trace-hint-color);
+  opacity: 0.38;
+  animation: trace-hint-travel var(--trace-hint-duration) ease-in-out infinite;
+}
+
+.trace-hint-dot[data-reached='true'] {
+  opacity: 0;
+  animation: none;
+}
+
+.trace:focus-visible {
+  outline: 0.35rem solid var(--trace-focus-color);
+  outline-offset: 0.2rem;
+}
+
+.trace[data-guidance='true'] .trace-start {
+  animation: trace-guidance-pulse 1.35s ease-in-out infinite;
+}
+
+.trace[data-guidance-mode='static'][data-guidance='true'] .trace-start {
+  outline: 0.45rem solid rgb(255 240 151 / 78%);
+  animation: none;
+}
+
+@keyframes trace-guidance-pulse {
+  50% {
+    scale: 1.12;
+    box-shadow: 0 0 0 0.7rem rgb(255 240 151 / 45%);
+  }
+}
+
+@keyframes trace-hint-travel {
+  0%,
+  45%,
+  100% {
+    opacity: 0.3;
+    scale: 0.84;
+  }
+
+  18% {
+    opacity: 0.9;
+    scale: 1.18;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trace[data-guidance='true'] .trace-start {
+    outline: 0.45rem solid rgb(255 240 151 / 78%);
+    animation: none;
+  }
+
+  .trace-tracer {
+    transition: none;
+  }
+
+  .trace-hint-dot {
+    opacity: 0.62;
+    animation: none;
+  }
+
+  .trace-hint-dot[data-reached='true'] {
+    opacity: 0;
+  }
+}

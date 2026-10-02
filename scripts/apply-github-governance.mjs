@@ -32,14 +32,6 @@ const authorizationAppId = Number(requiredEnvironment(authorizationPublisher.app
 if (!Number.isInteger(authorizationAppId) || authorizationAppId <= 0)
   throw new Error('AUTHORIZATION_APP_ID must be a positive GitHub App ID.');
 
-const hostedMainRuleset = structuredClone(ruleset);
-hostedMainRuleset.bypass_actors[0].actor_id = authorizationAppId;
-hostedMainRuleset.rules
-  .find((rule) => rule.type === 'required_status_checks')
-  .parameters.required_status_checks.find(
-    (check) => check.context === 'authorization',
-  ).integration_id = authorizationAppId;
-
 async function githubApi(pathname, method = 'GET', body) {
   const response = await fetch(`https://api.github.com${pathname}`, {
     method,
@@ -58,6 +50,8 @@ async function githubApi(pathname, method = 'GET', body) {
 
 const github = (pathname, method = 'GET', body) =>
   githubApi(`/repos/${repository}${pathname}`, method, body);
+
+const hostedMainRuleset = structuredClone(ruleset);
 
 const localPolicy = {
   settings,

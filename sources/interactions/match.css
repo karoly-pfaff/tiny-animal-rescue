@@ -1,0 +1,136 @@
+.match-interaction {
+  --match-color-error: #c16c35;
+  --match-color-ink: #173f65;
+  --match-color-selection: #f8c24d;
+  --match-color-success: #5dac78;
+  --match-color-surface: #fff7df;
+  --match-color-cue-surface: #fff;
+  --match-radius-item: 1.25rem;
+  --match-radius-round: 50%;
+  --match-shadow-item: 0 0.35rem 0 rgb(23 63 101 / 24%);
+  --match-motion-feedback-duration: 280ms;
+  --match-motion-feedback-easing: ease-out;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.match-item {
+  position: absolute;
+  display: grid;
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  translate: -50% -50%;
+  place-items: center;
+  padding: 0.3rem;
+  border: 0.22rem solid var(--match-color-ink);
+  border-radius: var(--match-radius-item);
+  background: var(--match-color-surface);
+  box-shadow: var(--match-shadow-item);
+  color: var(--match-color-ink);
+  touch-action: none;
+}
+
+.match-item[aria-pressed='true'] {
+  outline: 0.4rem solid var(--match-color-selection);
+  outline-offset: 0.18rem;
+  scale: 1.06;
+}
+
+.match-item[data-locked='true'] {
+  border-style: double;
+  opacity: 1;
+  box-shadow: inset 0 0 0 0.25rem var(--match-color-success);
+}
+
+.match-item[data-incorrect='true'] {
+  outline: 0.3rem dashed var(--match-color-error);
+  outline-offset: 0.15rem;
+}
+
+.match-item[data-guidance='true'] {
+  animation: match-guidance-pulse 1.35s ease-in-out infinite;
+}
+
+.match-interaction[data-guidance-mode='static'] .match-item[data-guidance='true'] {
+  outline: 0.45rem solid rgb(255 240 151 / 78%);
+  animation: none;
+}
+
+.match-item[data-incorrect='true'] .match-item-visual {
+  animation: match-gentle-return var(--match-motion-feedback-duration)
+    var(--match-motion-feedback-easing);
+}
+
+.match-item:focus-visible {
+  outline: 0.35rem solid var(--match-color-ink);
+  outline-offset: 0.2rem;
+}
+
+.match-item-visual {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  pointer-events: none;
+}
+
+.match-item-cue {
+  position: absolute;
+  right: -0.45rem;
+  bottom: -0.45rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  border: 0.2rem solid var(--match-color-ink);
+  border-radius: var(--match-radius-round);
+  background: var(--match-color-cue-surface);
+  place-items: center;
+  pointer-events: none;
+}
+
+.match-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes match-gentle-return {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  35% {
+    translate: -0.35rem 0;
+  }
+
+  70% {
+    translate: 0.2rem 0;
+  }
+}
+
+@keyframes match-guidance-pulse {
+  50% {
+    scale: 1.08;
+    box-shadow: 0 0 0 0.7rem rgb(255 240 151 / 45%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-item[data-guidance='true'] {
+    outline: 0.45rem solid rgb(255 240 151 / 78%);
+    animation: none;
+  }
+
+  .match-item[data-incorrect='true'] .match-item-visual {
+    animation: none;
+  }
+}

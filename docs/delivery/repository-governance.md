@@ -9,8 +9,8 @@ history contracts into reproducible provider settings rather than relying on rem
   the already validated pull-request title/body as the default, and delete the merged epic branch;
 - [main ruleset](../../deploy/github/main-ruleset.json) blocks deletion and non-fast-forward updates,
   requires a pull request, rejects stale heads, and requires the seven quality checks plus an
-  `authorization` status pinned to a dedicated GitHub App; that least-privilege app is the ruleset's
-  only bypass actor so normal users and the generic GitHub Actions app cannot merge without it;
+  `authorization` status; it has no bypass actor, so strict current checks provide the atomic merge
+  lease for both the dedicated App and the authenticated owner-session executor under ADR-0016;
 - [release-tag creation ruleset](../../deploy/github/tag-ruleset.json) blocks direct creation of
   `v*` tags; its sole bypass class is the dedicated release deploy key;
 - [release-tag immutability ruleset](../../deploy/github/tag-immutability-ruleset.json) blocks update
@@ -29,10 +29,10 @@ history contracts into reproducible provider settings rather than relying on rem
   seven quality statuses, exact-head inspection where required, and owner approval; it proves the PR
   head contains the current `main` tip, refetches the open PR and `main` ref immediately before passing
   the validated title and body plus the immutable merge-approval comment footer to the squash API,
-  and runs under one repository-wide merge
-  concurrency group so no other authorized writer can advance `main` between that snapshot and merge;
+  and runs under one repository-wide merge concurrency group; the bypass-free strict ruleset still
+  rejects the ref update atomically if another writer advances `main`;
 - [authorization-publisher policy](../../deploy/github/authorization-publisher.json) names the
-  protected environment and the only App credentials allowed to perform that merge;
+  protected environment and the only App credentials allowed to perform the hosted merge;
 - [media-qualification policy](../../deploy/github/media-qualification.json) and
   [workflow](../../.github/workflows/qualify-media.yml) isolate read-only R2 credentials from all
   candidate-controlled execution, keep the original media/receipt handoff in a different job, and use
@@ -112,6 +112,16 @@ backlog/audit records, check summaries, and the PR conversation. Merge automatio
 unchanged and appends exactly one `Merge-Approval-Comment: #<id>` footer after validating the immutable
 approval record.
 
+After direct owner authorization, the preferred hosted executor is the merge App workflow. If that
+App is unavailable or local operator execution is more appropriate, run `npm run merge:approved` from
+a clean trusted `main` checkout and pass the pull-request, inspection, approval, qualification, and
+candidate-checkout arguments. The candidate checkout must also be clean. The command supports only
+inspected work and downloads and independently verifies its provider qualification; caller-supplied
+evidence JSON is not accepted. Non-inspected work remains hosted-executor-only so candidate build code
+never runs with the owner's GitHub credentials. The command then uses the
+configured owner's GitHub CLI session and constructs the squash payload from validated history. Raw
+`gh pr merge` is forbidden because it can silently omit the approval footer.
+
 The required `history` job uses trusted provider event data and fails when it cannot query canonical
 PR identity. It resolves epic and declared maintenance branches from backlog metadata and validates
 explicit pull-request, merge-queue, `main`, and tag modes; local
@@ -130,16 +140,22 @@ the recorded inspection, downloads it by exact run/name, and independently verif
 non-player-visible PATCH, it instead rebuilds the exact squash and compares its artifact and
 asset-inventory digests; it never invents an inspection record.
 
-The authorization App posts `pending` before validation. It keeps that status non-successful while it
-uses its narrow ruleset bypass to perform the already validated squash, and posts `success` only after
-the provider reports the merge complete. Candidate workflows cannot forge the App-pinned context, and
-there is no cached pre-merge success for an edited comment to reuse. Its contents-write token exists
+Each sanctioned executor posts `pending` before validation and replaces it with `success` only for the
+exact validated head immediately before requesting the squash. Because main has no bypass actor, the
+provider requires this status and every strict current quality check at the atomic ref update; a base
+race rejects the merge. Its contents-write token exists
 only in the fresh protected-environment job, after candidate validation. That job runs parser and
 authorization policy from protected `main` while reading backlog metadata from the exact read-only
 candidate checkout; it never executes candidate code. The initial adoption of this
 contract is a one-time bootstrap: before the trusted workflow exists on `main`, the complete diff and
 gates are presented for explicit user approval and merged under the preceding protection; only then is
 the App/ruleset reconciliation applied. This bootstrap is not reusable for later work items.
+
+The ADR-0016 owner-session executor revalidates the same seven-check trusted run and immutable provider
+records, verifies local `main` equals `origin/main`, authenticates GitHub CLI as the configured owner,
+and publishes the same required authorization status. It has no ruleset bypass. The command verifies
+the returned base parent and candidate tree, and the post-merge `main` history check verifies the exact
+squash body and tree again. This is a normal sanctioned path, not an administrator exception.
 
 ## Live inspection record
 
@@ -220,8 +236,9 @@ documentation work and a qualifying non-player-visible PATCH instead use `Inspec
 in the exact approval body. Tag
 workflow dispatch supplies the same PR/inspection/qualification identity and the separate
 tag-approval-comment ID.
-Direct provider merge, local tag push, auto-merge, and hand-edited release tags are forbidden even for
-an administrator. The publication workflow's SSH push is the sole allowed tag write. Its private
+Raw provider merge, local tag push, auto-merge, and hand-edited release tags are forbidden even for
+an administrator. The App workflow and `npm run merge:approved` are the only sanctioned merge
+executors. The publication workflow's SSH push is the sole allowed tag write. Its private
 deploy key becomes available only after the validation job succeeds, without a duplicate manual
 environment review. That key can
 create a new approved tag but cannot update or delete an existing `v*` tag.

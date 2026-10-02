@@ -11,7 +11,6 @@ export const qualityChecks = [
   'security',
 ];
 const requiredChecks = [...qualityChecks, 'authorization'];
-const authorizationAppPlaceholder = '$AUTHORIZATION_APP_ID';
 const workflowSemanticFingerprints = {
   ci: '30aa077fdc28127da6f99da661aea92d233e1a41c19eebd0d38c0f2804c71263',
   merge: '555acbd0057d23f5b7f7b71f6633d0fee03cd6c49bd6060bfd8afc24c8e098e8',
@@ -80,7 +79,7 @@ function validateSettings(settings) {
   if (!settings.delete_branch_on_merge) findings.push('Merged epic branches must be deleted.');
   if (settings.allow_auto_merge !== false) {
     findings.push(
-      'Provider auto-merge must remain disabled; only validated merge automation may merge.',
+      'Provider auto-merge must remain disabled; only sanctioned validated merge tooling may merge.',
     );
   }
   return findings;
@@ -100,18 +99,13 @@ function validateRuleScope(ruleset) {
   return findings;
 }
 
-function validateBaselineProtection(ruleset, authorizationAppId) {
+function validateBaselineProtection(ruleset) {
   const findings = [];
   const bypass = ruleset.bypass_actors ?? [];
-  const actor = bypass[0];
-  if (
-    ruleset.enforcement !== 'active' ||
-    bypass.length !== 1 ||
-    actor?.actor_id !== authorizationAppId ||
-    actor.actor_type !== 'Integration' ||
-    actor.bypass_mode !== 'always'
-  ) {
-    findings.push('Only the dedicated merge-authorization app may bypass the main ruleset.');
+  if (ruleset.enforcement !== 'active' || bypass.length !== 0) {
+    findings.push(
+      'Protected main may not have a bypass actor; the provider must atomically enforce current strict checks.',
+    );
   }
   if (
     hasRule(ruleset, 'deletion') === undefined ||
@@ -138,7 +132,7 @@ function validatePullRequestRule(ruleset) {
   return findings;
 }
 
-function validateStatusRules(ruleset, authorizationAppId) {
+function validateStatusRules(ruleset) {
   const findings = [];
   const statuses = statusParameters(ruleset);
   const observedChecks = statuses?.required_status_checks?.map(({ context }) => context) ?? [];
@@ -154,8 +148,10 @@ function validateStatusRules(ruleset, authorizationAppId) {
   const authorization = statuses?.required_status_checks?.find(
     ({ context }) => context === 'authorization',
   );
-  if (authorization?.integration_id !== authorizationAppId)
-    findings.push('Authorization status must be pinned to the dedicated authorization app.');
+  if (authorization?.integration_id !== undefined)
+    findings.push(
+      'Authorization status must admit both sanctioned executors and may not be App-pinned.',
+    );
   return findings;
 }
 
@@ -631,14 +627,13 @@ export function validateRepositoryPolicy({
   authorizationPublisher,
   releasePublisher,
   mediaQualification,
-  authorizationAppId = authorizationAppPlaceholder,
 }) {
   return [
     ...validateSettings(settings),
     ...validateRuleScope(ruleset),
-    ...validateBaselineProtection(ruleset, authorizationAppId),
+    ...validateBaselineProtection(ruleset),
     ...validatePullRequestRule(ruleset),
-    ...validateStatusRules(ruleset, authorizationAppId),
+    ...validateStatusRules(ruleset),
     ...validateWorkflow(workflow),
     ...validateMergeWorkflow(mergeWorkflow, approvalPolicy, authorizationPublisher),
     ...validateAuthorizationPublisher(authorizationPublisher),

@@ -50,6 +50,42 @@ export default defineConfig({
           lines: 100,
           statements: 100,
         },
+        'sources/engine/mission-step-state.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/engine/guidance-ladder-state.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/interactions/tap-remove-state.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/interactions/wipe-progress.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/interactions/match-state.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+        'sources/interactions/trace-progress.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
         'sources/content/v1-content-catalog-validator.ts': {
           branches: 100,
           functions: 100,

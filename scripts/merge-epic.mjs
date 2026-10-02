@@ -1,14 +1,20 @@
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { approvalRecordFromGithub } from './lib/approval-policy.mjs';
 import { createGithubHistoryClient } from './lib/github-history.mjs';
+import { generateAuthorizedSquashMessage } from './lib/history-policy.mjs';
 import { git } from './lib/history-repository.mjs';
 import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
 import {
   validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
   validateEvidenceVersion,
+  validateMergedCommitIdentity,
   validateMergeCandidate,
   validateMergeSnapshot,
+  validateOwnerEvidenceProvenance,
 } from './lib/merge-policy.mjs';
 import { requiredEnvironment, requiredWorkflowArguments } from './lib/workflow-input.mjs';
 
@@ -19,16 +25,123 @@ function requiredArgument(name) {
   return value;
 }
 
+function githubCli(arguments_) {
+  const result = spawnSync('gh', arguments_, { encoding: 'utf8' });
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `gh ${arguments_.join(' ')} failed.`);
+  }
+  return result.stdout.trim();
+}
+
+function checkedCommand(command, arguments_, cwd) {
+  const result = spawnSync(command, arguments_, { cwd, encoding: 'utf8', stdio: 'pipe' });
+  if (result.status !== 0) {
+    throw new Error(
+      result.stderr?.trim() ||
+        result.stdout?.trim() ||
+        `${command} ${arguments_.join(' ')} failed.`,
+    );
+  }
+}
+
+function prepareQualifiedOwnerEvidence({
+  candidateRoot,
+  currentHistory,
+  inspection,
+  inspectionPolicy,
+  output,
+  policySha,
+  qualificationRun,
+  repository,
+  temporaryRoot,
+  trustedRoot,
+}) {
+  if (
+    inspection?.artifact?.name === undefined ||
+    inspection.artifact.workflowRun?.id !== qualificationRun
+  ) {
+    throw new Error('Inspection does not identify the requested provider qualification artifact.');
+  }
+  const qualification = join(temporaryRoot, 'qualification');
+  githubCli([
+    'run',
+    'download',
+    String(qualificationRun),
+    '--name',
+    inspection.artifact.name,
+    '--dir',
+    qualification,
+    '--repo',
+    repository,
+  ]);
+  checkedCommand(
+    process.execPath,
+    [
+      resolve(trustedRoot, 'scripts/verify-qualified-media.mjs'),
+      '--source',
+      candidateRoot,
+      '--qualification',
+      qualification,
+      '--expected-head',
+      currentHistory.headSha,
+      '--expected-policy',
+      policySha,
+      '--artifact-prefix',
+      inspectionPolicy.artifactNamePrefix,
+      '--qualification-run',
+      String(qualificationRun),
+      '--output',
+      output,
+    ],
+    trustedRoot,
+  );
+}
+
+async function prepareOwnerEvidence(options) {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'tiny-rescue-merge-'));
+  const output = join(temporaryRoot, 'release-evidence.json');
+  const trustedRoot = process.cwd();
+  try {
+    if (!options.currentHistory.item.requiresInspection) {
+      throw new Error(
+        'Owner-session merge requires provider-qualified inspected work; use the hosted executor for non-inspected work.',
+      );
+    }
+    prepareQualifiedOwnerEvidence({ ...options, output, temporaryRoot, trustedRoot });
+    const evidence = JSON.parse(await readFile(output, 'utf8'));
+    const provenanceFindings = validateOwnerEvidenceProvenance({
+      requiresInspection: true,
+      source: 'trusted-qualified-media',
+      qualificationRunId: options.qualificationRun,
+      evidenceQualificationRunId: evidence.qualificationRunId,
+    });
+    if (provenanceFindings.length > 0) throw new Error(provenanceFindings.join('\n'));
+    return evidence;
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+}
+
 const { pullNumber, inspectionCommentId, approvalCommentId } = requiredWorkflowArguments(
   'merge-epic',
   { inspectionRequired: false },
 );
-const repository = requiredEnvironment('GITHUB_REPOSITORY');
-const token = requiredEnvironment('GITHUB_TOKEN');
-if (requiredEnvironment('GITHUB_REF') !== 'refs/heads/main') {
+const ownerSession = process.argv.includes('--owner-session');
+const repository = ownerSession
+  ? githubCli(['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner'])
+  : requiredEnvironment('GITHUB_REPOSITORY');
+const token = ownerSession ? githubCli(['auth', 'token']) : requiredEnvironment('GITHUB_TOKEN');
+if (ownerSession) {
+  if (git(['branch', '--show-current']) !== 'main') {
+    throw new Error('Owner-session merge must execute from a checked-out trusted main branch.');
+  }
+  if (git(['status', '--porcelain']) !== '') {
+    throw new Error('Owner-session merge requires a clean trusted main checkout.');
+  }
+} else if (requiredEnvironment('GITHUB_REF') !== 'refs/heads/main') {
   throw new Error('Authorization must execute from the trusted main ref.');
 }
-const evidencePath = requiredArgument('--evidence');
+const evidencePath = ownerSession ? undefined : requiredArgument('--evidence');
 const qualificationRun = Number(requiredArgument('--qualification-run'));
 const candidateRoot = requiredArgument('--candidate');
 const digestPattern = /^sha256:[0-9a-f]{64}$/u;
@@ -38,11 +151,10 @@ const { github, pullRequestInput, trustedQualityChecksForCommit } = createGithub
   { workItemRoot: candidateRoot },
 );
 
-const [pullRequest, approvalPolicy, inspectionPolicy, evidence] = await Promise.all([
+const [pullRequest, approvalPolicy, inspectionPolicy] = await Promise.all([
   github(`/pulls/${pullNumber}`),
   readFile('deploy/github/approval-policy.json', 'utf8').then(JSON.parse),
   readFile('deploy/github/inspection-policy.json', 'utf8').then(JSON.parse),
-  readFile(evidencePath, 'utf8').then(JSON.parse),
 ]);
 
 const postAuthorization = (state, description) =>
@@ -53,6 +165,14 @@ const postAuthorization = (state, description) =>
 
 await postAuthorization('pending', 'Exact candidate authorization is being validated.');
 try {
+  if (ownerSession) {
+    const authenticatedLogin = githubCli(['api', 'user', '--jq', '.login']);
+    if (authenticatedLogin.toLowerCase() !== approvalPolicy.approver.toLowerCase()) {
+      throw new Error(
+        'Owner-session merge is not authenticated as the configured repository owner.',
+      );
+    }
+  }
   if (pullRequest.base.ref !== 'main' || pullRequest.state !== 'open' || pullRequest.draft) {
     throw new Error(
       'Merge automation accepts only an open, non-draft work-item pull request targeting main.',
@@ -67,19 +187,40 @@ try {
     comparison,
   });
   if (ancestryFindings.length > 0) throw new Error(ancestryFindings.join('\n'));
+  const candidateSha = git(['-C', candidateRoot, 'rev-parse', 'HEAD']);
+  const candidateStatus = git(['-C', candidateRoot, 'status', '--porcelain']);
+  if (candidateStatus !== '') throw new Error('Candidate checkout contains uncommitted changes.');
+  const currentHistory = await pullRequestInput(pullRequest, 'pull-request');
+  if (currentHistory.headSha !== currentHistory.pullRequest.headSha)
+    throw new Error('Canonical pull-request head identity is inconsistent.');
+  if (git(['rev-parse', 'HEAD']) !== git(['rev-parse', 'origin/main']))
+    throw new Error('Authorization policy checkout is not trusted main.');
+  const inspection =
+    inspectionCommentId === undefined
+      ? undefined
+      : await github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
+          inspectionRecordFromGithub(comment, { github, repository }),
+        );
+  const evidence = ownerSession
+    ? await prepareOwnerEvidence({
+        candidateRoot,
+        currentHistory,
+        inspection,
+        policySha: git(['rev-parse', 'HEAD']),
+        qualificationRun,
+        repository,
+        inspectionPolicy,
+      })
+    : JSON.parse(await readFile(evidencePath, 'utf8'));
   const candidateIdentityFindings = validateCandidateCheckoutIdentity({
-    checkoutSha: git(['-C', candidateRoot, 'rev-parse', 'HEAD']),
+    checkoutSha: candidateSha,
+    checkoutStatus: git(['-C', candidateRoot, 'status', '--porcelain']),
     pullRequestHeadSha: pullRequest.head.sha,
     evidenceHeadSha: evidence.headSha,
   });
   if (candidateIdentityFindings.length > 0) {
     throw new Error(candidateIdentityFindings.join('\n'));
   }
-  const currentHistory = await pullRequestInput(pullRequest, 'pull-request');
-  if (currentHistory.headSha !== currentHistory.pullRequest.headSha)
-    throw new Error('Canonical pull-request head identity is inconsistent.');
-  if (git(['rev-parse', 'HEAD']) !== git(['rev-parse', 'origin/main']))
-    throw new Error('Authorization policy checkout is not trusted main.');
   if (evidence.headSha !== currentHistory.headSha)
     throw new Error('Validation evidence does not match the exact pull-request head.');
   const versionFindings = validateEvidenceVersion(evidence.version, currentHistory.item.version);
@@ -99,13 +240,8 @@ try {
   ) {
     throw new Error('Qualification-run input does not match the work-item inspection policy.');
   }
-  const [approval, inspection, quality] = await Promise.all([
+  const [approval, quality] = await Promise.all([
     github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
-    inspectionCommentId === undefined
-      ? undefined
-      : github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
-          inspectionRecordFromGithub(comment, { github, repository }),
-        ),
     trustedQualityChecksForCommit(pullRequest.head.sha, 'pull_request', pullRequest.head.ref),
   ]);
   const findings = validateMergeCandidate(currentHistory, quality.checkRuns, {
@@ -164,21 +300,30 @@ try {
     mainSha: freshMain.object?.sha,
   });
   if (snapshotFindings.length > 0) throw new Error(snapshotFindings.join('\n'));
+  const authorizedMessage = generateAuthorizedSquashMessage(currentHistory, approvalCommentId);
+  const candidateCommit = await github(`/git/commits/${pullRequest.head.sha}`);
+  await postAuthorization(
+    'success',
+    'Owner approval and exact candidate evidence are valid for protected merge.',
+  );
   const result = await github(`/pulls/${pullNumber}/merge`, {
     method: 'PUT',
     body: JSON.stringify({
       merge_method: 'squash',
       sha: pullRequest.head.sha,
-      commit_title: pullRequest.title,
-      commit_message: `${pullRequest.body}\nMerge-Approval-Comment: #${approvalCommentId}`,
+      commit_title: authorizedMessage.title,
+      commit_message: authorizedMessage.body,
     }),
   });
   if (result.merged !== true)
     throw new Error(`Provider refused the squash merge: ${result.message}.`);
-  await postAuthorization(
-    'success',
-    'Owner approval and candidate evidence were exact at protected merge.',
-  );
+  const mergedCommit = await github(`/git/commits/${result.sha}`);
+  const mergedIdentityFindings = validateMergedCommitIdentity({
+    expectedBaseSha: pullRequest.base.sha,
+    expectedTreeSha: candidateCommit.tree?.sha,
+    commit: mergedCommit,
+  });
+  if (mergedIdentityFindings.length > 0) throw new Error(mergedIdentityFindings.join('\n'));
   console.log(`Squash-merged pull request #${pullNumber} at ${result.sha}.`);
 } catch (error) {
   await postAuthorization('failure', 'Exact candidate authorization failed or was revoked.');

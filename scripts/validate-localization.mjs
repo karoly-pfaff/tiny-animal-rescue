@@ -12,13 +12,24 @@ const structuralAttributes = new Set([
   'htmlFor',
   'id',
   'role',
+  'sourceClassName',
   'type',
 ]);
-const technicalProperties = new Set(['id', 'path', 'titleKey']);
+const technicalProperties = new Set([
+  'globalCompositeOperation',
+  'id',
+  'lineCap',
+  'lineJoin',
+  'path',
+  'sourceClassName',
+  'titleKey',
+]);
 const technicalCalls = new Set([
   'addEventListener',
   'getElementById',
+  'getContext',
   'glob',
+  'matchMedia',
   'querySelector',
   'querySelectorAll',
   'removeEventListener',
@@ -82,10 +93,19 @@ function isElementAccessKey(node) {
 
 function isTechnicalPropertyValue(node) {
   const parent = node.parent;
-  return (
+  if (
     ts.isPropertyAssignment(parent) &&
     parent.initializer === node &&
     technicalProperties.has(propertyName(parent) ?? '')
+  ) {
+    return true;
+  }
+  return (
+    ts.isBinaryExpression(parent) &&
+    parent.right === node &&
+    parent.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+    ts.isPropertyAccessExpression(parent.left) &&
+    technicalProperties.has(parent.left.name.text)
   );
 }
 
@@ -176,10 +196,16 @@ function isConstrainedTechnicalLiteral(node) {
         'FirstRescueRecordLabel',
         'FirstRescueResidentId',
         'FirstRescueWorldFlag',
+        'GuidanceDiagnosticName',
+        'GuidanceStage',
         'IDBTransactionMode',
         'LanguageTag',
         'Locale',
+        'MatchSide',
         'MissionPhase',
+        'MissionStepActionType',
+        'MissionStepStatus',
+        'MissionStepType',
         'NarrationCue',
         'NarrationFilename',
         'NarrationObjectKey',

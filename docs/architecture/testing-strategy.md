@@ -64,6 +64,17 @@ approve the product.
 
 Every interaction primitive is tested using Pointer Events. E2E includes touch emulation and mouse fallback. Tests cover cancellation, pointer leaving bounds, secondary pointer input, and navigation/background pause.
 
+### Trace tablet performance profile
+
+Until the release hardware matrix is exercised, the repeatable E003-S06 tablet proxy is Chromium at
+the supported 768×1024 touch viewport with four-times CPU throttling through the browser debugging
+protocol. The production-built Trace fixture must complete its full forgiving route while measuring
+the complete pointer-event → React update → canvas redraw → browser paint path. Its 95th-percentile
+frame interval must be at most 50 ms, its 95th-percentile pointer-to-paint latency at most 100 ms, and
+the run must collect at least 12 pointer samples. These bounds preserve responsive feedback under a
+conservative automated profile without claiming physical-device certification. The release hardware
+check may strengthen this evidence; it may not be replaced by a host-only JavaScript microbenchmark.
+
 ## Determinism
 
 - fake clock for hints and animation milestones

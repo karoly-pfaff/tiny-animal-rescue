@@ -1,6 +1,6 @@
 {
   "name": "tiny-animal-rescue",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -28,6 +28,7 @@
     "generate:voice-copy": "node scripts/generate-first-rescue-voice-copy.mjs",
     "generate:media-signatures": "node scripts/generate-media-visual-signatures.mjs",
     "generate:squash": "node scripts/generate-squash-message.mjs",
+    "merge:approved": "node scripts/merge-epic.mjs --owner-session",
     "governance:apply": "node scripts/apply-github-governance.mjs",
     "commitlint:raw": "commitlint",
     "lint": "npm run lint:code && npm run lint:duplicates && npm run lint:dead-code && npm run lint:docs && npm run lint:governance",

@@ -61,27 +61,27 @@ export type DragStep = MissionStepBase &
     snapTolerance: number;
   }>;
 
-type WipeStep = MissionStepBase &
+export type WipeStep = MissionStepBase &
   Readonly<{
     type: 'wipe';
     maskId: string;
     completionRatio: number;
   }>;
 
-type MatchStep = MissionStepBase &
+export type MatchStep = MissionStepBase &
   Readonly<{
     type: 'match';
     pairs: readonly Readonly<{ sourceId: string; targetId: string }>[];
   }>;
 
-type TraceStep = MissionStepBase &
+export type TraceStep = MissionStepBase &
   Readonly<{
     type: 'trace';
     pathId: string;
     corridorWidth: number;
   }>;
 
-type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
+export type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
 
 export type MissionRecord = Readonly<{
   id: string;

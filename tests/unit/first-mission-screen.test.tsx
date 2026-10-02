@@ -102,7 +102,7 @@ describe('FirstMissionScreen protected exit', () => {
 });
 
 describe('FirstMissionScreen rescue completion', () => {
-  it('narrates the first required action on entry and stops narration on exit', () => {
+  it('narrates the first required action without overlap and stops narration on exit', () => {
     const { props, unmount } = renderMission({ locale: 'hu' });
 
     expect(props.narrationService.speak).toHaveBeenCalledWith({
@@ -110,8 +110,48 @@ describe('FirstMissionScreen rescue completion', () => {
       locale: 'hu',
       text: 'Húzd a létrát a fához!',
     });
-    unmount();
     expect(props.narrationService.stop).toHaveBeenCalledOnce();
+    unmount();
+    expect(props.narrationService.stop).toHaveBeenCalledTimes(2);
+  });
+
+  it('replays the active prompt by replacing prior narration and restarting guidance', () => {
+    const { props } = renderMission();
+    const repeat = screen.getByRole('button', { name: 'Hear again' });
+
+    fireEvent.click(repeat);
+
+    expect(props.narrationService.speak).toHaveBeenCalledTimes(2);
+    expect(props.narrationService.stop).toHaveBeenCalledTimes(2);
+    expect(props.narrationService.stop.mock.invocationCallOrder[1]).toBeLessThan(
+      props.narrationService.speak.mock.invocationCallOrder[1] ?? Number.POSITIVE_INFINITY,
+    );
+  });
+
+  it('pauses through the browser visibility boundary and resumes narration and remaining delay', () => {
+    vi.useFakeTimers();
+    let hidden = false;
+    vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const { props } = renderMission();
+    const interaction = screen
+      .getByRole('button', { name: 'Move the ladder to the tree!' })
+      .closest('.drag-interaction');
+
+    void act(() => vi.advanceTimersByTime(2_000));
+    hidden = true;
+    void act(() => document.dispatchEvent(new Event('visibilitychange')));
+    void act(() => vi.advanceTimersByTime(20_000));
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
+    expect(props.narrationService.stop).toHaveBeenCalledTimes(2);
+
+    hidden = false;
+    void act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(props.narrationService.speak).toHaveBeenCalledTimes(2);
+    expect(props.narrationService.stop).toHaveBeenCalledTimes(3);
+    void act(() => vi.advanceTimersByTime(2_999));
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
+    void act(() => vi.advanceTimersByTime(1));
+    expect(interaction).toHaveAttribute('data-guidance-stage', 'demonstration');
   });
 
   it('makes Mimi actionable only after the ladder and completes once after reward commit', async () => {
@@ -130,6 +170,14 @@ describe('FirstMissionScreen rescue completion', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
+    expect(
+      screen.queryByRole('button', { name: 'Move the ladder to the tree!' }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('.drag-interaction')).toHaveAttribute('data-phase', 'placed');
+    expect(document.querySelector('.drag-interaction')).toHaveAttribute(
+      'data-interactive',
+      'false',
+    );
     expect(props.narrationService.speak).toHaveBeenCalledWith({
       cue: 'voice.mission.garden-kitten-tree.step.help-mimi-down',
       locale: 'en',
@@ -141,6 +189,11 @@ describe('FirstMissionScreen rescue completion', () => {
 
     expect(onCommitReward).toHaveBeenCalledOnce();
     expect(onCelebrate).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).not.toBeInTheDocument();
+    expect(document.querySelector('.mission-kitten-rescue')).toHaveAttribute(
+      'data-phase',
+      'saving',
+    );
     finishCommit();
     await act(async () => {
       await Promise.resolve();

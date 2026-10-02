@@ -4,7 +4,7 @@ import { resolveFirstRescueNarration } from '../content/first-rescue-narration';
 type LanguageTag = 'en-US' | 'hu-HU';
 type BrowserCapability = 'speechSynthesis';
 
-type NarrationRequest = Readonly<{
+export type NarrationRequest = Readonly<{
   cue: string;
   locale: Locale;
   text: string;

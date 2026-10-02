@@ -6,7 +6,30 @@ const screenshotDirectory = 'build/reports/playwright/test-results';
 const output = 'tests/fixtures/assets/media-complete-visual-signatures.json';
 const width = 64;
 const height = 48;
-const expectedBulkContractCount = 40;
+const reviewedScreenshotNames = [
+  'celebration-mimi.png',
+  'map-first-rescue.png',
+  'mission-first-step.png',
+  'mission-ladder-hint.png',
+  'mission-ladder-placed.png',
+  'mission-ladder-reduced-motion.png',
+  'mission-mimi-reduced-motion.png',
+  'mission-mimi-rescuing.png',
+  'mission-protected-exit-en.png',
+  'shelter-indoor-mimi.png',
+  'start-first-run.png',
+  'start-screen-en.png',
+  'start-screen-hu.png',
+];
+const reviewedProjects = [
+  'chromium-1024x768',
+  'chromium-1280x800',
+  'chromium-1366x1024',
+  'chromium-touch-768x1024',
+];
+const expectedBulkContracts = reviewedScreenshotNames
+  .flatMap((name) => reviewedProjects.map((project) => `${name}::${project}`))
+  .sort();
 
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -42,15 +65,13 @@ const inputs =
     : [{ contract: suppliedContract, file: suppliedScreenshot }];
 if (inputs.length === 0) throw new Error('No reviewed media-complete screenshots were supplied.');
 if (suppliedScreenshot === undefined) {
-  const expectedContracts = Object.keys(signatures).sort();
   const observedContracts = inputs.map(({ contract }) => contract).sort();
   if (
-    expectedContracts.length !== expectedBulkContractCount ||
-    observedContracts.length !== expectedBulkContractCount ||
-    JSON.stringify(observedContracts) !== JSON.stringify(expectedContracts)
+    observedContracts.length !== expectedBulkContracts.length ||
+    JSON.stringify(observedContracts) !== JSON.stringify(expectedBulkContracts)
   ) {
     throw new Error(
-      `Bulk signature generation requires the exact ${String(expectedBulkContractCount)}-contract reviewed screenshot set.`,
+      `Bulk signature generation requires the exact ${String(expectedBulkContracts.length)}-contract reviewed screenshot set.`,
     );
   }
 }

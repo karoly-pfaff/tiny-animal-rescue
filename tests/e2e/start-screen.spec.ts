@@ -1,9 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { completeFirstRescue } from './support/complete-first-rescue';
-import { dragLadder } from './support/ladder-drag';
+import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
 
@@ -16,6 +16,20 @@ async function setAnimationTime(element: Locator, milliseconds: number): Promise
     animation.pause();
     animation.currentTime = nextTime;
   }, milliseconds);
+}
+
+async function openMimiTapStep(page: Page, hasTouch: boolean) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await activateWithPrimaryPointer(page.getByRole('button', { name: 'Játék' }), hasTouch);
+  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await dragLadder({
+    destination: 'target',
+    ladder: page.getByRole('button', { name: 'Húzd a létrát a fához!' }),
+    page,
+    pointerType: hasTouch ? 'touch' : 'mouse',
+  });
+  return page.getByRole('button', { name: 'Koppints Mimire!' });
 }
 
 test('@preview renders the localized start screen from production preview', async ({
@@ -171,16 +185,102 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
 
-  await dragLadder({ destination: 'invalid', ladder, page, pointerType });
+  const interrupted = await interruptLadderDrag({
+    inspectAfterCancel: async () => {
+      await expect(ladder).toHaveAttribute('data-phase', 'idle');
+      await expect(ladder).toHaveAttribute('style', /left: 20%; top: 72%/);
+      await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toHaveCount(0);
+    },
+    ladder,
+    page,
+    pointerType,
+  });
+  expect(interrupted.afterSecondary).toEqual(interrupted.afterPrimary);
+  await expect(ladder).toHaveAttribute('data-phase', 'idle');
+  await expect(ladder).toHaveAttribute('style', /left: 20%; top: 72%/);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toHaveCount(0);
+
+  await dragLadder({
+    destination: 'invalid',
+    inspectWhileDragging: async (pointer) => {
+      await expect(ladder).toHaveAttribute('data-phase', 'dragging');
+      const [surfaceBox, ladderBox, inlineTop] = await Promise.all([
+        page.locator('.drag-interaction').boundingBox(),
+        ladder.boundingBox(),
+        ladder.evaluate((element) => Number.parseFloat(element.style.top)),
+      ]);
+      if (surfaceBox === null || ladderBox === null) {
+        throw new Error('Active drag geometry must remain measurable.');
+      }
+      const expectedTop = ((pointer.y - surfaceBox.y - 48) / surfaceBox.height) * 100;
+      expect(inlineTop).toBeCloseTo(expectedTop, 3);
+      expect(ladderBox.y + ladderBox.height / 2).toBeLessThan(pointer.y);
+    },
+    ladder,
+    page,
+    pointerType,
+  });
   await expect(ladder).toHaveAttribute('data-phase', 'idle');
   await dragLadder({ destination: 'target', ladder, page, pointerType });
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
-  await ladder.press('Enter');
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await expect(ladder).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toBeVisible();
   expect(browserErrors).toEqual([]);
 });
 
-test('@preview demonstrates idle guidance under a normal-motion fake clock', async ({
+test('@preview activates Mimi through the forgiving tap hit area', async ({ page }, testInfo) => {
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  const mimi = await openMimiTapStep(page, hasTouch);
+  await page.clock.fastForward(5_000);
+
+  const targetBox = await mimi.boundingBox();
+  const visualBox = await mimi.locator('.mission-kitten-tap-visual').boundingBox();
+  if (targetBox === null || visualBox === null) {
+    throw new Error('Mimi tap geometry must be measurable.');
+  }
+  expect(targetBox.width).toBeGreaterThan(visualBox.width);
+  expect(targetBox.height).toBeGreaterThan(visualBox.height);
+  await expect(mimi).toHaveAttribute('data-guidance', 'true');
+  await expect(mimi.locator('.tap-remove-visual')).toHaveCSS('animation-name', 'tap-target-pulse');
+
+  const outsideVisualPoint = { x: 4, y: targetBox.height / 2 };
+  expect(targetBox.x + outsideVisualPoint.x).toBeLessThan(visualBox.x);
+  if (hasTouch) {
+    await mimi.tap({ position: outsideVisualPoint });
+  } else {
+    await mimi.click({ position: outsideVisualPoint });
+  }
+  await expect(mimi).toHaveCount(0);
+  const rescueMotion = page.locator('.mission-kitten-rescue');
+  await expect(rescueMotion).toBeVisible();
+  await expect(rescueMotion).toHaveAttribute('data-phase', 'saving');
+  await expect(rescueMotion).toHaveCSS('animation-name', 'mimi-rescued');
+  await page.clock.fastForward(1);
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await page.clock.fastForward(324);
+  await expect(rescueMotion).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await page.clock.fastForward(325);
+  await expect(page.getByRole('button', { name: 'Segíts Miminek!' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+});
+
+test('@preview substitutes static tap guidance under reduced motion', async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  const mimi = await openMimiTapStep(page, Boolean(testInfo.project.use.hasTouch));
+  await page.clock.fastForward(5_000);
+
+  const visual = mimi.locator('.tap-remove-visual');
+  await expect(mimi).toHaveAttribute('data-guidance', 'true');
+  await expect(visual).toHaveCSS('animation-name', 'none');
+  await expect(visual).toHaveCSS('outline-style', 'solid');
+});
+
+test('@preview @guidance-replay restarts idle guidance under a fake clock', async ({
   page,
 }, testInfo) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
@@ -192,7 +292,13 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
   await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
   const target = page.locator('.ladder-target');
   await expect(target).toHaveCSS('animation-name', 'none');
-  await page.clock.fastForward(5_000);
+  await page.clock.fastForward(4_999);
+  await page.getByRole('button', { name: 'Hallgasd újra' }).click();
+  await page.clock.fastForward(1);
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await page.clock.fastForward(3_999);
+  await expect(page.locator('.drag-ghost-hand')).toHaveCount(0);
+  await page.clock.fastForward(1_100);
 
   const ghost = page.locator('.drag-ghost-hand');
   await expect(ghost).toBeVisible();
@@ -214,7 +320,8 @@ test('@preview demonstrates idle guidance under a normal-motion fake clock', asy
     page,
     pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
   });
-  await expect(ladder).toHaveAttribute('data-phase', 'placed');
+  await expect(ladder).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Koppints Mimire!' })).toBeVisible();
   expect(browserErrors).toEqual([]);
 });
 

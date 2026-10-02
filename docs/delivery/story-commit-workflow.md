@@ -173,7 +173,7 @@ commits do not become ancestors of `main`. Update recorded SHAs after any autosq
 The exact squash body is generated deterministically before merge and contains a machine-readable
 crosswalk with epic ID, milestone, target version, canonical PR identity/URL, every story ID and full
 SHA, optional closure SHA, applicable aggregate gate, evidence digest, and `Release: v<version>`
-footer. Merge automation appends the immutable merge-approval comment ID. The annotated milestone tag
+footer. The shared sanctioned merge tooling appends the immutable merge-approval comment ID. The annotated milestone tag
 repeats that crosswalk and records the merge-approval, live-inspection, and distinct tag-approval
 comment IDs, resulting squash SHA, artifact digest, and asset-inventory digest. These
 Git-native and provider records preserve traceability without treating a green build as publication
@@ -194,9 +194,8 @@ none` and binds a clean rebuilt artifact instead;
 7. validate the exact proposed PR title and deterministic squash body/crosswalk;
 8. present the complete candidate evidence and obtain the user's explicit approval; the instruction
    may cover merge only or both merge and tag publication;
-9. only after that approval and its agent-materialized provider record, let repository merge
-   automation perform the squash with those exact
-   validated inputs;
+9. only after that approval and its agent-materialized provider record, let the hosted merge workflow
+   or ADR-0016 owner-session command perform the squash with those exact validated inputs;
 10. verify the resulting `main` subject/body, squash SHA, tree identity, and post-merge history check;
 11. verify the squash tree equals the approved head, independently verify the immutable qualified
     build/receipt or non-inspected rebuild evidence, and wait for the complete trusted `main` check
@@ -210,9 +209,10 @@ none` and binds a clean rebuilt artifact instead;
     identity and tag-triggered checks before deleting the epic branch.
 
 Interactive merge-message editing is forbidden. Repository settings allow squash merge only; merge
-commit and rebase-merge modes are disabled. The merge automation/provider API must use the validated
-PR title and generated squash body with only the verified merge-approval comment footer appended. If
-it cannot guarantee this, stop rather than merging and change the repository integration deliberately.
+commit and rebase-merge modes are disabled. The hosted workflow and owner-session command both use
+the shared validator and authorized-message generator. Raw `gh pr merge`, the provider merge button,
+and custom payloads are unsupported. If the sanctioned command cannot guarantee the exact title,
+body, head, and approval footer, stop rather than merging.
 
 The applicable aggregate gate is `validate:full` through M6 and `validate:release` for M7, M8, M9,
 and GA promotion. A failed, stale, cancelled, empty, or retry-only result does not authorize merge.
