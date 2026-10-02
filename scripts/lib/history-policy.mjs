@@ -164,6 +164,17 @@ export function generateSquashMessage(input) {
   };
 }
 
+export function generateAuthorizedSquashMessage(input, approvalCommentId) {
+  if (!Number.isInteger(approvalCommentId) || approvalCommentId <= 0) {
+    throw new Error('Merge approval comment ID must be a positive integer.');
+  }
+  const message = generateSquashMessage(input);
+  return {
+    title: message.title,
+    body: `${message.body}\nMerge-Approval-Comment: #${approvalCommentId}`,
+  };
+}
+
 function validatePullRequest(input, findings) {
   validateBranch(input, findings, true);
   push(
@@ -223,6 +234,10 @@ function validateMain(input, findings) {
   if (commit === undefined) return;
   const expected = generateSquashMessage(input);
   const mergeApprovalCommentId = mergeApprovalCommentIdFromBody(commit.body);
+  const authorized =
+    Number.isInteger(mergeApprovalCommentId) && mergeApprovalCommentId > 0
+      ? generateAuthorizedSquashMessage(input, mergeApprovalCommentId)
+      : undefined;
   push(findings, commit.parentCount === 1, 'Main commit must be a non-merge squash commit.');
   push(
     findings,
@@ -236,7 +251,7 @@ function validateMain(input, findings) {
   );
   push(
     findings,
-    commit.body === `${expected.body}\nMerge-Approval-Comment: #${mergeApprovalCommentId}`,
+    commit.body === authorized?.body,
     'Main squash body does not match the validated crosswalk.',
   );
   push(

@@ -2,13 +2,7 @@
   "name": "protected-main",
   "target": "branch",
   "enforcement": "active",
-  "bypass_actors": [
-    {
-      "actor_id": "$AUTHORIZATION_APP_ID",
-      "actor_type": "Integration",
-      "bypass_mode": "always"
-    }
-  ],
+  "bypass_actors": [],
   "conditions": {
     "ref_name": {
       "include": ["~DEFAULT_BRANCH"],
@@ -42,7 +36,7 @@
           { "context": "visual" },
           { "context": "supply-chain" },
           { "context": "security" },
-          { "context": "authorization", "integration_id": "$AUTHORIZATION_APP_ID" }
+          { "context": "authorization" }
         ]
       }
     }

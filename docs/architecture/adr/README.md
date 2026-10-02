@@ -19,6 +19,7 @@ ADRs are binding unless superseded. Implementation tasks must cite relevant ADRs
 | [ADR-0013](ADR-0013-bounded-reproducible-release-qualification.md) | Bound and reproduce release qualification                | Accepted   |
 | [ADR-0014](ADR-0014-operator-directed-release-authorization.md)    | Treat direct owner instructions as release authority     | Accepted   |
 | [ADR-0015](ADR-0015-deferred-assembled-mechanic-inspection.md)     | Carry mechanics into assembled content inspection        | Accepted   |
+| [ADR-0016](ADR-0016-owner-session-merge-execution.md)              | Support exact owner-session merge execution              | Accepted   |
 
 ## ADR format
 

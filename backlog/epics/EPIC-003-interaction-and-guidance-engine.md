@@ -5,7 +5,7 @@
 - Target version: `0.4.0`
 - Inspection journeys: `first-rescue,guidance`
 - Dependencies: EPIC-001, EPIC-002
-- ADRs: ADR-0001, ADR-0003, ADR-0007, ADR-0012, ADR-0015
+- ADRs: ADR-0001, ADR-0003, ADR-0007, ADR-0012 through ADR-0016
 
 ## Outcome
 
@@ -69,6 +69,19 @@ Implement all five production-grade, reusable interaction primitives behind one 
 - [x] One contract-only fixture scene demonstrates each primitive.
 - [x] Visual and E2E tests cover success, wrong action, cancellation, pause, and replay.
 - [x] No fixture becomes a hidden v1 mission.
+
+### E003-S09 — Exact owner-session merge execution
+
+- [x] One sanctioned owner-session command reuses the protected merge validator and exact candidate
+      evidence instead of hand-editing a provider merge.
+- [x] The squash payload is generated from the validated crosswalk and binds exactly one immutable
+      `Merge-Approval-Comment` footer.
+- [x] Governance fixtures reproduce and reject the PATCH-002 missing-footer failure and duplicate
+      footer variants.
+- [x] The configured owner bypass is limited to pull-request operations; direct pushes and local tag
+      publication remain forbidden.
+- [x] Delivery documentation distinguishes the App and owner-session executors and forbids raw
+      `gh pr merge` usage.
 
 ## Exit criteria
 

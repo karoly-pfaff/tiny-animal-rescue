@@ -36,6 +36,18 @@
     { "name": "multiple main commits", "mode": "main", "mutation": "main-count", "valid": false },
     { "name": "main tree mismatch", "mode": "main", "mutation": "main-tree", "valid": false },
     { "name": "merge commit on main", "mode": "main", "mutation": "main-parent", "valid": false },
+    {
+      "name": "main squash without approval footer",
+      "mode": "main",
+      "mutation": "main-approval-absent",
+      "valid": false
+    },
+    {
+      "name": "main squash with duplicate approval footer",
+      "mode": "main",
+      "mutation": "main-approval-duplicate",
+      "valid": false
+    },
     { "name": "annotated milestone tag", "mode": "tag", "mutation": "none", "valid": true },
     { "name": "lightweight tag", "mode": "tag", "mutation": "tag-lightweight", "valid": false },
     { "name": "wrong tag version", "mode": "tag", "mutation": "tag-version", "valid": false },
@@ -174,6 +186,11 @@
     { "name": "authoritative policy", "mutation": "none", "valid": true },
     { "name": "merge method drift", "mutation": "merge-method", "valid": false },
     { "name": "ruleset bypass", "mutation": "bypass", "valid": false },
+    {
+      "name": "owner pull-request bypass weakens the provider lease",
+      "mutation": "owner-bypass",
+      "valid": false
+    },
     { "name": "non-strict checks", "mutation": "stale-checks", "valid": false },
     {
       "name": "seven quality checks without authorization",
@@ -181,8 +198,8 @@
       "valid": false
     },
     {
-      "name": "generic GitHub Actions can forge authorization",
-      "mutation": "generic-actions-authorization",
+      "name": "authorization is pinned to only one executor",
+      "mutation": "single-executor-authorization",
       "valid": false
     },
     {

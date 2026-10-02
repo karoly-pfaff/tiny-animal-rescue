@@ -328,29 +328,32 @@ checks with stable names:
 | `supply-chain` | frozen install, dependency advisory, shipped-license/SBOM and provenance checks            |
 | `security`     | repository secret/static scans plus provider-hosted CodeQL SARIF                           |
 
-`main` is protected: no direct push, no force push, no merge with a missing/stale/failing required
-check, and no human or administrator bypass. Its only ruleset bypass is the least-privilege dedicated
-merge-authorization App described below. Required workflows cannot use path
-filters that leave a check absent. Concurrency cancellation may stop an obsolete run only after a newer
-commit for the same change has started its replacement run.
+`main` is protected: no direct push, no force push, and no merge with missing, stale, or failing
+technical evidence. Its ruleset has no bypass actor; both sanctioned executors must satisfy the same
+strict current checks under ADR-0016. Required workflows cannot use path filters
+that leave a check absent. Concurrency cancellation may stop an obsolete run only after a newer commit
+for the same change has started its replacement run.
 
 Merge automation additionally requires a provider-backed owner approval whose exact body binds the
 PR number, current head SHA, version, and live-inspection comment. Under ADR-0014, a direct owner
 instruction is the authority and the agent may materialize this exact immutable provider record; one
 instruction may cover both merge and later tag publication when it unambiguously names both. A
-dedicated GitHub App identity,
-not the generic Actions integration, owns the required `authorization` context and is the main
-ruleset's only bypass actor. It executes trusted `main` policy on a fresh protected-environment runner,
-keeps authorization non-successful until its squash finishes, and never exposes its token to candidate
-build code. Its short-lived token requests the exact read scopes needed for evidence plus commit-status
-write and the contents-write scope required by GitHub's pull-request merge endpoint; it receives no
+dedicated GitHub App or the authenticated configured owner publishes the required `authorization`
+context only after the shared trusted validation succeeds. The App executes trusted `main` policy on
+a fresh protected-environment runner and never exposes its token to candidate build code. The
+owner-session command reuses that validation from a clean trusted `main` checkout, requires a clean
+exact-head candidate checkout, and supports only inspected work backed by a provider artifact that it
+downloads and verifies internally. Non-inspected work remains hosted-executor-only, so candidate code
+never runs with owner credentials. Neither executor bypasses the strict ruleset. The App's short-lived
+token requests the exact read scopes needed for evidence plus commit-status write and the
+contents-write scope required by GitHub's pull-request merge endpoint; it receives no
 administration, environment, deployment, or workflow write scope. The App accepts the seven jobs only
 from the canonical `required-quality` workflow ID and active path and the exact SHA/branch/event. It
 selects the newest identity-matching workflow run by run number, attempt, and ID before considering
 status or conclusion; that newest run itself must be completed and successful, and every accepted
 check must be tied to its check-suite ID. A newer pending or failed canonical run therefore blocks an
 older success, and same-name jobs from another candidate workflow do not count. Thus the seven quality
-jobs alone cannot permit a normal merge.
+jobs alone cannot permit a merge through either sanctioned executor.
 Protected `v*` tags reject
 direct creation, update, and deletion. Only creation has the
 dedicated release-deploy-key bypass; update and deletion have no bypass. The tag workflow exposes the

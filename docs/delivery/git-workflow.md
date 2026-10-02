@@ -40,9 +40,9 @@ single epic commit on `main`.
 - Use subjects `<type>(E<epic>-S<story>): <imperative summary>` for story commits and
   `chore(EPIC-<id>): close milestone M<milestone>` for the optional non-behavioral closure commit.
 - Squash merge only after the final work-item head has all seven quality checks and exact owner
-  approval. Normal actors remain blocked by the App-pinned `authorization` context; the dedicated
-  merge App validates live provider records, performs the squash through its narrow ruleset bypass,
-  and records success only after the merge completes.
+  approval. The dedicated merge App or the ADR-0016 owner-session command validates live provider
+  records and performs the exact squash. Neither executor has a ruleset bypass; raw provider merge
+  and direct push remain outside the supported path.
 
 ## Pull-request contract
 
@@ -67,18 +67,21 @@ only for the latest reviewed commit.
 
 - Required workflows are not skipped by path or commit-message filters.
 - Review approval is dismissed when code changes after approval.
-- Merge requires the branch head to contain the current protected-base tip. The trusted merge workflow
-  verifies the GitHub comparison, refetches the exact open PR and `main` ref immediately before the
-  squash call, and serializes all authorized `main` writes in one non-cancelling concurrency group.
+- Merge requires the branch head to contain the current protected-base tip. The shared merge
+  validator verifies the GitHub comparison and refetches the exact open PR and `main` ref immediately
+  before the squash call. The hosted App path additionally serializes its own writes in one
+  non-cancelling concurrency group; both paths rely on the bypass-free, strict current-check ruleset
+  to reject an atomic ref update when `main` moved.
 - Merge evidence must prove root product and base-pack versions are identical and equal the target
   version declared by the trusted base-branch backlog item; a later tag failure is not a substitute.
 - A green branch, completed audit, or passing live product inspection is not merge authority. Obtain
   the user's explicit approval after presenting the final evidence and before invoking merge
   automation or publishing a version tag. One direct instruction may authorize both operations; the
   agent then materializes their distinct exact provider records under ADR-0014.
-- Repository settings enable squash merge only. Validated automation supplies the exact linted PR
-  title and deterministic squash body plus the verified merge-approval comment footer; interactive
-  message editing, merge commits, and rebase merges are disabled or forbidden.
+- Repository settings enable squash merge only. Both sanctioned executors generate the exact linted
+  title and deterministic body plus one verified merge-approval comment footer from validated
+  history; interactive message editing, raw `gh pr merge`, merge commits, and rebase merges are
+  forbidden.
 - A cancellation, timeout, neutral result, empty test collection, or retry-only pass does not satisfy
   the evidence contract even if the host UI labels it successful.
 - There is no generic failed-gate bypass. After two identical failures on one unchanged head, stop
@@ -113,7 +116,7 @@ runs only from protected `main` and must:
    and retain the inspection record on that exact candidate; a non-player-visible PATCH instead binds
    a clean rebuilt artifact under ADR-0013;
 3. validate the proposed squash title/body, present all evidence, and wait for explicit user approval;
-4. after approval, merge only through squash automation;
+4. after approval, merge through the hosted App workflow or `npm run merge:approved` under ADR-0016;
 5. verify protected `main` contains the exact candidate tree and a valid squash crosswalk;
 6. verify requested SemVer equals root `package.json` and bundled base-pack version and the annotated
    `vX.Y.Z` tag does not already exist;

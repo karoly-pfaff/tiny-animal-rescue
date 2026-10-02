@@ -10,15 +10,21 @@ import {
   fetchAllCheckRuns,
   fetchTrustedQualityChecks,
 } from './lib/github-history.mjs';
-import { generateSquashMessage, validateHistoryPolicy } from './lib/history-policy.mjs';
+import {
+  generateAuthorizedSquashMessage,
+  generateSquashMessage,
+  validateHistoryPolicy,
+} from './lib/history-policy.mjs';
 import { tagRevisions, workItemFromBranch } from './lib/history-repository.mjs';
 import { expectedInspectionBody } from './lib/inspection-policy.mjs';
 import {
   validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
   validateEvidenceVersion,
+  validateMergedCommitIdentity,
   validateMergeCandidate,
   validateMergeSnapshot,
+  validateOwnerEvidenceProvenance,
   validateRequiredQualityChecks,
 } from './lib/merge-policy.mjs';
 import { npmProcess } from './lib/npm-process.mjs';
@@ -290,7 +296,7 @@ function historyBaseline(mode) {
     ],
     treeMatchesApprovedHead: true,
   };
-  input.main.newCommits[0].body += '\nMerge-Approval-Comment: #98';
+  input.main.newCommits[0].body = generateAuthorizedSquashMessage(input, 98).body;
   input.tag = tagBaseline(input, message);
   return input;
 }
@@ -330,7 +336,7 @@ function maintenanceBaseline(item, mode) {
     ],
     treeMatchesApprovedHead: true,
   };
-  input.main.newCommits[0].body += '\nMerge-Approval-Comment: #98';
+  input.main.newCommits[0].body = generateAuthorizedSquashMessage(input, 98).body;
   input.tag = tagBaseline(input, message);
   return input;
 }
@@ -355,6 +361,10 @@ function mutateHistory(input, mutation) {
     'main-count': () => input.main.newCommits.push(clone(input.main.newCommits[0])),
     'main-tree': () => (input.main.treeMatchesApprovedHead = false),
     'main-parent': () => (input.main.newCommits[0].parentCount = 2),
+    'main-approval-absent': () =>
+      (input.main.newCommits[0].body = generateSquashMessage(input).body),
+    'main-approval-duplicate': () =>
+      (input.main.newCommits[0].body += '\nMerge-Approval-Comment: #98'),
     'tag-lightweight': () => (input.tag.annotated = false),
     'tag-version': () => (input.tag.name = 'v0.43.1'),
     'tag-digest': () => (input.tag.artifactDigest = 'sha256:nope'),
@@ -963,6 +973,30 @@ for (const fixture of cases.history) {
   mutateHistory(input, fixture.mutation);
   record(`history/${fixture.name}`, fixture.valid, validateHistoryPolicy(input));
 }
+{
+  const input = historyBaseline('pull-request');
+  const authorized = generateAuthorizedSquashMessage(input, 98);
+  record(
+    'merge/authorized-message-binds-approval-once',
+    true,
+    authorized.title === input.pullRequest.title &&
+      authorized.body === `${input.pullRequest.body}\nMerge-Approval-Comment: #98` &&
+      authorized.body.match(/^Merge-Approval-Comment:/gmu)?.length === 1
+      ? []
+      : ['Authorized squash message did not bind exactly one approval footer.'],
+  );
+  let rejected = false;
+  try {
+    generateAuthorizedSquashMessage(input, 0);
+  } catch {
+    rejected = true;
+  }
+  record(
+    'merge/reject-invalid-approval-identity',
+    true,
+    rejected ? [] : ['Invalid approval identity produced a squash message.'],
+  );
+}
 for (const branch of [
   'fix/PATCH-001-v0.2.1-asset-evidence-correction',
   'fix/PATCH-002-v0.3.1-release-governance-repair',
@@ -1037,6 +1071,16 @@ for (const branch of [
     }),
   );
   record(
+    'merge/dirty-candidate-metadata',
+    false,
+    validateCandidateCheckoutIdentity({
+      checkoutSha: headSha,
+      checkoutStatus: ' M backlog/maintenance/PATCH-002-v0.3.1-release-governance-repair.md',
+      pullRequestHeadSha: headSha,
+      evidenceHeadSha: headSha,
+    }),
+  );
+  record(
     'merge/candidate-evidence-race',
     false,
     validateCandidateCheckoutIdentity({
@@ -1053,6 +1097,60 @@ for (const branch of [
       expectedHeadSha: headSha,
       pullRequest: { state: 'open', base: { sha: '3'.repeat(40) }, head: { sha: headSha } },
       mainSha: '3'.repeat(40),
+    }),
+  );
+  record(
+    'merge/provider-result-preserves-base-and-tree',
+    true,
+    validateMergedCommitIdentity({
+      expectedBaseSha: baseSha,
+      expectedTreeSha: '3'.repeat(40),
+      commit: { parents: [{ sha: baseSha }], tree: { sha: '3'.repeat(40) } },
+    }),
+  );
+  record(
+    'merge/provider-rejects-racing-base-result',
+    false,
+    validateMergedCommitIdentity({
+      expectedBaseSha: baseSha,
+      expectedTreeSha: '3'.repeat(40),
+      commit: { parents: [{ sha: '4'.repeat(40) }], tree: { sha: '3'.repeat(40) } },
+    }),
+  );
+  record(
+    'merge/verified-provider-evidence',
+    true,
+    validateOwnerEvidenceProvenance({
+      requiresInspection: true,
+      source: 'trusted-qualified-media',
+      qualificationRunId: 123,
+      evidenceQualificationRunId: 123,
+    }),
+  );
+  for (const [name, source, evidenceQualificationRunId] of [
+    ['fabricated', 'caller-json', 123],
+    ['stale', 'trusted-qualified-media', 122],
+    ['unverified', 'downloaded-unverified', 123],
+  ]) {
+    record(
+      `merge/${name}-owner-evidence`,
+      false,
+      validateOwnerEvidenceProvenance({
+        requiresInspection: true,
+        source,
+        qualificationRunId: 123,
+        evidenceQualificationRunId,
+      }),
+    );
+  }
+  record(
+    'merge/reject-non-inspected-owner-session',
+    false,
+    validateOwnerEvidenceProvenance({
+      requiresInspection: false,
+      source: 'trusted-local-rebuild',
+      qualificationRunId: Number.NaN,
+      evidenceQualificationRunId: undefined,
     }),
   );
   record('merge/exact-target-version', true, validateEvidenceVersion('0.2.0', '0.2.0'));
@@ -1139,6 +1237,12 @@ for (const fixture of cases.repository) {
       actor_type: 'OrganizationAdmin',
       bypass_mode: 'always',
     });
+  if (fixture.mutation === 'owner-bypass')
+    candidate.ruleset.bypass_actors.push({
+      actor_id: 2,
+      actor_type: 'User',
+      bypass_mode: 'pull_request',
+    });
   if (fixture.mutation === 'stale-checks') {
     candidate.ruleset.rules.find(
       (rule) => rule.type === 'required_status_checks',
@@ -1152,8 +1256,7 @@ for (const fixture of cases.repository) {
       1,
     );
   }
-  if (fixture.mutation === 'generic-actions-authorization') {
-    candidate.ruleset.bypass_actors[0].actor_id = 15368;
+  if (fixture.mutation === 'single-executor-authorization') {
     candidate.ruleset.rules
       .find((rule) => rule.type === 'required_status_checks')
       .parameters.required_status_checks.find(
