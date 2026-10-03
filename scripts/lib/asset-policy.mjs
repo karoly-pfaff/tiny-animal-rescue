@@ -1,8 +1,6 @@
 const acceptedValues = Object.freeze({
   classification: 'production-safe',
-  licenseStatus: 'approved',
   ownership: 'base',
-  qaStatus: 'approved',
 });
 
 const digestPattern = /^sha256:[0-9a-f]{64}$/u;
@@ -39,8 +37,8 @@ function validateMetadata(record) {
     findings.push('delivery must be r2-pending or r2-locked.');
   }
   if (record.delivery === 'r2-locked') {
-    if (record.provenanceStatus !== 'approved') {
-      findings.push('provenanceStatus must be approved for a locked asset.');
+    if (!hasApprovedProductionEvidence(record)) {
+      findings.push('QA, license, and provenance must be approved for a locked asset.');
     }
     if (record.mediaType !== 'image/png') {
       findings.push('Locked visual assets must declare image/png.');
@@ -55,7 +53,29 @@ function validateMetadata(record) {
       findings.push('Locked visual assets must declare transparency.');
     }
   }
+  if (record.delivery === 'r2-pending' && !hasConsistentPendingEvidence(record)) {
+    findings.push(
+      'A pending asset must be either not-produced with pending license/provenance or fully approved while awaiting delivery.',
+    );
+  }
   return findings;
+}
+
+function hasApprovedProductionEvidence(record) {
+  return (
+    record.qaStatus === 'approved' &&
+    record.licenseStatus === 'approved' &&
+    record.provenanceStatus === 'approved'
+  );
+}
+
+function hasConsistentPendingEvidence(record) {
+  return (
+    hasApprovedProductionEvidence(record) ||
+    (record.qaStatus === 'not-produced' &&
+      record.licenseStatus === 'pending-production' &&
+      record.provenanceStatus === 'pending-production')
+  );
 }
 
 function validatePrompt(record, promptText) {

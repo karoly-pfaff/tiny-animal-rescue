@@ -1,9 +1,10 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { tracePointAtProgress } from '../../sources/interactions/trace-progress';
 import { fixtureTracePath } from './fixture-app/trace-fixture-path';
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
 import { interactionFixtureUrl } from './support/fixture-url';
+import { expect, test } from './support/muted-test';
 import { followPrimaryPointerPath, type ClientPoint } from './support/pointer';
 import {
   measureTabletTracePerformance,

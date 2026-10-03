@@ -1,9 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
-import { completeFirstRescue } from './support/complete-first-rescue';
+import {
+  activateFirstRescueCall,
+  completeFirstRescue,
+  openFirstRescueCallSheet,
+  openFirstRescueMission,
+} from './support/complete-first-rescue';
 import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
+import { expect, test } from './support/muted-test';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
 
@@ -22,7 +28,7 @@ async function openMimiTapStep(page: Page, hasTouch: boolean) {
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Játék' }), hasTouch);
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, { force: true, hasTouch, locale: 'hu' });
   await dragLadder({
     destination: 'target',
     ladder: page.getByRole('button', { name: 'Húzd a létrát a fához!' }),
@@ -160,7 +166,15 @@ test('@preview opens only the first Garden mission and protects mission exit', a
   await expect(gardenCall).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
   await expect(page.getByText(/Erdő|Tanya|Tó/u)).not.toBeVisible();
-  await activateWithPrimaryPointer(gardenCall, Boolean(testInfo.project.use.hasTouch));
+  await openFirstRescueCallSheet(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
+  await expect(page.getByRole('button', { name: 'Mimi a fán — Kert' })).toBeVisible();
+  await activateFirstRescueCall(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
 
   const back = page.getByRole('button', { name: 'Tartsd nyomva a térképhez' });
@@ -174,6 +188,65 @@ test('@preview opens only the first Garden mission and protects mission exit', a
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
 });
 
+test('@preview gives unlocked locations without calls persistent visual selection', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.goto('/');
+  await writePrimarySave(page, {
+    completedMissionIds: ['garden-kitten-tree'],
+    locale: 'en',
+    schemaVersion: 0,
+    unlockedResidentIds: ['mimi-kitten'],
+    worldFlags: ['mimi-rescued'],
+  });
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await page.goto('/#/map');
+
+  const garden = page.getByRole('button', { name: 'Garden rescue: Mimi' });
+  const forest = page.getByRole('button', { name: 'Forest rescues' });
+  const farm = page.getByRole('button', { name: 'Farm rescues' });
+  await activateWithPrimaryPointer(garden, hasTouch);
+  await expect(page.getByRole('region', { name: 'Garden' })).toBeVisible();
+
+  await activateWithPrimaryPointer(forest, hasTouch);
+  await expect(page.getByRole('region', { name: 'Garden' })).toHaveCount(0);
+  await expect(forest).toHaveAttribute('aria-pressed', 'true');
+  await expect(forest).toHaveAttribute('data-selected-location', 'true');
+  await expect(forest).toHaveCSS('box-shadow', /rgba?\(41, 62, 103/u);
+  await expect(garden).toHaveAttribute('aria-pressed', 'false');
+
+  await activateWithPrimaryPointer(farm, hasTouch);
+  await expect(farm).toHaveAttribute('aria-pressed', 'true');
+  await expect(forest).toHaveAttribute('aria-pressed', 'false');
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview restores map focus after leaving a direct mission route', async ({
+  page,
+}, testInfo) => {
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Magyar' }).click();
+  await page.goto('/#/mission/garden-kitten-tree');
+  await expect(page.getByRole('heading', { name: 'Mimi a fán' })).toBeVisible();
+
+  await page
+    .getByRole('button', { name: 'Tartsd nyomva a térképhez' })
+    .dispatchEvent('pointerdown', {
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: hasTouch ? 'touch' : 'mouse',
+    });
+
+  const garden = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
+  await expect(garden).toBeFocused();
+  await expect(garden).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('region', { name: 'Kert' })).toBeVisible();
+});
+
 test('@preview returns an invalid ladder drop and snaps a valid drop exactly once', async ({
   page,
 }, testInfo) => {
@@ -181,7 +254,10 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   const pointerType = testInfo.project.use.hasTouch ? 'touch' : 'mouse';
 
@@ -289,7 +365,11 @@ test('@preview @guidance-replay restarts idle guidance under a fake clock', asyn
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
   await page.getByRole('button', { name: 'Játék' }).click();
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click({ force: true });
+  await openFirstRescueMission(page, {
+    force: true,
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const target = page.locator('.ladder-target');
   await expect(target).toHaveCSS('animation-name', 'none');
   await page.clock.fastForward(4_999);
@@ -336,6 +416,15 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
   await completeFirstRescue(page, hasTouch, 'hu');
   await expect(page.getByRole('button', { name: 'Térkép' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menhely' })).toBeVisible();
+  await activateWithPrimaryPointer(page.getByRole('button', { name: 'Térkép' }), hasTouch);
+  const garden = page.getByRole('button', { name: 'Kerti mentés: Mimi' });
+  const replayCall = page.getByRole('button', { name: 'Mimi a fán — Kert' });
+  await expect(garden).toBeFocused();
+  await expect(garden).toHaveAttribute('aria-expanded', 'true');
+  await expect(replayCall).toHaveAttribute('data-completed', 'true');
+  await expect(replayCall).toHaveAccessibleDescription('Kész, újrajátszható');
+  await expect(replayCall.locator('.mission-call-complete-cue')).toBeVisible();
+  await completeFirstRescue(page, hasTouch, 'hu');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Menhely' }), hasTouch);
@@ -386,7 +475,10 @@ test('@preview recovers corrupt save data without crashing the child flow', asyn
 
   await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
-  await page.getByRole('button', { name: 'Kerti mentés: Mimi' }).click();
+  await openFirstRescueMission(page, {
+    hasTouch: Boolean(testInfo.project.use.hasTouch),
+    locale: 'hu',
+  });
   const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
   await dragLadder({
     destination: 'target',

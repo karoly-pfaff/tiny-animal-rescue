@@ -1,0 +1,23 @@
+{
+  "id": "pond",
+  "nameKey": "location.pond.name",
+  "mapLabelKey": "location.pond.map-label",
+  "unlockRequirement": {
+    "type": "rescue-count",
+    "minimum": 3
+  },
+  "mapPresentation": {
+    "silhouette": "pond",
+    "shape": "wave",
+    "accentColor": "#2b7691",
+    "audioCue": "effects.ambience.pond",
+    "placement": {
+      "landscape": { "x": 0.81, "y": 0.29 },
+      "portrait": { "x": 0.74, "y": 0.76 }
+    }
+  },
+  "assets": {
+    "mapBackground": "images/map/pond-map.png",
+    "missionBackground": "images/missions/pond/background.png"
+  }
+}

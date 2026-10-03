@@ -2,6 +2,17 @@
   "id": "indoor-room",
   "nameKey": "shelter-area.indoor-room.name",
   "capacity": 4,
+  "mapLabelKey": "map.shelter.label",
+  "mapPresentation": {
+    "silhouette": "shelter",
+    "shape": "rounded-square",
+    "accentColor": "#9b4f35",
+    "audioCue": "effects.ambience.rescue-center",
+    "placement": {
+      "landscape": { "x": 0.5, "y": 0.55 },
+      "portrait": { "x": 0.5, "y": 0.54 }
+    }
+  },
   "assets": {
     "background": "images/shelter/indoor-room.png"
   }

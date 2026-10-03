@@ -96,6 +96,23 @@ remain separate runtime categories and channels.
 - The success line names the animal where appropriate.
 - Audio filenames/metadata map to semantic keys rather than translated sentence text.
 
+## Map landmark checklist
+
+- A player-visible map location declares `mapPresentation` with a supported silhouette, shape,
+  accent color, semantic ambience cue, and normalized landscape/portrait centers.
+- Omit `unlockRequirement` only for a location intended to be immediately visible. Otherwise choose
+  one declarative `mission-completed` reference or a positive `rescue-count`; do not add a stored
+  location-unlock flag or application-code ID check.
+- Every landmark remains recognizable without its localized label; color is reinforcement, not the
+  only identity signal.
+- Reuse code-native shapes and silhouettes only in a new, globally unique shape-and-silhouette pair;
+  accent colors may repeat, while each `effects.ambience.<kebab-case-id>` cue remains unique.
+- The assembled map owns exactly one central Shelter landmark through a shelter-area
+  `mapPresentation` and `mapLabelKey`.
+- Mission `mapCallOrder` values are non-negative and unique within a pack. Omitted priorities sort
+  after declared values by stable mission ID, never by filename or discovery order.
+- Landmark portrait hit regions do not overlap.
+
 ## Pack checklist
 
 - Manifest contract version is supported.

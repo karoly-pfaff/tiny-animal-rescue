@@ -19,7 +19,7 @@ Status values:
 | [EPIC-001](epics/EPIC-001-first-rescue-vertical-slice.md)            |        M1 |        `0.2.0` | Complete kitten rescue from map to persisted shelter | 000        | Done        |
 | [EPIC-002](epics/EPIC-002-content-platform.md)                       |        M2 |        `0.3.0` | Validated declarative content packs                  | 001        | Done        |
 | [EPIC-003](epics/EPIC-003-interaction-and-guidance-engine.md)        |        M3 |        `0.4.0` | All five reusable interactions and hinting           | 001, 002   | In progress |
-| [EPIC-004](epics/EPIC-004-map-and-progression.md)                    |        M4 |        `0.5.0` | Full map, unlock rules, replay                       | 002, 003   | Planned     |
+| [EPIC-004](epics/EPIC-004-map-and-progression.md)                    |        M4 |        `0.5.0` | Full map, unlock rules, replay                       | 002, 003   | In progress |
 | [EPIC-005](epics/EPIC-005-shelter-and-persistence.md)                |        M5 |        `0.6.0` | Three-area living shelter and robust saves           | 002, 004   | Planned     |
 | [EPIC-006](epics/EPIC-006-localization-audio-and-parent-settings.md) |        M6 |        `0.7.0` | Production HU/EN audio-first experience              | 001, 002   | Planned     |
 | [EPIC-007](epics/EPIC-007-v1-content-production.md)                  |        M7 |        `0.8.0` | All 16 missions and 12 residents                     | 003–006    | Planned     |

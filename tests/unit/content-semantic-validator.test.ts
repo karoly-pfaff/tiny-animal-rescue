@@ -73,6 +73,17 @@ describe('content semantic validation', () => {
       message: /missing location/u,
     },
     {
+      name: 'missing location unlock mission',
+      packs: validPacks({
+        locations: [
+          makeLocation({
+            unlockRequirement: { type: 'mission-completed', missionId: 'missing-mission' },
+          }),
+        ],
+      }),
+      message: /Location garden references missing mission/u,
+    },
+    {
       name: 'missing mission subject',
       packs: validPacks({ missions: [makeMission({ subjectAnimalId: 'missing-animal' })] }),
       message: /missing animal/u,
@@ -126,6 +137,20 @@ describe('content semantic validation', () => {
       message: /must declare a subject/u,
     },
     {
+      name: 'world mission without a call subject visual',
+      packs: validPacks({
+        missions: [
+          makeMission({
+            callSubjectAsset: undefined,
+            subjectAnimalId: undefined,
+            type: 'world',
+            unlockResidentId: undefined,
+          }),
+        ],
+      }),
+      message: /must declare a subject animal or call subject asset/u,
+    },
+    {
       name: 'rescue with the wrong unlock',
       packs: validPacks({ missions: [makeMission({ unlockResidentId: 'other-animal' })] }),
       message: /unlock exactly its subject/u,
@@ -154,6 +179,22 @@ describe('content semantic validation', () => {
       missions: [makeMission(), makeMission({ id: 'second-rescue' })],
     });
     expect(validateContentSemantics(packs).join('\n')).toMatch(/unlocked by both/u);
+  });
+
+  it('rejects duplicate declared map call priorities inside one pack', () => {
+    const packs = validPacks({
+      missions: [
+        makeMission({ mapCallOrder: 0 }),
+        makeMission({
+          id: 'garden-world-call',
+          mapCallOrder: 0,
+          type: 'world',
+          unlockResidentId: undefined,
+        }),
+      ],
+    });
+
+    expect(validateContentSemantics(packs).join('\n')).toMatch(/share mapCallOrder 0/u);
   });
 
   it('requires every declared locale document and referenced localization key', () => {
@@ -571,7 +612,9 @@ function makeShelterArea(overrides: Partial<ShelterAreaRecord> = {}): ShelterAre
 }
 
 type MissionOptions = Readonly<{
+  callSubjectAsset?: string | undefined;
   id?: string;
+  mapCallOrder?: number;
   type?: MissionRecord['type'];
   locationId?: string;
   subjectAnimalId?: string | undefined;
@@ -593,6 +636,11 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
     unlockResidentId === undefined
       ? { completeMission: true as const }
       : { completeMission: true as const, unlockResidentId };
+  const callSubjectAsset = Object.hasOwn(options, 'callSubjectAsset')
+    ? options.callSubjectAsset
+    : subjectAnimalId === undefined
+      ? `images/missions/${id}/background.png`
+      : undefined;
   const common = {
     id,
     type,
@@ -612,7 +660,12 @@ function makeMission(options: MissionOptions = {}): MissionRecord {
     },
     assets: { required: [`images/missions/${id}/background.png`] },
   };
-  return subjectAnimalId === undefined ? common : { ...common, subjectAnimalId };
+  return {
+    ...common,
+    ...(options.mapCallOrder === undefined ? {} : { mapCallOrder: options.mapCallOrder }),
+    ...(callSubjectAsset === undefined ? {} : { callSubjectAsset }),
+    ...(subjectAnimalId === undefined ? {} : { subjectAnimalId }),
+  };
 }
 
 function makeStep(
@@ -704,7 +757,8 @@ function referencedPaths(records: ContentPackSource['records']): readonly string
     ...records.animals.flatMap(({ assets }) => Object.values(assets)),
     ...records.locations.flatMap(({ assets }) => Object.values(assets)),
     ...records.shelterAreas.map(({ assets }) => assets.background),
-    ...records.missions.flatMap(({ scene, assets, steps }) => [
+    ...records.missions.flatMap(({ callSubjectAsset, scene, assets, steps }) => [
+      ...(callSubjectAsset === undefined ? [] : [callSubjectAsset]),
       scene.background,
       ...assets.required,
       ...steps.flatMap((step) =>

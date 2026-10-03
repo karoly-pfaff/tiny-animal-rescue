@@ -75,6 +75,16 @@ const expectedLocation = {
   id: 'garden',
   nameKey: 'location.garden.name',
   mapLabelKey: 'location.garden.map-label',
+  mapPresentation: {
+    silhouette: 'tree',
+    shape: 'circle',
+    accentColor: '#2f7d32',
+    audioCue: 'effects.ambience.garden',
+    placement: {
+      landscape: { x: 0.79, y: 0.62 },
+      portrait: { x: 0.73, y: 0.36 },
+    },
+  },
   assets: {
     mapBackground: 'images/map/garden-map.png',
     missionBackground: 'images/missions/garden-kitten-tree/background.png',
@@ -85,6 +95,17 @@ const expectedShelterArea = {
   id: 'indoor-room',
   nameKey: 'shelter-area.indoor-room.name',
   capacity: 4,
+  mapLabelKey: 'map.shelter.label',
+  mapPresentation: {
+    silhouette: 'shelter',
+    shape: 'rounded-square',
+    accentColor: '#9b4f35',
+    audioCue: 'effects.ambience.rescue-center',
+    placement: {
+      landscape: { x: 0.5, y: 0.55 },
+      portrait: { x: 0.5, y: 0.54 },
+    },
+  },
   assets: { background: 'images/shelter/indoor-room.png' },
 } as const satisfies ShelterAreaRecord;
 
@@ -136,6 +157,7 @@ const expectedLocalization = {
 const expectedMission = {
   id: 'garden-kitten-tree',
   type: 'rescue',
+  mapCallOrder: 0,
   locationId: 'garden',
   subjectAnimalId: 'mimi-kitten',
   prerequisites: [],
@@ -305,6 +327,7 @@ describe('content contracts', () => {
         assets: { ...animalExample.assets, portrait: objectKey },
       }),
     ).toBe(false);
+    expect(validate(missionSchema, { ...missionExample, callSubjectAsset: objectKey })).toBe(false);
   });
 
   it('accepts a dependency-qualified content reference but not a qualified inventory key', () => {
@@ -315,6 +338,7 @@ describe('content contracts', () => {
         assets: { ...animalExample.assets, portrait: qualified },
       }),
     ).toBe(true);
+    expect(validate(missionSchema, { ...missionExample, callSubjectAsset: qualified })).toBe(true);
     expect(validate(assetSchema, { ...assetExample, objectKey: qualified })).toBe(false);
   });
 
@@ -331,6 +355,30 @@ describe('content contracts', () => {
         reward: { ...missionExample.reward, unlockResidentId: 'base:mimi-kitten' },
       }),
     ).toBe(true);
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: {
+          type: 'mission-completed',
+          missionId: 'base:garden-kitten-tree',
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('accepts declarative location unlock rules and rejects invalid Rescue counts', () => {
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: { type: 'rescue-count', minimum: 3 },
+      }),
+    ).toBe(true);
+    expect(
+      validate(locationSchema, {
+        ...locationExample,
+        unlockRequirement: { type: 'rescue-count', minimum: 0 },
+      }),
+    ).toBe(false);
   });
 
   it('requires locale ownership only for voice assets', () => {

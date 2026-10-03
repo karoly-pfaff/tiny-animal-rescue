@@ -17,6 +17,7 @@ import {
 } from './content-record-linker.ts';
 import type { ContentPackSource } from './content-registry.ts';
 import { diagnostic } from './content-validation-diagnostic.ts';
+import { validateLocationUnlockReferences } from './location-unlock-validator.ts';
 import { normalizeMissionsForGraph } from './content-mission-normalizer.ts';
 import type { MissionRecord } from './mission-contract.ts';
 import { validateMissionGraph } from './mission-graph-validator.ts';
@@ -46,6 +47,7 @@ export function validateContentRelationships(
   const missionContext = { content, residentRescues };
   return [
     ...validateAnimals(content),
+    ...validateLocationUnlockReferences(content),
     ...validateMissions(missionContext),
     ...validateShelterCapacity(content),
     ...validateMissionGraph(

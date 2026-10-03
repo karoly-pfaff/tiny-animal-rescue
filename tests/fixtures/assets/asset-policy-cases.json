@@ -1,6 +1,6 @@
 [
   {
-    "name": "valid R2-pending production asset",
+    "name": "valid not-produced R2-pending production asset",
     "record": {
       "id": "start-background",
       "objectKey": "images/start/welcome-garden.png",
@@ -8,9 +8,10 @@
       "height": 1086,
       "classification": "production-safe",
       "delivery": "r2-pending",
-      "licenseStatus": "approved",
+      "licenseStatus": "pending-production",
       "ownership": "base",
-      "qaStatus": "approved"
+      "provenanceStatus": "pending-production",
+      "qaStatus": "not-produced"
     },
     "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
     "dimensions": { "width": 1448, "height": 1086 },
@@ -56,6 +57,7 @@
       "delivery": "r2-pending",
       "licenseStatus": "approved",
       "ownership": "base",
+      "provenanceStatus": "approved",
       "qaStatus": "approved"
     },
     "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
@@ -114,10 +116,29 @@
       "delivery": "r2-pending",
       "licenseStatus": "approved",
       "ownership": "base",
+      "provenanceStatus": "approved",
       "qaStatus": "approved"
     },
     "promptText": "Asset ID: `start-background`\nR2 object key: `images/start/welcome-garden.png`\nFull-size QA: no baked text and no watermark.",
     "dimensions": { "width": 1024, "height": 768 },
+    "valid": false
+  },
+  {
+    "name": "rejects prematurely approved pending-asset evidence",
+    "record": {
+      "id": "forest-map-background",
+      "objectKey": "images/map/forest-map.png",
+      "width": 1448,
+      "height": 1086,
+      "classification": "production-safe",
+      "delivery": "r2-pending",
+      "licenseStatus": "approved",
+      "ownership": "base",
+      "provenanceStatus": "pending-production",
+      "qaStatus": "not-produced"
+    },
+    "promptText": "Asset ID: `forest-map-background`\nR2 object key: `images/map/forest-map.png`\nFull-size QA: no baked text and no watermark.",
+    "dimensions": null,
     "valid": false
   }
 ]

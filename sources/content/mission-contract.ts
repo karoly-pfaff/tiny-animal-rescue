@@ -86,8 +86,10 @@ export type MissionStep = TapStep | DragStep | WipeStep | MatchStep | TraceStep;
 export type MissionRecord = Readonly<{
   id: string;
   type: MissionType;
+  mapCallOrder?: number;
   locationId: string;
   subjectAnimalId?: string;
+  callSubjectAsset?: string;
   prerequisites: readonly MissionPrerequisite[];
   scene: Readonly<{
     background: string;

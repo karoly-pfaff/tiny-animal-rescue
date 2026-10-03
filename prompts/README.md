@@ -28,6 +28,7 @@ images/
   resident-character.template.md
   interactive-prop.template.md
   localization-edit.template.md
+  pending/
   examples/
 music/
   README.md

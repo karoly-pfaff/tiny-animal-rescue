@@ -1,70 +1,141 @@
-import {
-  firstRescueText,
-  type FirstRescueContent,
-  resolveFirstRescueAssets,
-} from '../content/first-rescue-content';
+import { useEffect, useRef, useState } from 'react';
+
+import type { EffectService } from '../audio/effect-service';
+import { resolveContentText } from '../content/content-localization';
+import type { ContentRegistry } from '../content/content-registry';
+import type { MissionCallContent } from '../content/mission-call-content';
+import { selectRescueMapContent } from '../content/rescue-map-content';
 import type { Locale } from '../i18n/localization';
 import { getStrings } from '../i18n/localization';
+import { LocationLandmark, MapPaths, ShelterLandmark } from './map-landmarks';
+import { MissionCallSheet } from './mission-call-sheet';
 
 type MapScreenProps = Readonly<{
-  content: FirstRescueContent;
+  activeLocationId?: string;
+  activePortraitUrl?: string | null;
+  backgroundUrl?: string | null;
+  effectService: EffectService;
   locale: Locale;
-  onOpenGardenMission: () => void;
+  featuredMissionId: string | null;
+  initialOpenLocationId?: string;
+  missionCalls: readonly MissionCallContent[];
+  onInitialLocationRestored?: () => void;
+  onOpenLocation: (locationId: string) => void;
+  onOpenMission: (missionId: string) => void;
   onOpenShelter: () => void;
+  registry: ContentRegistry;
+  visibleLocationIds: readonly string[];
 }>;
 
-export function MapScreen({ content, locale, onOpenGardenMission, onOpenShelter }: MapScreenProps) {
+export function MapScreen({
+  activeLocationId,
+  activePortraitUrl,
+  backgroundUrl,
+  effectService,
+  featuredMissionId,
+  initialOpenLocationId,
+  locale,
+  missionCalls,
+  onInitialLocationRestored,
+  onOpenLocation,
+  onOpenMission,
+  onOpenShelter,
+  registry,
+  visibleLocationIds,
+}: MapScreenProps) {
+  const [openLocationId, setOpenLocationId] = useState<string | null>(
+    initialOpenLocationId ?? null,
+  );
+  const restoredLocationButton = useRef<HTMLButtonElement>(null);
   const strings = getStrings(locale);
-  const assets = resolveFirstRescueAssets(content);
-  const locationName = firstRescueText(content, locale, {
-    key: content.location.nameKey,
-    ownerPackId: content.locationPackId,
-  });
-  const missionLabel = firstRescueText(content, locale, {
-    key: content.location.mapLabelKey,
-    ownerPackId: content.locationPackId,
-  });
+  const map = selectRescueMapContent(registry, visibleLocationIds);
+  const openCalls = missionCalls.filter(({ locationId }) => locationId === openLocationId);
+
+  useEffect(() => {
+    if (initialOpenLocationId === undefined) {
+      return;
+    }
+    restoredLocationButton.current?.focus();
+    onInitialLocationRestored?.();
+  }, [initialOpenLocationId, onInitialLocationRestored]);
 
   return (
     <main className="game-shell" data-route="map">
-      <section className="game-surface map-screen" aria-labelledby="map-title">
-        {assets.mapBackground === null ? null : (
-          <img className="scene-background" src={assets.mapBackground} alt="" aria-hidden="true" />
+      <section
+        aria-labelledby="map-title"
+        className="game-surface map-screen"
+        data-call-sheet-open={callSheetOpenAttribute(openCalls.length)}
+      >
+        {backgroundUrl === null || backgroundUrl === undefined ? null : (
+          <img
+            aria-hidden="true"
+            alt=""
+            className="scene-background map-scene-background"
+            src={backgroundUrl}
+          />
         )}
         <header className="map-title-plaque">
           <h1 id="map-title">{strings.screenTitles['screen.map.title']}</h1>
         </header>
-        <button
-          className="shelter-marker"
-          type="button"
-          aria-label={strings.shelter}
-          onClick={onOpenShelter}
-        >
-          <span className="shelter-icon" aria-hidden="true" />
-          <span>{strings.shelter}</span>
-        </button>
-        <button
-          className="garden-mission-marker"
-          type="button"
-          aria-label={missionLabel}
-          onClick={onOpenGardenMission}
-        >
-          <span className="garden-marker-icon" aria-hidden="true">
-            <span className="tree-crown" />
-            <span className="tree-trunk" />
-            {assets.residentPortrait === null ? (
-              <span className="kitten-portrait" />
-            ) : (
-              <img
-                className="kitten-portrait kitten-portrait-art"
-                src={assets.residentPortrait}
-                alt=""
-              />
-            )}
-          </span>
-          <span>{locationName}</span>
-        </button>
+        <div className="map-landmark-stage">
+          <MapPaths />
+          <ShelterLandmark
+            content={map.shelter}
+            effectService={effectService}
+            label={resolveContentText(registry, locale, {
+              key: map.shelter.labelKey,
+              ownerPackId: map.shelter.ownerPackId,
+            })}
+            onOpen={onOpenShelter}
+          />
+          {map.locations.map((location) => (
+            <LocationLandmark
+              content={location}
+              effectService={effectService}
+              isExpanded={location.id === openLocationId && openCalls.length > 0}
+              isActive={location.id === activeLocationId}
+              isSelected={location.id === openLocationId}
+              key={`${location.ownerPackId}:${location.id}`}
+              label={resolveContentText(registry, locale, {
+                key: location.record.mapLabelKey,
+                ownerPackId: location.ownerPackId,
+              })}
+              name={resolveContentText(registry, locale, {
+                key: location.record.nameKey,
+                ownerPackId: location.ownerPackId,
+              })}
+              onOpen={(locationId) => {
+                onOpenLocation(locationId);
+                setOpenLocationId(locationId);
+              }}
+              portraitUrl={
+                location.id === activeLocationId && openLocationId === null
+                  ? activePortraitUrl
+                  : null
+              }
+              {...(location.id === initialOpenLocationId
+                ? { buttonRef: restoredLocationButton }
+                : {})}
+            />
+          ))}
+        </div>
+        {openCalls.length === 0 ? null : (
+          <MissionCallSheet
+            calls={openCalls}
+            closeLabel={strings.map}
+            completedLabel={strings.completedReplay}
+            featuredMissionId={featuredMissionId}
+            onClose={() => {
+              setOpenLocationId(null);
+            }}
+            onOpenMission={onOpenMission}
+          />
+        )}
       </section>
     </main>
   );
+}
+
+function callSheetOpenAttribute(callCount: number): string | undefined {
+  return callCount === 0 ? undefined : String(true);
 }

@@ -102,14 +102,44 @@ An animal declares:
 
 An animal does not define mission logic or arbitrary animation callbacks.
 
+## Map landmark presentation
+
+A location may opt into the rescue map with a declarative `mapPresentation`. The record selects one
+of the supported code-native silhouettes and shapes, an accent color, a semantic ambience cue, and
+normalized landmark centers for landscape and portrait. These values identify the place without
+requiring the localized label to be read. They contain no executable behavior and never select a
+concrete mission in application code.
+
+The code-native shape and silhouette vocabularies are reusable primitives, not one-use landmark
+slots. Every presented landmark must own a unique `shape + silhouette` pair so its identity never
+depends on color alone. Accent colors are supplemental and may repeat. Ambience cue IDs use the
+validated `effects.ambience.<kebab-case-id>` namespace and remain unique across the assembled map;
+adding an ordinary pack-owned cue does not require extending an engine enum.
+
+A location may also declare one `unlockRequirement`: either a `mission-completed` reference or a
+positive `rescue-count` minimum. Omission is the contract-version-1 default for an immediately visible
+location. Mission references follow the same own-pack/dependency ownership rules as other content
+record references. Runtime availability is derived from completed mission IDs: only known Rescue
+records count toward a Rescue threshold, and no separate location-unlock flag is persisted. A
+location containing an already completed mission remains visible so that content-rule changes cannot
+remove a replay from an existing save.
+
+Exactly one shelter-area record across an assembled map declares a `mapPresentation` and a
+`mapLabelKey`; this is the stable central Shelter landmark. Presented landmarks must have distinct
+shape-and-silhouette pairs and audio cues. Location and Shelter labels are resolved from the declaring
+pack's localization documents at runtime. Omission remains the contract-version-1 default for
+expansion content that does not add a map landmark.
+
 ## Mission record
 
 ```ts
 type Mission = {
   id: string;
   type: 'rescue' | 'help' | 'world';
+  mapCallOrder?: number;
   locationId: string;
   subjectAnimalId?: string;
+  callSubjectAsset?: string;
   prerequisites: MissionPrerequisite[];
   scene: SceneDefinition;
   steps: MissionStep[];
@@ -118,6 +148,16 @@ type Mission = {
   assets: MissionAssets;
 };
 ```
+
+`mapCallOrder` is a non-negative, pack-local priority for rescue-map call presentation. Declared
+values must be unique inside their pack. Runtime ordering first follows the dependency-derived pack
+order, then `mapCallOrder`, then stable mission ID. The contract-version-1 default for an omitted
+value is “after every explicitly ordered mission in the same pack, ordered by stable mission ID”; it
+never falls back to JSON array, discovery, or filename order.
+
+Every mission call has a content-owned subject visual. A mission with `subjectAnimalId` uses that
+animal's portrait; a mission without an animal subject must declare `callSubjectAsset`. The latter is
+an ordinary ownership-checked image reference and must be present in the owning pack inventory.
 
 The accepted step union is:
 
@@ -217,6 +257,10 @@ mandatory for any epic or patch that claims the affected production media comple
 Ignored local working media may satisfy dimension and visual QA during development. A code-native
 fallback may cover an `r2-pending` decorative asset, but it does not make that asset epic- or
 release-ready when the backlog item claims the corresponding production media.
+An inventory reservation for media that has not yet been produced records `qaStatus: not-produced`
+and `pending-production` for both license and provenance. An already produced, reviewed asset that
+is merely awaiting R2 locking may use approved evidence with `r2-pending`; mixed or prematurely
+approved states fail the source asset-policy gate.
 Visual-regression baselines and presentation-only references are evidence, not runtime assets.
 
 A media-complete candidate also provides one tracked
@@ -256,6 +300,7 @@ In addition to schema validation, CI verifies:
 - prerequisite graph is acyclic
 - every base Rescue unlocks exactly one unique resident
 - Help missions depend on their resident's Rescue mission
+- location mission-completion unlock references resolve through declared content ownership
 - resident count does not exceed shelter capacity
 - every base mission has 2–4 steps, except an approved trace-only case
 - only accepted interaction and reaction enums are used

@@ -66,6 +66,20 @@ Availability is derived rather than stored:
 - completed missions remain replayable;
 - Help missions remain hidden until their resident is unlocked.
 
+The runtime derives these results deterministically from content-declared location requirements,
+mission prerequisites, known completed mission IDs, and unlocked resident IDs. Unknown completed IDs
+do not satisfy Rescue-count thresholds, and the save does not duplicate derived location availability
+as an unlock flag.
+
+The map presents the selector's available missions in authored order. It emphasizes the first
+incomplete mission without removing completed missions from replay, and opens a selected mission on
+its content-addressed `/mission/<mission-id>` route. Direct mission routes are subject to the same
+availability selector and return to the current map when the mission is unknown or unavailable.
+Completed calls use a gentle, non-rating visual marker and remain actionable. During the current app
+session, mission navigation remembers the selected location so an exit or post-celebration return
+reopens that location and restores keyboard focus to its landmark. This transient navigation context
+is not a persisted unlock flag and does not participate in progression derivation.
+
 ## Reset
 
 Reset progress is behind the parent gate, requires a second confirmation, and preserves audio/language settings unless the parent selects a full reset.

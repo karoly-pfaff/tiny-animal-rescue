@@ -1,9 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../sources/app/app';
 import { createSessionFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
 import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence/locale-bootstrap-repository';
+import { testRegistryWithWorldMission } from '../support/expanded-mission-content';
 
 describe('App', () => {
   it('requires first-run locale choice, then follows the child path', async () => {
@@ -92,10 +93,12 @@ describe('App', () => {
   it('shows only the first Garden call and opens the correct mission', async () => {
     window.location.hash = '/map';
     const repository = createMemoryLocaleBootstrapRepository('en');
+    const narrationService = { speak: vi.fn(), stop: vi.fn() };
     render(
       <App
         firstRescueProgressStore={createSessionFirstRescueProgressStore()}
         localeRepository={repository}
+        narrationService={narrationService}
       />,
     );
 
@@ -103,10 +106,36 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Shelter' })).toBeVisible();
     expect(screen.queryByText(/Forest|Farm|Pond/u)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mimi in the tree — Garden' }));
     await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
 
     expect(screen.getByRole('heading', { name: 'Mimi in the tree' })).toBeVisible();
     expect(screen.getByRole('main')).toHaveAttribute('data-mission-id', 'garden-kitten-tree');
+    expect(window.location.hash).toBe('#/mission/garden-kitten-tree');
+    expect(narrationService.speak).toHaveBeenCalledWith({
+      cue: 'voice.mission.garden-kitten-tree.step.place-ladder',
+      locale: 'en',
+      text: 'Move the ladder to the tree!',
+    });
+  });
+
+  it('reveals Forest and Farm from completed mission IDs without a stored location flag', async () => {
+    window.location.hash = '/map';
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore({
+          completedMissionIds: ['garden-kitten-tree'],
+          unlockedResidentIds: ['mimi-kitten'],
+          worldFlags: ['mimi-rescued'],
+        })}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Forest rescues' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Farm rescues' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Pond rescues' })).not.toBeInTheDocument();
   });
 
   it('commits the rescue reward before opening the localized celebration', async () => {
@@ -124,6 +153,7 @@ describe('App', () => {
 
     await screen.findByRole('button', { name: 'Garden rescue: Mimi' });
     fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mimi in the tree — Garden' }));
     await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
     fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
@@ -147,6 +177,59 @@ describe('App', () => {
       cue: 'voice.mission.garden-kitten-tree.success',
       locale: 'en',
       text: 'Mimi is safe!',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    const garden = screen.getByRole('button', { name: 'Garden rescue: Mimi' });
+    const replay = screen.getByRole('button', { name: 'Mimi in the tree — Garden' });
+    expect(garden).toHaveFocus();
+    expect(garden).toHaveAttribute('aria-expanded', 'true');
+    expect(replay).toHaveAttribute('data-completed', 'true');
+    expect(replay).toHaveAccessibleDescription('Completed, replay available');
+    expect(replay.querySelector('.mission-call-complete-cue')).toBeVisible();
+  });
+
+  it('returns an unavailable content-addressed mission route to the current map', async () => {
+    window.location.hash = '/mission/missing-rescue';
+    render(
+      <App
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/map');
+      expect(screen.getByRole('heading', { name: 'Rescue map' })).toBeVisible();
+    });
+    expect(screen.queryByRole('heading', { name: 'Mimi in the tree' })).not.toBeInTheDocument();
+  });
+
+  it('loads a second available mission by ID and starts its opening narration', async () => {
+    window.location.hash = '/map';
+    const narrationService = { speak: vi.fn(), stop: vi.fn() };
+    render(
+      <App
+        contentRegistry={testRegistryWithWorldMission()}
+        firstRescueProgressStore={createSessionFirstRescueProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+        narrationService={narrationService}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Garden rescue: Mimi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bring the ladder — Garden' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    expect(screen.getByRole('heading', { name: 'Bring the ladder' })).toBeVisible();
+    expect(screen.getByRole('main')).toHaveAttribute('data-mission-id', 'garden-bring-ladder');
+    expect(window.location.hash).toBe('#/mission/garden-bring-ladder');
+    expect(narrationService.speak).toHaveBeenCalledWith({
+      cue: 'voice.mission.garden-bring-ladder.intro',
+      locale: 'en',
+      text: 'The ladder is needed in the garden.',
     });
   });
 

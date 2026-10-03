@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -6,17 +6,29 @@ import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
 import { SaveFailureScreen } from '../../sources/app/save-failure-screen';
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
+import { ContentMissionScreen } from '../../sources/app/content-mission-screen';
 import { ShelterScreen } from '../../sources/app/shelter-screen';
+import { selectMissionCalls } from '../../sources/content/mission-call-content';
+import { selectProgression } from '../../sources/content/progression-selectors';
 import { testFirstRescueContent } from '../support/first-rescue-content';
+import {
+  testRegistryWithWorldMission,
+  testWorldMission,
+} from '../support/expanded-mission-content';
 
 describe('first rescue screen accessibility', () => {
   it.each([
     <MapScreen
+      effectService={{ play: vi.fn() }}
+      featuredMissionId={null}
       key="map"
-      content={testFirstRescueContent}
       locale="hu"
-      onOpenGardenMission={vi.fn()}
+      missionCalls={[]}
+      onOpenLocation={vi.fn()}
+      onOpenMission={vi.fn()}
       onOpenShelter={vi.fn()}
+      registry={testFirstRescueContent.registry}
+      visibleLocationIds={['garden', 'forest', 'farm', 'pond']}
     />,
     <FirstMissionScreen
       key="mission"
@@ -48,8 +60,44 @@ describe('first rescue screen accessibility', () => {
       }}
     />,
     <SaveFailureScreen key="save-failure" locale="hu" onRetry={vi.fn()} />,
+    <ContentMissionScreen
+      key="content-mission"
+      locale="en"
+      mission={testWorldMission}
+      narrationService={{ speak: vi.fn(), stop: vi.fn() }}
+      onExit={vi.fn()}
+      ownerPackId="base"
+      registry={testRegistryWithWorldMission()}
+    />,
   ])('has no automatically detectable violation', async (screen) => {
     const { container } = render(screen);
+    const results = await axe.run(container);
+    expect(results.violations).toEqual([]);
+  });
+
+  it('keeps the open mission-call presentation accessible', async () => {
+    const state = { completedMissionIds: [], unlockedResidentIds: [] };
+    const selection = selectMissionCalls(
+      testFirstRescueContent.registry,
+      selectProgression(testFirstRescueContent.registry, state),
+      { locale: 'en', state },
+    );
+    const { container } = render(
+      <MapScreen
+        effectService={{ play: vi.fn() }}
+        featuredMissionId={selection.featuredMissionId}
+        locale="en"
+        missionCalls={selection.calls}
+        onOpenLocation={vi.fn()}
+        onOpenMission={vi.fn()}
+        onOpenShelter={vi.fn()}
+        registry={testFirstRescueContent.registry}
+        visibleLocationIds={['garden']}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Garden rescue: Mimi' }));
+    expect(screen.getByRole('region', { name: 'Garden' })).toBeVisible();
     const results = await axe.run(container);
     expect(results.violations).toEqual([]);
   });

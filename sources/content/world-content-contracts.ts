@@ -23,16 +23,37 @@ export type LocationRecord = Readonly<{
   id: string;
   nameKey: string;
   mapLabelKey: string;
+  unlockRequirement?: LocationUnlockRequirement;
+  mapPresentation?: MapLandmarkPresentation;
   assets: Readonly<{
     mapBackground: string;
     missionBackground: string;
   }>;
 }>;
 
+type LocationUnlockRequirement =
+  | Readonly<{ type: 'mission-completed'; missionId: string }>
+  | Readonly<{ type: 'rescue-count'; minimum: number }>;
+
+export type MapLandmarkAudioCue = `effects.ambience.${string}`;
+
+export type MapLandmarkPresentation = Readonly<{
+  accentColor: `#${string}`;
+  audioCue: MapLandmarkAudioCue;
+  placement: Readonly<{
+    landscape: Readonly<{ x: number; y: number }>;
+    portrait: Readonly<{ x: number; y: number }>;
+  }>;
+  shape: 'arch' | 'circle' | 'leaf' | 'rounded-square' | 'wave';
+  silhouette: 'barn' | 'pines' | 'pond' | 'shelter' | 'tree';
+}>;
+
 export type ShelterAreaRecord = Readonly<{
   id: string;
   nameKey: string;
   capacity: number;
+  mapLabelKey?: string;
+  mapPresentation?: MapLandmarkPresentation;
   assets: Readonly<{
     background: string;
   }>;

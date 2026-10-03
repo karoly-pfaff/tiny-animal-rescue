@@ -148,7 +148,7 @@ never become Git inputs or direct browser downloads.
   One signature exists per state and viewport; multiple accepted digests and non-empty-only exceptions
   are forbidden. After `npm run validate:media`, inspect the retained full-size images under
   `build/reports/playwright/test-results/`, then run `npm run generate:media-signatures`. The generator
-  accepts only the exact 40-contract screenshot set produced by the current visual matrix. A targeted
+  accepts only the exact 64-contract screenshot set produced by the current visual matrix. A targeted
   reviewed update may instead provide both `--screenshot` and `--contract`. Signature generation is an
   explicit reviewed command and never runs in CI.
 - Automated accessibility checks run in component and Playwright layers on every pull request. They

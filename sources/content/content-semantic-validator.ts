@@ -1,5 +1,6 @@
 import { validateContentAssets } from './content-asset-validator.ts';
 import { validateContentRelationships } from './content-relationship-validator.ts';
+import { validateMapDeclarations } from './content-map-validator.ts';
 import type { ContentPackSource } from './content-registry';
 import { diagnostic } from './content-validation-diagnostic.ts';
 import { isSupportedInitialRescueMission } from './initial-rescue-contract.ts';
@@ -18,12 +19,46 @@ export function validateContentSemantics(
   const release = options.releaseCatalog === 'v1';
   return Object.freeze([
     ...validateContentRelationships(packs),
+    ...validateMapDeclarations(packs),
     ...validatePackDependencyPolicy(packs),
     ...validateContentAssets(packs, { release }),
+    ...packs.flatMap(validateMissionCallSubjects),
+    ...packs.flatMap(validateMissionMapCallOrder),
     ...packs.flatMap(validatePackLocalizations),
     ...validateInitialMission(packs),
     ...(release ? validateV1Catalog(packs) : []),
   ]);
+}
+
+function validateMissionMapCallOrder(pack: ContentPackSource): readonly string[] {
+  const owners = new Map<number, string>();
+  return pack.records.missions.flatMap((mission) => {
+    const order = mission.mapCallOrder;
+    if (order === undefined) {
+      return [];
+    }
+    const owner = owners.get(order);
+    owners.set(order, mission.id);
+    return owner === undefined
+      ? []
+      : [
+          diagnostic(
+            `Missions ${owner} and ${mission.id} in pack ${pack.id} share mapCallOrder ${String(order)}.`,
+          ),
+        ];
+  });
+}
+
+function validateMissionCallSubjects(pack: ContentPackSource): readonly string[] {
+  return pack.records.missions.flatMap((mission) =>
+    mission.subjectAnimalId === undefined && mission.callSubjectAsset === undefined
+      ? [
+          diagnostic(
+            `Mission ${mission.id} in pack ${pack.id} must declare a subject animal or call subject asset.`,
+          ),
+        ]
+      : [],
+  );
 }
 
 function validatePackDependencyPolicy(packs: readonly ContentPackSource[]): readonly string[] {
@@ -82,7 +117,10 @@ function packLocalizationKeys(pack: ContentPackSource): readonly string[] {
       shelterLocalization.tapLabelKey,
     ]),
     ...pack.records.locations.flatMap(({ mapLabelKey, nameKey }) => [mapLabelKey, nameKey]),
-    ...pack.records.shelterAreas.map(({ nameKey }) => nameKey),
+    ...pack.records.shelterAreas.flatMap(({ mapLabelKey, nameKey }) => [
+      nameKey,
+      ...(mapLabelKey === undefined ? [] : [mapLabelKey]),
+    ]),
     ...pack.records.missions.flatMap(({ localization, steps }) => [
       localization.titleKey,
       localization.introKey,

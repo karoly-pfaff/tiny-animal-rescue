@@ -5,12 +5,13 @@ export type ClientPoint = Readonly<{ x: number; y: number }>;
 export async function activateWithPrimaryPointer(
   locator: Locator,
   hasTouch: boolean,
+  options: Readonly<{ force?: boolean }> = {},
 ): Promise<void> {
   if (hasTouch) {
-    await locator.tap();
+    await locator.tap(options);
     return;
   }
-  await locator.click();
+  await locator.click(options);
 }
 
 type CancelPointerOptions = Readonly<{

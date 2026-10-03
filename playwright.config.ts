@@ -32,6 +32,7 @@ export default defineConfig({
   use: {
     baseURL,
     colorScheme: 'light',
+    launchOptions: { args: ['--mute-audio'] },
     locale: 'hu-HU',
     reducedMotion: 'reduce',
     screenshot: 'only-on-failure',

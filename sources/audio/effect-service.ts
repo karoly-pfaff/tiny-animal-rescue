@@ -1,7 +1,10 @@
 import type { StepSuccessCue } from '../content/mission-contract';
+import type { MapLandmarkAudioCue } from '../content/world-content-contracts';
+
+export type EffectCue = MapLandmarkAudioCue | StepSuccessCue;
 
 export type EffectService = Readonly<{
-  play: (cue: StepSuccessCue) => void;
+  play: (cue: EffectCue) => void;
 }>;
 
 export const deferredBrowserEffectService: EffectService = Object.freeze({
