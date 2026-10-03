@@ -1,7 +1,7 @@
-import { type CSSProperties, type ReactNode, useEffect } from 'react';
+import { type CSSProperties, type ReactNode, type RefObject, useEffect, useRef } from 'react';
 
 import type { GuidancePresentation } from '../engine/guidance-ladder-state';
-import { observeTraceCanvas } from './trace-canvas';
+import { observeTraceCanvas, renderTraceCanvas, type TraceCanvasOptions } from './trace-canvas';
 import {
   activateTraceAccessibly,
   beginTrace,
@@ -61,18 +61,13 @@ export function Trace({
   const start = tracePointAtProgress(path, 0);
   const end = tracePointAtProgress(path, 1);
   const tracerPoint = tracePointAtProgress(path, presentation.progress);
-
-  useEffect(
-    () =>
-      observeTraceCanvas(canvas, {
-        corridorColor,
-        corridorWidth: effectiveCorridorWidth,
-        path,
-        progress: presentation.progress,
-        progressColor,
-      }),
-    [canvas, corridorColor, effectiveCorridorWidth, path, presentation.progress, progressColor],
-  );
+  useTraceCanvasRendering(canvas, {
+    corridorColor,
+    corridorWidth: effectiveCorridorWidth,
+    path,
+    progress: presentation.progress,
+    progressColor,
+  });
 
   useEffect(() => {
     if (paused) {
@@ -134,6 +129,27 @@ export function Trace({
       </span>
     </button>
   );
+}
+
+function useTraceCanvasRendering(
+  canvas: RefObject<HTMLCanvasElement | null>,
+  options: TraceCanvasOptions,
+): void {
+  const latestOptions = useRef(options);
+  useEffect(() => {
+    latestOptions.current = options;
+    const element = canvas.current;
+    if (element === null) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      renderTraceCanvas(element, latestOptions.current);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [canvas, options]);
+  useEffect(() => observeTraceCanvas(canvas, () => latestOptions.current), [canvas]);
 }
 
 function hasVisibleGuidance(guidance: GuidancePresentation): boolean {

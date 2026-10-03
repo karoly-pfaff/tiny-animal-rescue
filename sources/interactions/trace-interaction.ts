@@ -2,12 +2,12 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   useRef,
-  useState,
 } from 'react';
 
 import type { NormalizedPoint } from './drag-geometry';
 import { capturePointer, isPrimaryActivationPointer, releasePointer } from './pointer-capture';
 import { sampleTracePointer, type PointerSample } from './trace-pointer-sample';
+import { useTracePresentation } from './trace-presentation';
 import {
   advanceTraceProgress,
   beginTraceProgress,
@@ -30,7 +30,7 @@ type TraceInteraction = Readonly<{
   path: TracePath;
   paused: boolean;
   progress: React.RefObject<TraceProgressState>;
-  setPresentation: React.Dispatch<React.SetStateAction<TraceProgressState>>;
+  setPresentation: (state: TraceProgressState) => void;
   surface: React.RefObject<HTMLButtonElement | null>;
 }>;
 
@@ -53,7 +53,7 @@ export function useTraceInteraction(options: TraceInteractionOptions) {
   const lastPoint = useRef<NormalizedPoint | null>(null);
   const progress = useRef<TraceProgressState>(createTraceProgress());
   const surface = useRef<HTMLButtonElement>(null);
-  const [presentation, setPresentation] = useState<TraceProgressState>(createTraceProgress);
+  const { presentation, setPresentation } = useTracePresentation();
   const interaction = {
     ...options,
     activePointerId,

@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import { observeResponsiveCanvas, resizeCanvasBackingStore } from './responsive-canvas';
 import { tracePathAtProgress, type TracePath } from './trace-progress';
 
-type TraceCanvasOptions = Readonly<{
+export type TraceCanvasOptions = Readonly<{
   corridorColor: string;
   corridorWidth: number;
   path: TracePath;
@@ -13,14 +13,14 @@ type TraceCanvasOptions = Readonly<{
 
 export function observeTraceCanvas(
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  options: TraceCanvasOptions,
+  readOptions: () => TraceCanvasOptions,
 ): () => void {
   return observeResponsiveCanvas(canvasRef, (canvas) => {
-    renderTraceCanvas(canvas, options);
+    renderTraceCanvas(canvas, readOptions());
   });
 }
 
-function renderTraceCanvas(canvas: HTMLCanvasElement, options: TraceCanvasOptions): void {
+export function renderTraceCanvas(canvas: HTMLCanvasElement, options: TraceCanvasOptions): void {
   const context = resizeCanvasBackingStore(canvas);
   if (context === null) {
     return;
