@@ -12,7 +12,7 @@ export const qualityChecks = [
 ];
 const requiredChecks = [...qualityChecks, 'authorization'];
 const workflowSemanticFingerprints = {
-  ci: '30aa077fdc28127da6f99da661aea92d233e1a41c19eebd0d38c0f2804c71263',
+  ci: 'c81c8694a0cd34bcd5e2dcb176bc6759e545a868a158638687097e4bd5bf655d',
   merge: '555acbd0057d23f5b7f7b71f6633d0fee03cd6c49bd6060bfd8afc24c8e098e8',
   publish: '71c83b2e98b41819123b84088091e1de2fefa044f3cbe165a738993430334398',
   qualify: 'd6c977bab240d9c7a62871d881eef5c54194436ba3669ee47a60a8cf8411bc95',

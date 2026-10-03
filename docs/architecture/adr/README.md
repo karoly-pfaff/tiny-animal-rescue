@@ -20,6 +20,8 @@ ADRs are binding unless superseded. Implementation tasks must cite relevant ADRs
 | [ADR-0014](ADR-0014-operator-directed-release-authorization.md)    | Treat direct owner instructions as release authority     | Accepted   |
 | [ADR-0015](ADR-0015-deferred-assembled-mechanic-inspection.md)     | Carry mechanics into assembled content inspection        | Accepted   |
 | [ADR-0016](ADR-0016-owner-session-merge-execution.md)              | Support exact owner-session merge execution              | Accepted   |
+| [ADR-0017](ADR-0017-non-inspected-owner-session-merge.md)          | Support non-inspected owner-session merge                | Accepted   |
+| [ADR-0018](ADR-0018-single-pass-browser-performance-gate.md)       | Use a single-pass repeatable browser performance gate    | Accepted   |
 
 ## ADR format
 

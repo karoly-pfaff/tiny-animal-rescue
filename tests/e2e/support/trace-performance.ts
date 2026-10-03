@@ -61,6 +61,24 @@ export function percentile95(samples: readonly number[]): number {
   return ordered[index] ?? Number.POSITIVE_INFINITY;
 }
 
+export function optionalPercentile95(samples: readonly number[]): number | null {
+  return samples.length === 0 ? null : percentile95(samples);
+}
+
+export function median(samples: readonly number[]): number {
+  if (samples.length === 0) {
+    throw new Error('A median requires at least one sample.');
+  }
+  const ordered = [...samples].sort((first, second) => first - second);
+  const midpoint = Math.floor(ordered.length / 2);
+  const upper = ordered[midpoint] ?? Number.POSITIVE_INFINITY;
+  if (ordered.length % 2 === 1) {
+    return upper;
+  }
+  const lower = ordered[midpoint - 1] ?? Number.NEGATIVE_INFINITY;
+  return (lower + upper) / 2;
+}
+
 async function startBrowserMeasurement(surface: Locator): Promise<void> {
   await surface.evaluate((element) => {
     const state: BrowserTracePerformanceState = {

@@ -71,9 +71,12 @@ the supported 768×1024 touch viewport with four-times CPU throttling through th
 protocol. The production-built Trace fixture must complete its full forgiving route while measuring
 the complete pointer-event → React update → canvas redraw → browser paint path. Its 95th-percentile
 frame interval must be at most 50 ms, its 95th-percentile pointer-to-paint latency at most 100 ms, and
-the run must collect at least 12 pointer samples. These bounds preserve responsive feedback under a
-conservative automated profile without claiming physical-device certification. The release hardware
-check may strengthen this evidence; it may not be replaced by a host-only JavaScript microbenchmark.
+each measurement must collect at least 12 pointer samples. One declared run contains exactly three
+clean-page measurements and asserts the median of their per-measurement p95 values against the
+unchanged 50 ms and 100 ms budgets. Every measurement is retained in the report, and no conditional
+retry is allowed. These bounds preserve responsive feedback under a conservative automated profile
+without claiming physical-device certification. The release hardware check may strengthen this
+evidence; it may not be replaced by a host-only JavaScript microbenchmark.
 
 ## Determinism
 

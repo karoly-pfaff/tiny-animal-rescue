@@ -11,10 +11,12 @@ import {
   validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
   validateEvidenceVersion,
+  latestTrustedQualityRun,
   validateMergedCommitIdentity,
   validateMergeCandidate,
   validateMergeSnapshot,
   validateOwnerEvidenceProvenance,
+  validateRequiredQualityChecks,
 } from './lib/merge-policy.mjs';
 import { requiredEnvironment, requiredWorkflowArguments } from './lib/workflow-input.mjs';
 
@@ -42,6 +44,14 @@ function checkedCommand(command, arguments_, cwd) {
         `${command} ${arguments_.join(' ')} failed.`,
     );
   }
+}
+
+function validateOwnerCandidatePolicy(candidateRoot, trustedRoot) {
+  checkedCommand(
+    process.execPath,
+    [resolve(trustedRoot, 'scripts/validate-repository-policy.mjs')],
+    candidateRoot,
+  );
 }
 
 function prepareQualifiedOwnerEvidence({
@@ -97,23 +107,71 @@ function prepareQualifiedOwnerEvidence({
   );
 }
 
+function prepareQualityOwnerEvidence({
+  candidateRoot,
+  output,
+  quality,
+  repository,
+  temporaryRoot,
+  trustedRoot,
+}) {
+  const qualityFindings = validateRequiredQualityChecks(
+    quality.checkRuns,
+    quality.expectation,
+    quality.workflowRuns,
+  );
+  if (qualityFindings.length > 0) throw new Error(qualityFindings.join('\n'));
+  const qualityRun = latestTrustedQualityRun(quality.workflowRuns, quality.expectation);
+  if (qualityRun === undefined) throw new Error('Trusted quality workflow run is unavailable.');
+  const artifact = join(temporaryRoot, 'quality-artifact');
+  githubCli([
+    'run',
+    'download',
+    String(qualityRun.id),
+    '--name',
+    `browser-${qualityRun.id}-${qualityRun.runAttempt}`,
+    '--dir',
+    artifact,
+    '--repo',
+    repository,
+  ]);
+  checkedCommand(
+    process.execPath,
+    [
+      resolve(trustedRoot, 'scripts/prepare-merge-evidence.mjs'),
+      '--candidate',
+      candidateRoot,
+      '--artifact',
+      artifact,
+      '--quality-run',
+      String(qualityRun.id),
+      '--output',
+      output,
+    ],
+    trustedRoot,
+  );
+  return qualityRun;
+}
+
 async function prepareOwnerEvidence(options) {
   const temporaryRoot = await mkdtemp(join(tmpdir(), 'tiny-rescue-merge-'));
   const output = join(temporaryRoot, 'release-evidence.json');
   const trustedRoot = process.cwd();
   try {
-    if (!options.currentHistory.item.requiresInspection) {
-      throw new Error(
-        'Owner-session merge requires provider-qualified inspected work; use the hosted executor for non-inspected work.',
-      );
+    const qualityRun = options.currentHistory.item.requiresInspection
+      ? undefined
+      : prepareQualityOwnerEvidence({ ...options, output, temporaryRoot, trustedRoot });
+    if (options.currentHistory.item.requiresInspection) {
+      prepareQualifiedOwnerEvidence({ ...options, output, temporaryRoot, trustedRoot });
     }
-    prepareQualifiedOwnerEvidence({ ...options, output, temporaryRoot, trustedRoot });
     const evidence = JSON.parse(await readFile(output, 'utf8'));
     const provenanceFindings = validateOwnerEvidenceProvenance({
-      requiresInspection: true,
-      source: 'trusted-qualified-media',
+      requiresInspection: options.currentHistory.item.requiresInspection,
+      source: qualityRun === undefined ? 'trusted-qualified-media' : 'trusted-quality-artifact',
       qualificationRunId: options.qualificationRun,
       evidenceQualificationRunId: evidence.qualificationRunId,
+      qualityRunId: qualityRun?.id,
+      evidenceQualityRunId: evidence.qualityRunId,
     });
     if (provenanceFindings.length > 0) throw new Error(provenanceFindings.join('\n'));
     return evidence;
@@ -190,6 +248,7 @@ try {
   const candidateSha = git(['-C', candidateRoot, 'rev-parse', 'HEAD']);
   const candidateStatus = git(['-C', candidateRoot, 'status', '--porcelain']);
   if (candidateStatus !== '') throw new Error('Candidate checkout contains uncommitted changes.');
+  if (ownerSession) validateOwnerCandidatePolicy(candidateRoot, process.cwd());
   const currentHistory = await pullRequestInput(pullRequest, 'pull-request');
   if (currentHistory.headSha !== currentHistory.pullRequest.headSha)
     throw new Error('Canonical pull-request head identity is inconsistent.');
@@ -201,6 +260,10 @@ try {
       : await github(`/issues/comments/${inspectionCommentId}`).then((comment) =>
           inspectionRecordFromGithub(comment, { github, repository }),
         );
+  const [approval, quality] = await Promise.all([
+    github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
+    trustedQualityChecksForCommit(pullRequest.head.sha, 'pull_request', pullRequest.head.ref),
+  ]);
   const evidence = ownerSession
     ? await prepareOwnerEvidence({
         candidateRoot,
@@ -210,6 +273,7 @@ try {
         qualificationRun,
         repository,
         inspectionPolicy,
+        quality,
       })
     : JSON.parse(await readFile(evidencePath, 'utf8'));
   const candidateIdentityFindings = validateCandidateCheckoutIdentity({
@@ -240,10 +304,6 @@ try {
   ) {
     throw new Error('Qualification-run input does not match the work-item inspection policy.');
   }
-  const [approval, quality] = await Promise.all([
-    github(`/issues/comments/${approvalCommentId}`).then(approvalRecordFromGithub),
-    trustedQualityChecksForCommit(pullRequest.head.sha, 'pull_request', pullRequest.head.ref),
-  ]);
   const findings = validateMergeCandidate(currentHistory, quality.checkRuns, {
     approval,
     approvalExpectation: {
