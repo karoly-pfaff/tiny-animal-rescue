@@ -4,7 +4,6 @@ import { deferredBrowserEffectService, type EffectService } from '../audio/effec
 import { createBrowserNarrationService, type NarrationService } from '../audio/narration-service';
 import { bundledContentRegistry } from '../content/bundled-content-registry';
 import type { ContentRegistry } from '../content/content-registry';
-import { selectFirstRescueContent } from '../content/first-rescue-content';
 import {
   createIndexedDbLocaleBootstrapRepository,
   type LocaleBootstrapRepository,
@@ -16,11 +15,11 @@ import {
   type FirstRescueProgressStore,
 } from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
-import { PlayerRoute } from './player-route';
 import { type ProgressBootstrapStatus, useProgressBootstrap } from './progress-bootstrap';
+import { ReadyAppRoute } from './ready-app-route';
 import { resolveRoute } from './routes';
 import { SaveFailureScreen } from './save-failure-screen';
-import { SaveRecoveryNotice } from './save-recovery-notice';
+import { SaveRecoveryScreen } from './save-recovery-screen';
 import { StartScreen } from './start-screen';
 
 const foundationLocale = 'hu' satisfies Locale;
@@ -92,7 +91,21 @@ function useLocaleBootstrap(repository: LocaleBootstrapRepository) {
     void persistLocale(nextLocale);
   }
 
-  return { locale, localeSaveFailed, localeSaving, selectLocale };
+  async function clearLocale(): Promise<void> {
+    setLocaleSaving(true);
+    setLocaleSaveFailed(false);
+    try {
+      await repository.clearLocale();
+      setLocale(null);
+    } catch (cause) {
+      setLocaleSaveFailed(true);
+      throw cause;
+    } finally {
+      setLocaleSaving(false);
+    }
+  }
+
+  return { clearLocale, locale, localeSaveFailed, localeSaving, selectLocale };
 }
 
 function navigate(nextPath: string): void {
@@ -119,27 +132,41 @@ function shouldShowStart(locale: Locale | null | undefined, routeId: string): bo
   return locale === undefined || locale === null || routeId === 'start';
 }
 
-type BlockingProgressStatus = Extract<ProgressBootstrapStatus, 'loading' | 'storage-error'>;
+type BlockingProgressStatus = Extract<
+  ProgressBootstrapStatus,
+  'corrupt' | 'loading' | 'storage-error' | 'unsupported-version'
+>;
 
 function isProgressBlocked(status: ProgressBootstrapStatus): status is BlockingProgressStatus {
-  return status === 'loading' || status === 'storage-error';
+  return status !== 'ready';
 }
 
 function ProgressBoundary({
   locale,
+  onRecoverCorrupt,
   onRetry,
   route,
   status,
 }: Readonly<{
   locale: Locale;
+  onRecoverCorrupt: () => void;
   onRetry: () => void;
   route: ReturnType<typeof resolveRoute>;
   status: BlockingProgressStatus;
 }>) {
-  return status === 'loading' ? (
-    <FoundationScreen locale={locale} route={route} />
-  ) : (
-    <SaveFailureScreen locale={locale} onRetry={onRetry} />
+  if (status === 'loading') {
+    return <FoundationScreen locale={locale} route={route} />;
+  }
+  if (status === 'storage-error') {
+    return <SaveFailureScreen locale={locale} onRetry={onRetry} />;
+  }
+  return (
+    <SaveRecoveryScreen
+      locale={locale}
+      onRecoverCorrupt={onRecoverCorrupt}
+      onRetry={onRetry}
+      status={status}
+    />
   );
 }
 
@@ -154,9 +181,8 @@ function AppWithDependencies({
   localeRepository,
   narrationService,
 }: Required<AppProps>) {
-  const firstRescueContent = requireFirstRescueContent(contentRegistry);
   const path = useHashPath();
-  const { locale, localeSaveFailed, localeSaving, selectLocale } =
+  const { clearLocale, locale, localeSaveFailed, localeSaving, selectLocale } =
     useLocaleBootstrap(localeRepository);
   const progressBootstrap = useProgressBootstrap(firstRescueProgressStore, locale),
     activeLocale = locale ?? foundationLocale,
@@ -191,6 +217,7 @@ function AppWithDependencies({
     return (
       <ProgressBoundary
         locale={activeLocale}
+        onRecoverCorrupt={progressBootstrap.recoverCorrupt}
         onRetry={progressBootstrap.retry}
         route={route}
         status={progressBootstrap.status}
@@ -199,28 +226,15 @@ function AppWithDependencies({
   }
 
   return (
-    <>
-      <PlayerRoute
-        effectService={effectService}
-        firstRescueContent={firstRescueContent}
-        firstRescueProgressStore={firstRescueProgressStore}
-        locale={activeLocale}
-        narrationService={narrationService}
-        onNavigate={navigate}
-        route={route}
-      />
-      <SaveRecoveryNotice locale={activeLocale} status={progressBootstrap.status} />
-    </>
+    <ReadyAppRoute
+      contentRegistry={contentRegistry}
+      effectService={effectService}
+      firstRescueProgressStore={firstRescueProgressStore}
+      locale={activeLocale}
+      narrationService={narrationService}
+      onLocaleReset={clearLocale}
+      onNavigate={navigate}
+      route={route}
+    />
   );
-}
-
-function requireFirstRescueContent(contentRegistry: ContentRegistry) {
-  assertContentAvailable(contentRegistry);
-  return selectFirstRescueContent(contentRegistry);
-}
-
-function assertContentAvailable(registry: ContentRegistry): void {
-  if (registry.packOrder.length === 0) {
-    throw new Error('The application requires at least one validated content pack.');
-  }
 }

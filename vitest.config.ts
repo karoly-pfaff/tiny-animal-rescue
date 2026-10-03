@@ -122,6 +122,12 @@ export default defineConfig({
           lines: 100,
           statements: 100,
         },
+        'sources/persistence/save-game-migrations.ts': {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
       },
     },
   },

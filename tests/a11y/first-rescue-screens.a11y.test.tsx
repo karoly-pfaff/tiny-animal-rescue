@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FirstMissionScreen } from '../../sources/app/first-mission-screen';
 import { MapScreen } from '../../sources/app/map-screen';
+import { ParentSettingsScreen } from '../../sources/app/parent-settings-screen';
 import { SaveFailureScreen } from '../../sources/app/save-failure-screen';
+import { SaveRecoveryScreen } from '../../sources/app/save-recovery-screen';
 import { CelebrationScreen } from '../../sources/app/celebration-screen';
 import { ContentMissionScreen } from '../../sources/app/content-mission-screen';
 import { ShelterScreen } from '../../sources/app/shelter-screen';
@@ -34,9 +36,11 @@ describe('first rescue screen accessibility', () => {
       key="mission"
       content={testFirstRescueContent}
       effectService={{ play: vi.fn() }}
+      initialCompletedStepIds={[]}
       locale="en"
       onCelebrate={vi.fn()}
       onCommitReward={vi.fn(() => Promise.resolve())}
+      onCommitStep={vi.fn(() => Promise.resolve())}
       onExit={vi.fn()}
       narrationService={{ speak: vi.fn(), stop: vi.fn() }}
     />,
@@ -52,6 +56,7 @@ describe('first rescue screen accessibility', () => {
       key="shelter"
       content={testFirstRescueContent}
       locale="en"
+      narrationService={{ speak: vi.fn(), stop: vi.fn() }}
       onMap={vi.fn()}
       progress={{
         completedMissionIds: ['garden-kitten-tree'],
@@ -60,6 +65,20 @@ describe('first rescue screen accessibility', () => {
       }}
     />,
     <SaveFailureScreen key="save-failure" locale="hu" onRetry={vi.fn()} />,
+    <SaveRecoveryScreen
+      key="save-recovery-corrupt"
+      locale="hu"
+      onRecoverCorrupt={vi.fn()}
+      onRetry={vi.fn()}
+      status="corrupt"
+    />,
+    <SaveRecoveryScreen
+      key="save-recovery-future"
+      locale="en"
+      onRecoverCorrupt={vi.fn()}
+      onRetry={vi.fn()}
+      status="unsupported-version"
+    />,
     <ContentMissionScreen
       key="content-mission"
       locale="en"
@@ -69,11 +88,15 @@ describe('first rescue screen accessibility', () => {
       ownerPackId="base"
       registry={testRegistryWithWorldMission()}
     />,
-  ])('has no automatically detectable violation', async (screen) => {
-    const { container } = render(screen);
-    const results = await axe.run(container);
-    expect(results.violations).toEqual([]);
-  });
+  ])(
+    'has no automatically detectable violation',
+    async (screen) => {
+      const { container } = render(screen);
+      const results = await axe.run(container);
+      expect(results.violations).toEqual([]);
+    },
+    15_000,
+  );
 
   it('keeps the open mission-call presentation accessible', async () => {
     const state = { completedMissionIds: [], unlockedResidentIds: [] };
@@ -101,4 +124,27 @@ describe('first rescue screen accessibility', () => {
     const results = await axe.run(container);
     expect(results.violations).toEqual([]);
   });
+
+  it('keeps the locked gate, reset choices, and confirmation accessible', async () => {
+    const { container } = render(
+      <ParentSettingsScreen
+        locale="en"
+        onBack={vi.fn()}
+        onResetAll={vi.fn(() => Promise.resolve())}
+        onResetProgress={vi.fn(() => Promise.resolve())}
+      />,
+    );
+    expect((await axe.run(container)).violations).toEqual([]);
+
+    vi.useFakeTimers();
+    const gate = screen.getByRole('button', { name: 'Press and hold' });
+    fireEvent.keyDown(gate, { key: 'Enter' });
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    vi.useRealTimers();
+    expect((await axe.run(container)).violations).toEqual([]);
+
+    fireEvent.click(screen.getByRole('button', { name: /Start the game again/u }));
+    expect(screen.getByRole('dialog', { name: 'Start the game again?' })).toBeVisible();
+    expect((await axe.run(container)).violations).toEqual([]);
+  }, 15_000);
 });

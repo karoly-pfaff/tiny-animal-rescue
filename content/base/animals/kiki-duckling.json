@@ -1,0 +1,17 @@
+{
+  "id": "kiki-duckling",
+  "species": "duckling",
+  "nameKey": "animal.kiki-duckling.name",
+  "shelterAreaId": "pondside",
+  "shelterSlot": 2,
+  "shelterLocalization": {
+    "happyKey": "animal.kiki-duckling.shelter.happy",
+    "tapLabelKey": "animal.kiki-duckling.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/kiki/canonical.png",
+    "idle": "images/residents/kiki/shelter-idle.png",
+    "happy": "images/residents/kiki/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

@@ -69,7 +69,7 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log('Validated 230 localized voice prompts and 3 first-rescue runtime cues.');
+console.log('Validated 230 localized voice prompts and 7 runtime cues.');
 
 async function readPolicyDocuments() {
   const entries = await Promise.all(

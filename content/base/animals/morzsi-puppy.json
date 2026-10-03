@@ -1,0 +1,17 @@
+{
+  "id": "morzsi-puppy",
+  "species": "puppy",
+  "nameKey": "animal.morzsi-puppy.name",
+  "shelterAreaId": "indoor-room",
+  "shelterSlot": 2,
+  "shelterLocalization": {
+    "happyKey": "animal.morzsi-puppy.shelter.happy",
+    "tapLabelKey": "animal.morzsi-puppy.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/morzsi/canonical.png",
+    "idle": "images/residents/morzsi/shelter-idle.png",
+    "happy": "images/residents/morzsi/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

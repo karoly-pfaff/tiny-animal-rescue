@@ -1,10 +1,15 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../sources/app/app';
-import { createSessionFirstRescueProgressStore } from '../../sources/app/first-rescue-progress';
+import {
+  createPersistedFirstRescueProgressStore,
+  createSessionFirstRescueProgressStore,
+} from '../../sources/app/first-rescue-progress';
 import { createMemoryLocaleBootstrapRepository } from '../../sources/persistence/locale-bootstrap-repository';
+import { createIndexedDbSaveGameRepository } from '../../sources/persistence/save-game-repository';
 import { testRegistryWithWorldMission } from '../support/expanded-mission-content';
+import { createIndexedDbHarness } from '../unit/support/indexed-db-harness';
 
 describe('App', () => {
   it('requires first-run locale choice, then follows the child path', async () => {
@@ -55,6 +60,92 @@ describe('App', () => {
     expect(document.documentElement.lang).toBe('en');
   });
 
+  it('requires the adult gate and full-reset confirmation before returning to first run', async () => {
+    vi.useFakeTimers();
+    const repository = createMemoryLocaleBootstrapRepository('en');
+    const progressStore = createSessionFirstRescueProgressStore({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    render(<App firstRescueProgressStore={progressStore} localeRepository={repository} />);
+    await act(() => Promise.resolve());
+    fireEvent.click(screen.getByRole('button', { name: 'Parent settings' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+
+    expect(screen.queryByRole('button', { name: /^Reset everything/u })).toBeNull();
+    const gate = screen.getByRole('button', { name: 'Press and hold' });
+    fireEvent.pointerDown(gate);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    fireEvent.pointerUp(gate);
+    vi.useRealTimers();
+    fireEvent.click(screen.getByRole('button', { name: /^Reset everything/u }));
+    const confirmation = screen.getByRole('dialog', { name: 'Reset everything?' });
+
+    expect(progressStore.read().unlockedResidentIds).toEqual(['mimi-kitten']);
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Reset everything' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
+    expect(progressStore.read()).toEqual({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(await repository.readLocale()).toBeNull();
+  });
+
+  it('keeps full-reset confirmation retryable when locale clearing fails after save reset', async () => {
+    vi.useFakeTimers();
+    const events: string[] = [];
+    const memoryLocale = createMemoryLocaleBootstrapRepository('en');
+    const clearLocale = vi.fn(async () => {
+      events.push('clear-locale');
+      if (clearLocale.mock.calls.length === 1) {
+        throw new Error('clear interrupted');
+      }
+      await memoryLocale.clearLocale();
+    });
+    const localeRepository = { ...memoryLocale, clearLocale };
+    const sessionProgress = createSessionFirstRescueProgressStore({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    const resetAll = vi.fn(async (locale: 'hu' | 'en') => {
+      events.push('reset-save');
+      return sessionProgress.resetAll(locale);
+    });
+    const progressStore = { ...sessionProgress, resetAll };
+    render(<App firstRescueProgressStore={progressStore} localeRepository={localeRepository} />);
+    await act(() => Promise.resolve());
+    fireEvent.click(screen.getByRole('button', { name: 'Parent settings' }));
+    await act(() => Promise.resolve(window.dispatchEvent(new HashChangeEvent('hashchange'))));
+    const gate = screen.getByRole('button', { name: 'Press and hold' });
+    fireEvent.pointerDown(gate);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    fireEvent.pointerUp(gate);
+    vi.useRealTimers();
+    fireEvent.click(screen.getByRole('button', { name: /^Reset everything/u }));
+    const confirmation = screen.getByRole('dialog', { name: 'Reset everything?' });
+
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Reset everything' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('did not finish');
+    expect(screen.getByRole('dialog', { name: 'Reset everything?' })).toBeVisible();
+    expect(screen.queryByRole('dialog', { name: 'Válassz nyelvet' })).toBeNull();
+    expect(await memoryLocale.readLocale()).toBe('en');
+    expect(events).toEqual(['reset-save', 'clear-locale']);
+
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reset everything?' })).getByRole('button', {
+        name: 'Reset everything',
+      }),
+    );
+    expect(await screen.findByRole('dialog', { name: 'Válassz nyelvet' })).toBeVisible();
+    expect(events).toEqual(['reset-save', 'clear-locale', 'reset-save', 'clear-locale']);
+    expect(resetAll).toHaveBeenCalledTimes(2);
+    expect(clearLocale).toHaveBeenCalledTimes(2);
+  });
+
   it('does not let a deep link bypass first-run locale selection', async () => {
     window.location.hash = '/map';
     const repository = createMemoryLocaleBootstrapRepository();
@@ -74,7 +165,11 @@ describe('App', () => {
       .fn<() => Promise<void>>()
       .mockRejectedValueOnce(new Error('write failed'))
       .mockResolvedValueOnce();
-    const repository = { readLocale: () => Promise.resolve(null), writeLocale };
+    const repository = {
+      clearLocale: () => Promise.resolve(),
+      readLocale: () => Promise.resolve(null),
+      writeLocale,
+    };
     render(<App localeRepository={repository} />);
 
     await screen.findByRole('dialog', { name: 'Válassz nyelvet' });
@@ -158,7 +253,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
       detail: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Tap Mimi!' }));
 
     expect(progressStore.read()).toEqual({
       completedMissionIds: ['garden-kitten-tree'],
@@ -249,6 +344,59 @@ describe('App', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('resumes a checkpoint after backgrounding and a browser-style remount', async () => {
+    window.location.hash = '/mission/garden-kitten-tree';
+    const harness = createIndexedDbHarness();
+    const createProgressStore = () =>
+      createPersistedFirstRescueProgressStore(
+        createIndexedDbSaveGameRepository(harness.factory, () => 'checkpoint-time'),
+      );
+    let hidden = false;
+    const hiddenProperty = vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const firstRender = render(
+      <App
+        firstRescueProgressStore={createProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Move the ladder to the tree!' }), {
+      detail: 0,
+    });
+    expect(await screen.findByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      currentMission: {
+        completedStepIds: ['place-ladder'],
+        missionId: 'garden-kitten-tree',
+      },
+    });
+
+    hidden = true;
+    await act(() => Promise.resolve(document.dispatchEvent(new Event('visibilitychange'))));
+    hidden = false;
+    await act(() => Promise.resolve(document.dispatchEvent(new Event('visibilitychange'))));
+    firstRender.unmount();
+
+    render(
+      <App
+        firstRescueProgressStore={createProgressStore()}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+    const mimi = await screen.findByRole('button', { name: 'Tap Mimi!' });
+    expect(screen.queryByRole('button', { name: 'Move the ladder to the tree!' })).toBeNull();
+    fireEvent.click(mimi);
+    expect(await screen.findByRole('heading', { name: 'Mimi is safe!' })).toBeVisible();
+
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+      unlockedResidentIds: ['mimi-kitten'],
+      worldFlags: ['mimi-rescued'],
+    });
+    expect(harness.getValue('save-games', 'primary')).not.toHaveProperty('currentMission');
+    hiddenProperty.mockRestore();
+  });
+
   it('blocks play and retries after a transient save load failure', async () => {
     window.location.hash = '/map';
     const sessionStore = createSessionFirstRescueProgressStore();
@@ -270,5 +418,77 @@ describe('App', () => {
 
     expect(await screen.findByRole('button', { name: 'Garden rescue: Mimi' })).toBeVisible();
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('requires an explicit adult choice before replacing corrupt progress', async () => {
+    window.location.hash = '/map';
+    const corrupt = { damaged: true, schemaVersion: 1 };
+    const harness = createIndexedDbHarness({
+      failureMode: 'transaction',
+      records: {
+        'save-games': { primary: corrupt },
+        'save-recovery': {},
+      },
+    });
+    const progressStore = createPersistedFirstRescueProgressStore(
+      createIndexedDbSaveGameRepository(harness.factory, () => 'recovery-time'),
+    );
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'The save needs help' })).toBeVisible();
+    expect(screen.getByText('A grown-up is needed')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Rescue map' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Archive damaged save and start again' }));
+
+    expect(await screen.findByRole('heading', { name: 'Saving is resting' })).toBeVisible();
+    expect(harness.getValue('save-games', 'primary')).toEqual(corrupt);
+    expect(harness.getStoreValues('save-recovery')).toEqual([]);
+    harness.setFailureMode(undefined);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('heading', { name: 'The save needs help' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Archive damaged save and start again' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Rescue map' })).toBeVisible();
+    });
+    expect(harness.getValue('save-games', 'primary')).toMatchObject({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+    expect(harness.getStoreValues('save-recovery')).toEqual([corrupt]);
+  });
+
+  it('preserves a future save without offering a destructive recovery action', async () => {
+    window.location.hash = '/map';
+    const future = { schemaVersion: 2 };
+    const harness = createIndexedDbHarness({
+      records: {
+        'save-games': { primary: future },
+        'save-recovery': {},
+      },
+    });
+    const progressStore = createPersistedFirstRescueProgressStore(
+      createIndexedDbSaveGameRepository(harness.factory),
+    );
+    render(
+      <App
+        firstRescueProgressStore={progressStore}
+        localeRepository={createMemoryLocaleBootstrapRepository('en')}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Newer save version' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Archive damaged save and start again' }),
+    ).not.toBeInTheDocument();
+    expect(harness.getValue('save-games', 'primary')).toEqual(future);
+    expect(harness.getStoreValues('save-recovery')).toEqual([]);
   });
 });

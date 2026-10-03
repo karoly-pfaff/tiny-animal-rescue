@@ -29,16 +29,25 @@ type SaveGameV1 = {
   currentMission?: {
     missionId: string;
     completedStepIds: string[];
-    stepState?: Record<string, unknown>;
+    stepState?:
+      | { interaction: 'drag'; stepId: string; placedItemIds: string[] }
+      | { interaction: 'match'; stepId: string; matchedPairIds: string[] }
+      | { interaction: 'tap'; stepId: string; acknowledged: boolean }
+      | { interaction: 'trace'; stepId: string; progress: number }
+      | { interaction: 'wipe'; stepId: string; clearedCellIds: string[] };
   };
 };
 ```
 
-The concrete persisted format must further constrain `stepState` by interaction type; arbitrary values are shown only to illustrate resumability.
+`stepState` is deliberately a closed union. Content cannot persist arbitrary executable or
+unbounded values in the save.
 
 ## Storage
 
-Use a repository interface with an IndexedDB implementation and an in-memory implementation for tests. Local storage may hold only a small bootstrap/settings hint, not the authoritative save.
+Use a repository interface with typed `load`, `transaction`, `replace`, and `reset` operations, an
+IndexedDB implementation, and a deterministic in-memory implementation for tests. Writes are
+serialized so concurrent callers cannot base changes on the same stale snapshot. Local storage may
+hold only a small bootstrap/settings hint, not the authoritative save.
 
 ## Commit boundaries
 
@@ -54,6 +63,11 @@ If the app closes mid-mission, opening that mission resumes at the first incompl
 ## Migration
 
 Each schema version has a pure migration to the next version. Migrations are deterministic, unit-tested, and never fetch network data. Unknown future versions stop with a parent-facing recovery path and do not overwrite the file.
+
+Corrupt current-version data also blocks play without changing the primary record. The adult-facing
+recovery screen offers retry or an explicit safe-start choice. Safe start archives the corrupt value
+and creates an empty save in one IndexedDB transaction; it never infers completed missions,
+residents, or flags from invalid data. Future-version saves never receive that destructive choice.
 
 ## Progression selectors
 
@@ -82,4 +96,13 @@ is not a persisted unlock flag and does not participate in progression derivatio
 
 ## Reset
 
-Reset progress is behind the parent gate, requires a second confirmation, and preserves audio/language settings unless the parent selects a full reset.
+Reset progress is behind the parent gate and requires a second confirmation. The progress-only path
+removes completed missions, residents, flags, and resumable mission state in one serialized repository
+transaction while preserving the save locale, audio levels, reduced-motion choice, and original
+creation timestamp. The explicit full-reset path restores default save settings, clears the locale
+bootstrap only after the save reset succeeds, and returns to first-run language selection.
+
+A failed or interrupted save transaction leaves the previous authoritative save in place and the UI
+does not report success. If the save reset succeeds but clearing the separate locale bootstrap fails,
+the adult remains on the confirmed settings screen and can retry; first-run is never shown while the
+old progress is still authoritative.

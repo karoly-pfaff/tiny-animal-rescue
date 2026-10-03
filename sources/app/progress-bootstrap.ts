@@ -9,11 +9,13 @@ import type {
 export type ProgressBootstrapStatus = FirstRescueProgressLoadStatus | 'loading' | 'storage-error';
 
 export type ProgressBootstrap = Readonly<{
+  recoverCorrupt: () => void;
   retry: () => void;
   status: ProgressBootstrapStatus;
 }>;
 
 const loadingStatus = 'loading' satisfies ProgressBootstrapStatus;
+const readyStatus = 'ready' satisfies ProgressBootstrapStatus;
 const storageErrorStatus = 'storage-error' satisfies ProgressBootstrapStatus;
 
 export function useProgressBootstrap(
@@ -26,6 +28,20 @@ export function useProgressBootstrap(
     setStatus(loadingStatus);
     setAttempt((current) => current + 1);
   }, []);
+  const recoverCorrupt = useCallback(() => {
+    if (locale === undefined || locale === null) {
+      return;
+    }
+    setStatus(loadingStatus);
+    void store.recoverCorrupt(locale).then(
+      () => {
+        setStatus(readyStatus);
+      },
+      () => {
+        setStatus(storageErrorStatus);
+      },
+    );
+  }, [locale, store]);
   useEffect(() => {
     let active = true;
     if (locale === undefined || locale === null) {
@@ -47,5 +63,5 @@ export function useProgressBootstrap(
       active = false;
     };
   }, [attempt, locale, store]);
-  return { retry, status };
+  return { recoverCorrupt, retry, status };
 }

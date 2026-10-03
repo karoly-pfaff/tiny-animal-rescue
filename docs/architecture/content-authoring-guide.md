@@ -131,6 +131,10 @@ remain separate runtime categories and channels.
   bounds. Keep the semantic target and safe path equivalent in both layouts.
 - Each animal owns localized shelter tap and gentle-reaction keys in every declared locale; do not
   place a concrete resident name in application-shell copy.
+- Each newly authored animal declares one `shelterSlot` that is unique within its shelter area and
+  falls within the area's capacity. Contract-v1 records may omit it for compatibility; the runtime
+  assigns those records to the lowest unoccupied slots in stable animal-ID order. Reordering files
+  must never move a resident.
 - Every referenced asset has exactly one inventory record. Image dimensions/transparency and audio
   category/media type/duration/locale ownership match the delivered file.
 - Voice lives under `audio/voice/<locale>/`; music and effects live under `audio/shared/` without a

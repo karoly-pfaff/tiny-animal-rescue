@@ -119,6 +119,8 @@ Resident interaction opens no modal menu. A tap can speak the name and begin the
 ## Parent settings
 
 - visually calmer and more conventional than the child flow;
+- entry requires a two-second sustained press by a grown-up, with equivalent Enter/Space keyboard
+  operation and no personal-information question;
 - language and separate music/effects/narration controls;
 - reduced-motion toggle;
 - reset, credits, licenses, privacy, and version information;

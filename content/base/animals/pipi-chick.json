@@ -1,0 +1,17 @@
+{
+  "id": "pipi-chick",
+  "species": "chick",
+  "nameKey": "animal.pipi-chick.name",
+  "shelterAreaId": "indoor-room",
+  "shelterSlot": 3,
+  "shelterLocalization": {
+    "happyKey": "animal.pipi-chick.shelter.happy",
+    "tapLabelKey": "animal.pipi-chick.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/pipi/canonical.png",
+    "idle": "images/residents/pipi/shelter-idle.png",
+    "happy": "images/residents/pipi/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

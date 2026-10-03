@@ -1,0 +1,17 @@
+{
+  "id": "suni-hedgehog",
+  "species": "hedgehog",
+  "nameKey": "animal.suni-hedgehog.name",
+  "shelterAreaId": "shelter-garden",
+  "shelterSlot": 1,
+  "shelterLocalization": {
+    "happyKey": "animal.suni-hedgehog.shelter.happy",
+    "tapLabelKey": "animal.suni-hedgehog.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/suni/canonical.png",
+    "idle": "images/residents/suni/shelter-idle.png",
+    "happy": "images/residents/suni/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

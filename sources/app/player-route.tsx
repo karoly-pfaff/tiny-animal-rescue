@@ -12,7 +12,11 @@ import { selectProgression } from '../content/progression-selectors';
 import type { Locale } from '../i18n/localization';
 import { CelebrationScreen } from './celebration-screen';
 import { ContentMissionScreen } from './content-mission-screen';
-import { type FirstRescueProgressStore, hasFirstRescueReward } from './first-rescue-progress';
+import {
+  completedStepIdsForMission,
+  type FirstRescueProgressStore,
+  hasFirstRescueReward,
+} from './first-rescue-progress';
 import { FoundationScreen } from './foundation-screen';
 import { FirstMissionScreen } from './first-mission-screen';
 import { MapScreen } from './map-screen';
@@ -24,7 +28,7 @@ import {
   selectMissionMapLocationId,
 } from './mission-route-selection';
 import { missionPath, resolveRoute } from './routes';
-import { ShelterScreen } from './shelter-screen';
+import { ShelterRoute } from './shelter-route';
 
 type PlayerRouteProps = Readonly<{
   effectService: EffectService;
@@ -62,7 +66,7 @@ export function PlayerRoute(props: PlayerRouteProps) {
     return <Celebration {...props} />;
   }
   if (props.route.id === 'shelter') {
-    return <Shelter {...props} />;
+    return <ShelterRoute {...props} />;
   }
   return <FoundationScreen locale={props.locale} route={props.route} />;
 }
@@ -191,11 +195,18 @@ function Mission({
       effectService={effectService}
       locale={locale}
       narrationService={narrationService}
+      initialCompletedStepIds={completedStepIdsForMission(
+        firstRescueProgressStore.read(),
+        firstRescueContent.mission.id,
+      )}
       onCelebrate={() => {
         onNavigate('/celebration');
       }}
       onCommitReward={async () => {
         await firstRescueProgressStore.commitReward(locale, firstRescueReward(firstRescueContent));
+      }}
+      onCommitStep={async (stepId) => {
+        await firstRescueProgressStore.commitStep(locale, firstRescueContent.mission.id, stepId);
       }}
       onExit={() => {
         onNavigate('/map');
@@ -232,24 +243,6 @@ function Celebration(props: PlayerRouteProps) {
       onShelter={() => {
         props.onNavigate('/shelter');
       }}
-    />
-  );
-}
-
-function Shelter({
-  firstRescueContent,
-  firstRescueProgressStore,
-  locale,
-  onNavigate,
-}: PlayerRouteProps) {
-  return (
-    <ShelterScreen
-      content={firstRescueContent}
-      locale={locale}
-      onMap={() => {
-        onNavigate('/map');
-      }}
-      progress={firstRescueProgressStore.read()}
     />
   );
 }

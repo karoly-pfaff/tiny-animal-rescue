@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Locator, Page } from '@playwright/test';
 
 import { observeUnexpectedBrowserErrors } from './support/browser-errors';
+import { observeTimeoutArming, pauseAppClockAfterRendering } from './support/clock';
 import {
   activateFirstRescueCall,
   completeFirstRescue,
@@ -12,6 +13,9 @@ import { dragLadder, interruptLadderDrag } from './support/ladder-drag';
 import { expect, test } from './support/muted-test';
 import { activateWithPrimaryPointer } from './support/pointer';
 import { readPrimarySave, readRecoveryCount, writePrimarySave } from './support/save-game';
+
+const firstMissionHintDelayMs = 5_000;
+const mimiHintTimerMarker = 'data-mimi-hint-timer-count';
 
 async function setAnimationTime(element: Locator, milliseconds: number): Promise<void> {
   await element.evaluate((animatedElement, nextTime) => {
@@ -24,17 +28,38 @@ async function setAnimationTime(element: Locator, milliseconds: number): Promise
   }, milliseconds);
 }
 
-async function openMimiTapStep(page: Page, hasTouch: boolean) {
+async function openMimiTapStep(
+  page: Page,
+  hasTouch: boolean,
+  reducedMotion?: 'no-preference' | 'reduce',
+) {
+  if (reducedMotion !== undefined) {
+    await page.emulateMedia({ reducedMotion });
+  }
   await page.goto('/');
+  if (reducedMotion !== undefined) {
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches),
+      )
+      .toBe(reducedMotion === 'reduce');
+  }
+  await observeTimeoutArming(page, firstMissionHintDelayMs, mimiHintTimerMarker);
   await page.getByRole('button', { name: 'Magyar' }).click();
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Játék' }), hasTouch);
   await openFirstRescueMission(page, { force: true, hasTouch, locale: 'hu' });
+  await expect(page.locator('html')).toHaveAttribute(mimiHintTimerMarker, /^[1-9]\d*$/u);
+  const timerCountBeforeDrag = Number(await page.locator('html').getAttribute(mimiHintTimerMarker));
   await dragLadder({
     destination: 'target',
     ladder: page.getByRole('button', { name: 'Húzd a létrát a fához!' }),
     page,
     pointerType: hasTouch ? 'touch' : 'mouse',
   });
+  const timersArmedByDragAndTapStep = hasTouch ? 3 : 7;
+  await expect
+    .poll(async () => Number(await page.locator('html').getAttribute(mimiHintTimerMarker)))
+    .toBeGreaterThanOrEqual(timerCountBeforeDrag + timersArmedByDragAndTapStep);
   return page.getByRole('button', { name: 'Koppints Mimire!' });
 }
 
@@ -305,10 +330,10 @@ test('@preview returns an invalid ladder drop and snaps a valid drop exactly onc
 
 test('@preview activates Mimi through the forgiving tap hit area', async ({ page }, testInfo) => {
   const hasTouch = Boolean(testInfo.project.use.hasTouch);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.clock.install();
-  const mimi = await openMimiTapStep(page, hasTouch);
-  await page.clock.fastForward(5_000);
+  const mimi = await openMimiTapStep(page, hasTouch, 'no-preference');
+  await pauseAppClockAfterRendering(page);
+  await page.clock.fastForward(firstMissionHintDelayMs);
 
   const targetBox = await mimi.boundingBox();
   const visualBox = await mimi.locator('.mission-kitten-tap-visual').boundingBox();
@@ -345,10 +370,10 @@ test('@preview activates Mimi through the forgiving tap hit area', async ({ page
 test('@preview substitutes static tap guidance under reduced motion', async ({
   page,
 }, testInfo) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
-  const mimi = await openMimiTapStep(page, Boolean(testInfo.project.use.hasTouch));
-  await page.clock.fastForward(5_000);
+  const mimi = await openMimiTapStep(page, Boolean(testInfo.project.use.hasTouch), 'reduce');
+  await pauseAppClockAfterRendering(page);
+  await page.clock.fastForward(firstMissionHintDelayMs);
 
   const visual = mimi.locator('.tap-remove-visual');
   await expect(mimi).toHaveAttribute('data-guidance', 'true');
@@ -431,7 +456,7 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
   await expect(page.getByRole('heading', { name: 'Belső szoba' })).toBeVisible();
   const shelterMimi = page.getByRole('button', { name: 'Simogasd meg Mimit' });
   await activateWithPrimaryPointer(shelterMimi, hasTouch);
-  await expect(shelterMimi).toHaveClass(/is-happy/u);
+  await expect(shelterMimi).toHaveAttribute('data-reaction', 'greet');
   await activateWithPrimaryPointer(page.getByRole('button', { name: 'Térkép' }), hasTouch);
   await completeFirstRescue(page, hasTouch, 'hu');
   await expect
@@ -442,6 +467,38 @@ test('@preview persists Mimi, replays idempotently, and shows her shelter reacti
       unlockedResidentIds: ['mimi-kitten'],
       worldFlags: ['mimi-rescued'],
     });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview resumes the first incomplete step after a browser reload', async ({
+  page,
+}, testInfo) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const hasTouch = Boolean(testInfo.project.use.hasTouch);
+  const mimi = await openMimiTapStep(page, hasTouch);
+  await expect(mimi).toBeVisible();
+  await expect
+    .poll(async () => readPrimarySave(page))
+    .toMatchObject({
+      currentMission: {
+        completedStepIds: ['place-ladder'],
+        missionId: 'garden-kitten-tree',
+      },
+    });
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Húzd a létrát a fához!' })).toHaveCount(0);
+  await activateWithPrimaryPointer(
+    page.getByRole('button', { name: 'Koppints Mimire!' }),
+    hasTouch,
+  );
+  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+  await expect
+    .poll(async () => {
+      const save = await readPrimarySave(page);
+      return typeof save === 'object' && save !== null && 'currentMission' in save;
+    })
+    .toBe(false);
   expect(browserErrors).toEqual([]);
 });
 
@@ -463,35 +520,53 @@ test('@preview completes the English rescue and restores Mimi after reload', asy
   expect(browserErrors).toEqual([]);
 });
 
-test('@preview recovers corrupt save data without crashing the child flow', async ({
+test('@preview requires an explicit adult choice before recovering corrupt save data', async ({
   page,
-}, testInfo) => {
+}) => {
   const browserErrors = observeUnexpectedBrowserErrors(page);
+  const corrupt = { damaged: true, schemaVersion: 1 };
   await page.goto('/');
   await page.getByRole('button', { name: 'Magyar' }).click();
-  await writePrimarySave(page, { damaged: true, schemaVersion: 1 });
+  await writePrimarySave(page, corrupt);
   await page.goto('/#/map');
   await page.reload();
 
-  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
-  await expect(page.getByRole('alert')).toContainText('korábbi mentés sérült');
-  await openFirstRescueMission(page, {
-    hasTouch: Boolean(testInfo.project.use.hasTouch),
-    locale: 'hu',
-  });
-  const ladder = page.getByRole('button', { name: 'Húzd a létrát a fához!' });
-  await dragLadder({
-    destination: 'target',
-    ladder,
-    page,
-    pointerType: testInfo.project.use.hasTouch ? 'touch' : 'mouse',
-  });
-  await page.getByRole('button', { name: 'Koppints Mimire!' }).click();
+  await expect(page.getByRole('heading', { name: 'A mentés segítséget kér' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).not.toBeVisible();
+  await expect.poll(async () => readPrimarySave(page)).toEqual(corrupt);
+  await expect.poll(async () => readRecoveryCount(page)).toBe(0);
 
-  await expect(page.getByRole('heading', { name: 'Mimi biztonságban van!' })).toBeVisible();
+  await page.getByRole('button', { name: 'Újra' }).click();
+  await expect(page.getByRole('heading', { name: 'A mentés segítséget kér' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sérült mentés archiválása és új játék' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Mentési térkép' })).toBeVisible();
   await expect.poll(async () => readRecoveryCount(page)).toBe(1);
   await expect
     .poll(async () => readPrimarySave(page))
-    .toMatchObject({ schemaVersion: 1, unlockedResidentIds: ['mimi-kitten'] });
+    .toMatchObject({
+      completedMissionIds: [],
+      schemaVersion: 1,
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
+  expect(browserErrors).toEqual([]);
+});
+
+test('@preview preserves a future save without destructive recovery', async ({ page }) => {
+  const browserErrors = observeUnexpectedBrowserErrors(page);
+  const future = { marker: 'future-data', schemaVersion: 2 };
+  await page.goto('/');
+  await page.getByRole('button', { name: 'English' }).click();
+  await writePrimarySave(page, future);
+  await page.goto('/#/map');
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Newer save version' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Archive damaged save and start again' }),
+  ).not.toBeVisible();
+  await expect.poll(async () => readPrimarySave(page)).toEqual(future);
+  await expect.poll(async () => readRecoveryCount(page)).toBe(0);
   expect(browserErrors).toEqual([]);
 });

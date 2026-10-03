@@ -2,6 +2,7 @@
   "id": "indoor-room",
   "nameKey": "shelter-area.indoor-room.name",
   "capacity": 4,
+  "navigationOrder": 0,
   "mapLabelKey": "map.shelter.label",
   "mapPresentation": {
     "silhouette": "shelter",

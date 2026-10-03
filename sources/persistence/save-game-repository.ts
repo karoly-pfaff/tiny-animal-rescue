@@ -1,37 +1,37 @@
 import type { Locale } from '../i18n/localization';
-import { requestResult, transactionDone } from './indexed-db-helpers';
+import { readPrimarySave, recoverCorruptSave, writePrimarySave } from './indexed-db-save-storage';
 import {
   createEmptySave,
+  corruptSaveStatus,
   migrateSaveGame,
   readySaveStatus,
-  recoveredSaveStatus,
   type SaveGameLoadResult,
   type SaveGameV1,
 } from './save-game-schema';
+import { createSerializedTaskQueue } from './serialized-task-queue';
 
+export { createMemorySaveGameRepository } from './memory-save-game-repository';
 export type { SaveGameV1 } from './save-game-schema';
 
 export type SaveGameRepository = Readonly<{
   load: (locale: Locale) => Promise<SaveGameLoadResult>;
-  update: (locale: Locale, transform: (save: SaveGameV1) => SaveGameV1) => Promise<SaveGameV1>;
+  recover: (locale: Locale) => Promise<SaveGameV1>;
+  replace: (save: SaveGameV1) => Promise<SaveGameV1>;
+  reset: (locale: Locale) => Promise<SaveGameV1>;
+  transaction: (locale: Locale, transform: (save: SaveGameV1) => SaveGameV1) => Promise<SaveGameV1>;
 }>;
 
-type PersistenceKey = string;
 type RepositoryState = Readonly<{
   currentSave: SaveGameV1 | null;
   loaded: boolean;
   loadResult: SaveGameLoadResult;
-  pendingCorruptValue?: unknown;
+  recoveryRequired: boolean;
   unsupportedVersion: boolean;
 }>;
 
-const databaseName = 'tiny-rescue-save' satisfies PersistenceKey;
-const databaseVersion = 1;
-const primaryRecordKey = 'primary' satisfies PersistenceKey;
-const primaryStoreName = 'save-games' satisfies PersistenceKey;
-const recoveryStoreName = 'save-recovery' satisfies PersistenceKey;
-const writeMode = 'readwrite' satisfies IDBTransactionMode;
 const defaultLocale = 'hu' satisfies Locale;
+
+type SaveWriter = (save: SaveGameV1, writableFactory: IDBFactory) => Promise<SaveGameV1>;
 
 export function createIndexedDbSaveGameRepository(
   factory: IDBFactory | undefined,
@@ -41,32 +41,52 @@ export function createIndexedDbSaveGameRepository(
     currentSave: null,
     loaded: false,
     loadResult: { save: createEmptySave(defaultLocale, now()), status: readySaveStatus },
+    recoveryRequired: false,
     unsupportedVersion: false,
+  };
+  const writes = createSerializedTaskQueue();
+
+  const persist: SaveWriter = async (save, writableFactory) => {
+    await writePrimarySave(writableFactory, save);
+    state = readyState(save);
+    return save;
   };
 
   return {
-    async load(locale) {
-      state = notLoadedState(locale, now());
-      state = await loadRepositoryState(factory, locale, now);
-      return state.loadResult;
-    },
-    async update(locale, transform) {
-      assertWritable(factory, state);
-      const base = state.currentSave ?? createEmptySave(locale, now());
-      const updated = transform({ ...base, locale, updatedAt: now() });
-      await writeSave({
-        corruptValue: state.pendingCorruptValue,
-        factory,
-        recoveryKey: now(),
-        save: updated,
+    load(locale) {
+      return writes.run(async () => {
+        state = notLoadedState(locale, now());
+        state = await loadRepositoryState(factory, locale, now);
+        return state.loadResult;
       });
-      state = {
-        currentSave: updated,
-        loaded: true,
-        loadResult: { save: updated, status: readySaveStatus },
-        unsupportedVersion: false,
-      };
-      return updated;
+    },
+    replace(save) {
+      return writes.run(() => persist(save, requiredWritableFactory(factory, state)));
+    },
+    recover(locale) {
+      return writes.run(async () => {
+        const writableFactory = requiredRecoveryFactory(factory, state);
+        const save = createEmptySave(locale, now());
+        await recoverCorruptSave({
+          factory: writableFactory,
+          recoveryKey: now(),
+          save,
+        });
+        state = readyState(save);
+        return save;
+      });
+    },
+    reset(locale) {
+      return writes.run(() =>
+        persist(createEmptySave(locale, now()), requiredWritableFactory(factory, state)),
+      );
+    },
+    transaction(locale, transform) {
+      return writes.run(() => {
+        const writableFactory = requiredWritableFactory(factory, state);
+        const base = state.currentSave ?? createEmptySave(locale, now());
+        return persist(transform({ ...base, locale, updatedAt: now() }), writableFactory);
+      });
     },
   };
 }
@@ -84,6 +104,30 @@ function assertWritable(
   if (state.unsupportedVersion) {
     throw new Error('A newer save version cannot be overwritten.');
   }
+  if (state.recoveryRequired) {
+    throw new Error('Corrupt save data requires an explicit recovery choice.');
+  }
+}
+
+function requiredRecoveryFactory(
+  factory: IDBFactory | undefined,
+  state: RepositoryState,
+): IDBFactory {
+  if (factory === undefined) {
+    throw new Error('IndexedDB is unavailable.');
+  }
+  if (!state.loaded || !state.recoveryRequired) {
+    throw new Error('No corrupt save is awaiting recovery.');
+  }
+  return factory;
+}
+
+function requiredWritableFactory(
+  factory: IDBFactory | undefined,
+  state: RepositoryState,
+): IDBFactory {
+  assertWritable(factory, state);
+  return factory;
 }
 
 async function loadRepositoryState(
@@ -94,17 +138,27 @@ async function loadRepositoryState(
   if (factory === undefined) {
     throw new Error('IndexedDB is unavailable.');
   }
-  const rawValue = await readPrimarySave(factory);
-  if (rawValue === undefined) {
-    return readyState(createEmptySave(locale, now()));
-  }
+  const stored = await readPrimarySave(factory);
+  return !stored.present
+    ? readyState(createEmptySave(locale, now()))
+    : repositoryStateFromRaw(stored.value, now);
+}
+
+function repositoryStateFromRaw(rawValue: unknown, now: () => string): RepositoryState {
   const migrated = migrateSaveGame(rawValue, now());
   if (migrated === null) {
-    return recoveredState(locale, now(), rawValue);
+    return corruptState();
   }
-  return migrated.status === 'unsupported-version'
-    ? { currentSave: null, loaded: true, loadResult: migrated, unsupportedVersion: true }
-    : readyState(migrated.save);
+  if (migrated.status === 'ready') {
+    return readyState(migrated.save);
+  }
+  return {
+    currentSave: null,
+    loaded: true,
+    loadResult: migrated,
+    recoveryRequired: false,
+    unsupportedVersion: true,
+  };
 }
 
 function readyState(save: SaveGameV1): RepositoryState {
@@ -112,21 +166,17 @@ function readyState(save: SaveGameV1): RepositoryState {
     currentSave: save,
     loaded: true,
     loadResult: { save, status: readySaveStatus },
+    recoveryRequired: false,
     unsupportedVersion: false,
   };
 }
 
-function recoveredState(
-  locale: Locale,
-  timestamp: string,
-  pendingCorruptValue: unknown,
-): RepositoryState {
-  const save = createEmptySave(locale, timestamp);
+function corruptState(): RepositoryState {
   return {
-    currentSave: save,
+    currentSave: null,
     loaded: true,
-    loadResult: { save, status: recoveredSaveStatus },
-    pendingCorruptValue,
+    loadResult: { save: null, status: corruptSaveStatus },
+    recoveryRequired: true,
     unsupportedVersion: false,
   };
 }
@@ -136,63 +186,7 @@ function notLoadedState(locale: Locale, timestamp: string): RepositoryState {
     currentSave: null,
     loaded: false,
     loadResult: { save: createEmptySave(locale, timestamp), status: readySaveStatus },
+    recoveryRequired: false,
     unsupportedVersion: false,
   };
-}
-
-function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = factory.open(databaseName, databaseVersion);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(primaryStoreName)) {
-        request.result.createObjectStore(primaryStoreName);
-      }
-      if (!request.result.objectStoreNames.contains(recoveryStoreName)) {
-        request.result.createObjectStore(recoveryStoreName);
-      }
-    };
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    request.onerror = () => {
-      reject(request.error ?? new Error('IndexedDB open failed.'));
-    };
-  });
-}
-
-async function readPrimarySave(factory: IDBFactory): Promise<unknown> {
-  const database = await openDatabase(factory);
-  try {
-    return await requestResult(
-      database.transaction(primaryStoreName).objectStore(primaryStoreName).get(primaryRecordKey),
-    );
-  } finally {
-    database.close();
-  }
-}
-
-type WriteSaveOptions = Readonly<{
-  corruptValue: unknown;
-  factory: IDBFactory;
-  recoveryKey: string;
-  save: SaveGameV1;
-}>;
-
-async function writeSave({
-  corruptValue,
-  factory,
-  recoveryKey,
-  save,
-}: WriteSaveOptions): Promise<void> {
-  const database = await openDatabase(factory);
-  try {
-    const transaction = database.transaction([primaryStoreName, recoveryStoreName], writeMode);
-    if (corruptValue !== undefined) {
-      transaction.objectStore(recoveryStoreName).put(corruptValue, recoveryKey);
-    }
-    transaction.objectStore(primaryStoreName).put(save, primaryRecordKey);
-    await transactionDone(transaction);
-  } finally {
-    database.close();
-  }
 }

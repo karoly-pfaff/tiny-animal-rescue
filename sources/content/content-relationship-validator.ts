@@ -21,6 +21,7 @@ import { validateLocationUnlockReferences } from './location-unlock-validator.ts
 import { normalizeMissionsForGraph } from './content-mission-normalizer.ts';
 import type { MissionRecord } from './mission-contract.ts';
 import { validateMissionGraph } from './mission-graph-validator.ts';
+import { validateShelterPopulation } from './shelter-population-validator.ts';
 
 type Animal = ContentPackSource['records']['animals'][number];
 type Location = ContentPackSource['records']['locations'][number];
@@ -242,12 +243,9 @@ function validateShelterCapacity(content: SemanticIndex): readonly string[] {
       });
       return owned?.ownerPackId === area.ownerPackId && owned.record.id === area.record.id;
     });
-    return residents.length > area.record.capacity
-      ? [
-          diagnostic(
-            `Shelter area ${area.record.id} has capacity ${String(area.record.capacity)} but ${String(residents.length)} residents.`,
-          ),
-        ]
-      : [];
+    return validateShelterPopulation(
+      area.record,
+      residents.map(({ record }) => record),
+    );
   });
 }
