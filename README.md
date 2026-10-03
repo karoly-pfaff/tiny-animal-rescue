@@ -85,8 +85,8 @@ Implement one end-to-end vertical slice before generalizing. The first slice is 
 ## Status
 
 - Specification baseline: **v0.1.0** (document revision, not a shipped product version)
-- Latest tagged product version: **v0.3.1** (PATCH-002)
-- Current candidate version: **v0.4.1** (PATCH-004, unpublished)
+- Latest tagged product version: **v0.4.0** (EPIC-003 / M3)
+- Current candidate version: **v0.4.2** (PATCH-003, unpublished)
 - Next milestone release: **v0.5.0** (EPIC-004 / M4)
 - Target product release: **v1.0.0**
 

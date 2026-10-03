@@ -95,11 +95,26 @@ function manifestRecordMatchesObject(record, object, packId) {
   ].every(Boolean);
 }
 
+function manifestDeliveryFindings(record, object, packId) {
+  if (record.delivery === 'r2-pending') {
+    return object === undefined
+      ? []
+      : [`Pending production asset unexpectedly has a lock: ${record.objectKey ?? '?'}.`];
+  }
+  if (record.delivery !== 'r2-locked') {
+    return [`Production asset has an invalid delivery state: ${record.objectKey ?? '?'}.`];
+  }
+  return object !== undefined && manifestRecordMatchesObject(record, object, packId)
+    ? []
+    : [`Production asset manifest differs from its lock: ${record.objectKey ?? '?'}.`];
+}
+
 function validateManifestRecords(records, plan, requiredRoles) {
   const findings = [];
   const ids = new Set();
   const roles = new Set();
   const keys = new Set();
+  const lockedKeys = new Set();
   const declaredRoles = new Set();
   const objectsByKey = new Map(
     plan.map((object) => [qualifiedAssetKey(object.packId, object.objectKey), object]),
@@ -112,11 +127,12 @@ function validateManifestRecords(records, plan, requiredRoles) {
     }
     ids.add(record.id);
     roles.add(scopedRole);
-    declaredRoles.add(record.role);
     keys.add(scopedKey);
     const object = objectsByKey.get(scopedKey);
-    if (object === undefined || !manifestRecordMatchesObject(record, object, packId)) {
-      findings.push(`Production asset manifest differs from its lock: ${record.objectKey ?? '?'}.`);
+    findings.push(...manifestDeliveryFindings(record, object, packId));
+    if (record.delivery === 'r2-locked') {
+      declaredRoles.add(record.role);
+      lockedKeys.add(scopedKey);
     }
   }
   for (const role of requiredRoles) {
@@ -124,8 +140,8 @@ function validateManifestRecords(records, plan, requiredRoles) {
       findings.push(`Required production asset role is absent: ${role}.`);
   }
   if (
-    records.length !== plan.length ||
-    plan.some((object) => !keys.has(qualifiedAssetKey(object.packId, object.objectKey)))
+    lockedKeys.size !== plan.length ||
+    plan.some((object) => !lockedKeys.has(qualifiedAssetKey(object.packId, object.objectKey)))
   ) {
     findings.push('Production asset manifest and materialization locks are not one-to-one.');
   }
@@ -177,6 +193,7 @@ export async function verifyCandidateAssetContract({ sourceRoot, assetRoot, requ
       ? manifest.assets.map((record) => ({ packId, record }))
       : [],
   );
+  const lockedRecords = records.filter(({ record }) => record.delivery === 'r2-locked');
   const findings = validateManifestRecords(records, plan, enforcedRoles);
   const observed = await observedPackMedia(assetRoot, packIds);
   const allowed = new Set(plan.map(({ path: objectPath }) => objectPath));
@@ -187,7 +204,7 @@ export async function verifyCandidateAssetContract({ sourceRoot, assetRoot, requ
     const data = await readFile(path.join(assetRoot, object.path));
     await verifyObjectBytes(data, object, object.path);
   }
-  for (const { packId, record } of records) {
+  for (const { packId, record } of lockedRecords) {
     const data = await readFile(path.join(assetRoot, `content/${packId}/assets`, record.objectKey));
     if (record.mediaType === 'image/png' && pngHasTransparency(data) !== record.transparent) {
       findings.push(
