@@ -86,3 +86,4 @@ Post-release corrections use separately scoped records rather than being hidden 
 - [PATCH-002: Repair release qualification governance](maintenance/PATCH-002-v0.3.1-release-governance-repair.md)
 - [PATCH-003: Accept declared pending media during qualification](maintenance/PATCH-003-v0.4.1-pending-media-qualification.md)
 - [PATCH-004: Support non-inspected owner-session merge](maintenance/PATCH-004-v0.4.1-owner-session-non-inspected.md)
+- [PATCH-005: Stabilize trace canvas rendering performance](maintenance/PATCH-005-v0.4.3-trace-canvas-performance.md)

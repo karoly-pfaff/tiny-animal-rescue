@@ -1,6 +1,6 @@
 {
   "id": "base",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "contractVersion": 1,
   "titleKey": "pack.base.title",
   "initialMissionId": "garden-kitten-tree",

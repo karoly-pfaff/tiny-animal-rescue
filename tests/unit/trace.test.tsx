@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { inactiveGuidancePresentation } from '../../sources/engine/guidance-ladder-state';
@@ -102,14 +102,33 @@ function pointerMove(button: HTMLElement, x: number, pointerId = 1): void {
 }
 
 describe('Trace', () => {
+  let animationFrames: Map<number, FrameRequestCallback>;
   let context: ReturnType<typeof createCanvasContext>;
+  let nextAnimationFrame: number;
 
   beforeEach(() => {
+    animationFrames = new Map();
     context = createCanvasContext();
+    nextAnimationFrame = 1;
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       context as unknown as CanvasRenderingContext2D,
     );
     vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue(bounds);
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        const frame = nextAnimationFrame;
+        nextAnimationFrame += 1;
+        animationFrames.set(frame, callback);
+        return frame;
+      }),
+    );
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn((frame: number) => {
+        animationFrames.delete(frame);
+      }),
+    );
     vi.stubGlobal('devicePixelRatio', 2);
   });
 
@@ -252,10 +271,63 @@ describe('Trace', () => {
     expect(screen.getByTestId('trace-hint').children).toHaveLength(5);
   });
 
+  it('coalesces progress painting and resizes with the latest canvas options', () => {
+    const addEventListener = vi.spyOn(window, 'addEventListener');
+    const removeEventListener = vi.spyOn(window, 'removeEventListener');
+    const { button, rerender, unmount } = renderTrace();
+    flushAnimationFrames(animationFrames);
+    vi.mocked(requestAnimationFrame).mockClear();
+    context.stroke.mockClear();
+
+    pointerDown(button, 40);
+    pointerMove(button, 120);
+    pointerMove(button, 200);
+    pointerMove(button, 280);
+
+    expect(requestAnimationFrame).toHaveBeenCalledOnce();
+    flushAnimationFrames(animationFrames);
+    expect(Number(button.getAttribute('data-progress'))).toBeGreaterThan(0.5);
+    expect(context.stroke).toHaveBeenCalledTimes(2);
+    expect(addEventListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1);
+
+    const resizedPath = [
+      { x: 0.2, y: 0.4 },
+      { x: 0.8, y: 0.6 },
+    ] satisfies TracePath;
+    rerender(
+      <Trace
+        accessibleLabel="Guide the animal home"
+        corridorColor="#111111"
+        corridorWidth={0.3}
+        endAffordance={<span />}
+        guidance={inactiveGuidancePresentation}
+        onComplete={vi.fn()}
+        onGuidanceActivity={vi.fn()}
+        onGuidanceWrongAction={vi.fn()}
+        path={resizedPath}
+        progressColor="#222222"
+        startAffordance={<span />}
+        tracer={<span />}
+      />,
+    );
+    flushAnimationFrames(animationFrames);
+    context.moveTo.mockClear();
+    context.stroke.mockClear();
+    fireEvent(window, new Event('resize'));
+
+    expect(context.moveTo).toHaveBeenCalledWith(80, 120);
+    expect(context.stroke).toHaveBeenCalledTimes(2);
+    expect(context.strokeStyle).toBe('#222222');
+    expect(context.lineWidth).toBeCloseTo(37.8);
+    unmount();
+    expect(removeEventListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1);
+  });
+
   it('preserves progress after a deviation, cancellation, pause, and resume', () => {
     const { button, onComplete, pointerCapture, rerender } = renderTrace();
     pointerDown(button, 40);
     pointerMove(button, 184);
+    flushAnimationFrames(animationFrames);
     const partial = Number(button.getAttribute('data-progress'));
     fireEvent.pointerMove(button, { clientX: 200, clientY: 20, pointerId: 1 });
     fireEvent.pointerCancel(button, { pointerId: 1 });
@@ -368,3 +440,15 @@ describe('Trace', () => {
     expect(screen.queryByTestId('trace-hint')).not.toBeInTheDocument();
   });
 });
+
+function flushAnimationFrames(animationFrames: Map<number, FrameRequestCallback>): void {
+  while (animationFrames.size > 0) {
+    const scheduled = [...animationFrames.entries()];
+    animationFrames.clear();
+    act(() => {
+      for (const [, callback] of scheduled) {
+        callback(16.7);
+      }
+    });
+  }
+}
