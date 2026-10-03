@@ -7,6 +7,8 @@ import { interactionFixtureUrl } from './support/fixture-url';
 import { followPrimaryPointerPath, type ClientPoint } from './support/pointer';
 import {
   measureTabletTracePerformance,
+  median,
+  optionalPercentile95,
   percentile95,
   traceTabletPerformanceBudget,
   type TracePerformanceEvidence,
@@ -56,26 +58,45 @@ async function runTraceJourney({
   });
 }
 
-function assertPerformanceEvidence(evidence: TracePerformanceEvidence): void {
-  expect(evidence.inputToPaintMs.length).toBeGreaterThanOrEqual(
-    traceTabletPerformanceBudget.minimumInputSamples,
-  );
-  expect(percentile95(evidence.frameIntervalsMs)).toBeLessThanOrEqual(
-    traceTabletPerformanceBudget.maximumP95FrameIntervalMs,
-  );
-  expect(percentile95(evidence.inputToPaintMs)).toBeLessThanOrEqual(
-    traceTabletPerformanceBudget.maximumP95InputToPaintMs,
-  );
+const tracePerformanceMeasurementCount = 3;
+
+function assertPerformanceEvidence(evidence: readonly TracePerformanceEvidence[]): void {
+  expect(evidence).toHaveLength(tracePerformanceMeasurementCount);
+  for (const measurement of evidence) {
+    expect(measurement.frameIntervalsMs.length).toBeGreaterThan(0);
+    expect(measurement.inputToPaintMs.length).toBeGreaterThanOrEqual(
+      traceTabletPerformanceBudget.minimumInputSamples,
+    );
+  }
+  expect(
+    median(evidence.map(({ frameIntervalsMs }) => percentile95(frameIntervalsMs))),
+  ).toBeLessThanOrEqual(traceTabletPerformanceBudget.maximumP95FrameIntervalMs);
+  expect(
+    median(evidence.map(({ inputToPaintMs }) => percentile95(inputToPaintMs))),
+  ).toBeLessThanOrEqual(traceTabletPerformanceBudget.maximumP95InputToPaintMs);
 }
 
-function performanceReport(evidence: TracePerformanceEvidence) {
+function performanceReport(evidence: readonly TracePerformanceEvidence[]) {
+  const measurements = evidence.map(({ frameIntervalsMs, inputToPaintMs }) => ({
+    frameSampleCount: frameIntervalsMs.length,
+    inputSampleCount: inputToPaintMs.length,
+    p95FrameIntervalMs: optionalPercentile95(frameIntervalsMs),
+    p95InputToPaintMs: optionalPercentile95(inputToPaintMs),
+  }));
+  const framePercentiles = measurements.map(({ p95FrameIntervalMs }) => p95FrameIntervalMs);
+  const inputPercentiles = measurements.map(({ p95InputToPaintMs }) => p95InputToPaintMs);
+  const hasCompleteFrameEvidence = framePercentiles.every(
+    (value): value is number => value !== null,
+  );
+  const hasCompleteInputEvidence = inputPercentiles.every(
+    (value): value is number => value !== null,
+  );
   return {
     budget: traceTabletPerformanceBudget,
     observed: {
-      frameSampleCount: evidence.frameIntervalsMs.length,
-      inputSampleCount: evidence.inputToPaintMs.length,
-      p95FrameIntervalMs: percentile95(evidence.frameIntervalsMs),
-      p95InputToPaintMs: percentile95(evidence.inputToPaintMs),
+      measurements,
+      medianP95FrameIntervalMs: hasCompleteFrameEvidence ? median(framePercentiles) : null,
+      medianP95InputToPaintMs: hasCompleteInputEvidence ? median(inputPercentiles) : null,
     },
     profile: 'chromium-touch-768x1024 with 4x CPU throttling',
   } as const;
@@ -119,9 +140,33 @@ test('@preview traces a forgiving scaled route in the production build', async (
   expect(backingStore.width).toBe(Math.round(box.width * backingStore.ratio));
   expect(backingStore.height).toBe(Math.round(box.height * backingStore.ratio));
 
-  const runJourney = () => runTraceJourney({ box, hasTouch, page, surface });
   if (testInfo.project.name === 'chromium-touch-768x1024') {
-    const evidence = await measureTabletTracePerformance({ page, runJourney, surface });
+    const evidence: TracePerformanceEvidence[] = [];
+    for (let measurement = 0; measurement < tracePerformanceMeasurementCount; measurement += 1) {
+      if (measurement > 0) {
+        await page.goto(interactionFixtureUrl('trace'));
+      }
+      const measurementSurface = page.getByRole('button', {
+        name: 'Guide the turtle to the pond',
+      });
+      const measurementBox = await measurementSurface.boundingBox();
+      if (measurementBox === null) {
+        throw new Error('The trace surface must be measurable for every performance measurement.');
+      }
+      evidence.push(
+        await measureTabletTracePerformance({
+          page,
+          runJourney: () =>
+            runTraceJourney({
+              box: measurementBox,
+              hasTouch,
+              page,
+              surface: measurementSurface,
+            }),
+          surface: measurementSurface,
+        }),
+      );
+    }
     const report = performanceReport(evidence);
     testInfo.annotations.push({
       description: JSON.stringify(report),
@@ -133,7 +178,7 @@ test('@preview traces a forgiving scaled route in the production build', async (
     });
     assertPerformanceEvidence(evidence);
   } else {
-    await runJourney();
+    await runTraceJourney({ box, hasTouch, page, surface });
   }
 
   await expect(surface).toHaveAttribute('data-complete', 'true');

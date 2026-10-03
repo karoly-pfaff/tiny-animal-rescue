@@ -182,6 +182,14 @@
       "record": { "channel": "text", "path": "hidden.txt", "content": "clean​signature" }
     }
   ],
+  "validationGroups": [
+    { "name": "single browser matrix invocation", "mutation": "none", "valid": true },
+    {
+      "name": "duplicate preview and e2e browser matrix",
+      "mutation": "duplicate-browser-matrix",
+      "valid": false
+    }
+  ],
   "repository": [
     { "name": "authoritative policy", "mutation": "none", "valid": true },
     { "name": "merge method drift", "mutation": "merge-method", "valid": false },
@@ -225,6 +233,11 @@
     {
       "name": "required workflow tolerates a failed step",
       "mutation": "continue-on-error",
+      "valid": false
+    },
+    {
+      "name": "owner quality artifact rejects candidate workflow drift",
+      "mutation": "candidate-quality-artifact-workflow-drift",
       "valid": false
     },
     {

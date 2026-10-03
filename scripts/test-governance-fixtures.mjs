@@ -17,6 +17,7 @@ import {
 } from './lib/history-policy.mjs';
 import { tagRevisions, workItemFromBranch } from './lib/history-repository.mjs';
 import { expectedInspectionBody } from './lib/inspection-policy.mjs';
+import { validateValidationGroups, validationGroups } from './lib/validation-groups.mjs';
 import {
   validateCandidateCheckoutIdentity,
   validateCurrentMainAncestry,
@@ -1144,15 +1145,33 @@ for (const branch of [
     );
   }
   record(
-    'merge/reject-non-inspected-owner-session',
-    false,
+    'merge/verified-quality-artifact-evidence',
+    true,
     validateOwnerEvidenceProvenance({
       requiresInspection: false,
-      source: 'trusted-local-rebuild',
+      source: 'trusted-quality-artifact',
       qualificationRunId: Number.NaN,
       evidenceQualificationRunId: undefined,
+      qualityRunId: 456,
+      evidenceQualityRunId: 456,
     }),
   );
+  for (const [name, source, evidenceQualityRunId] of [
+    ['local-rebuild', 'trusted-local-rebuild', 456],
+    ['stale-quality-artifact', 'trusted-quality-artifact', 455],
+    ['caller-quality-artifact', 'caller-json', 456],
+  ]) {
+    record(
+      `merge/${name}-owner-evidence`,
+      false,
+      validateOwnerEvidenceProvenance({
+        requiresInspection: false,
+        source,
+        qualityRunId: 456,
+        evidenceQualityRunId,
+      }),
+    );
+  }
   record('merge/exact-target-version', true, validateEvidenceVersion('0.2.0', '0.2.0'));
   record('merge/target-version-drift', false, validateEvidenceVersion('0.1.0', '0.2.0'));
 }
@@ -1228,6 +1247,13 @@ for (const branch of [
 for (const fixture of cases.watermarks) {
   record(`watermark/${fixture.name}`, fixture.valid, validateWatermarkRecord(fixture.record));
 }
+for (const fixture of cases.validationGroups) {
+  const candidate = clone(validationGroups);
+  if (fixture.mutation === 'duplicate-browser-matrix') {
+    candidate.full.push('test:preview');
+  }
+  record(`validation-groups/${fixture.name}`, fixture.valid, validateValidationGroups(candidate));
+}
 for (const fixture of cases.repository) {
   const candidate = repositoryPolicyCandidate();
   if (fixture.mutation === 'merge-method') candidate.settings.allow_merge_commit = true;
@@ -1277,6 +1303,11 @@ for (const fixture of cases.repository) {
     candidate.workflow = candidate.workflow.replace(
       '      - run: npm run lint\n',
       '      - run: npm run lint\n        continue-on-error: true\n',
+    );
+  if (fixture.mutation === 'candidate-quality-artifact-workflow-drift')
+    candidate.workflow = candidate.workflow.replace(
+      '      - run: npm run test:e2e\n',
+      '      - run: node candidate/forge-browser-artifact.mjs\n',
     );
   if (fixture.mutation === 'candidate-command-in-secret-job')
     candidate.qualifyMediaWorkflow = candidate.qualifyMediaWorkflow.replace(
@@ -1413,5 +1444,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `Validated ${cases.commitSubjects.length + cases.history.length + cases.watermarks.length + cases.repository.length + cases.hostedReleasePublisher.length + cases.deployKeyPagination.length + cases.mainCheckSuites.length + cases.hostedAuthorizationPublisher.length + cases.hostedMediaQualification.length + cases.hostedSecretIsolation.length + cases.adapters.length + 1} governance fixture(s).`,
+  `Validated ${cases.commitSubjects.length + cases.history.length + cases.watermarks.length + cases.validationGroups.length + cases.repository.length + cases.hostedReleasePublisher.length + cases.deployKeyPagination.length + cases.mainCheckSuites.length + cases.hostedAuthorizationPublisher.length + cases.hostedMediaQualification.length + cases.hostedSecretIsolation.length + cases.adapters.length + 1} governance fixture(s).`,
 );

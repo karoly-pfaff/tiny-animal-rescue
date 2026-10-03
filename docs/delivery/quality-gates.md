@@ -288,8 +288,9 @@ and watermark scans, and production build.
 
 `validate:full` is the merge and ordinary epic gate: `validate:quick`, Conventional Commit/history
 and watermark validation, waiver validation, dependency and shipped-license audit, local static
-analysis, production-preview smoke, serialized E2E at the full supported viewport matrix, visual
-regression, and built-artifact inspection.
+analysis, one canonical serialized production-preview E2E run at the full supported viewport matrix,
+visual regression, and built-artifact inspection. `test:preview` and `test:e2e` currently select the
+same non-visual browser matrix and therefore must not both appear in one aggregate or provider job.
 
 `validate:full` remains an automated aggregate. Passing it does not perform or imply the live epic
 product inspection; that separately recorded gate must also pass before an epic or player-visible
@@ -341,10 +342,11 @@ instruction may cover both merge and later tag publication when it unambiguously
 dedicated GitHub App or the authenticated configured owner publishes the required `authorization`
 context only after the shared trusted validation succeeds. The App executes trusted `main` policy on
 a fresh protected-environment runner and never exposes its token to candidate build code. The
-owner-session command reuses that validation from a clean trusted `main` checkout, requires a clean
-exact-head candidate checkout, and supports only inspected work backed by a provider artifact that it
-downloads and verifies internally. Non-inspected work remains hosted-executor-only, so candidate code
-never runs with owner credentials. Neither executor bypasses the strict ruleset. The App's short-lived
+owner-session command reuses that validation from a clean trusted `main` checkout and requires a clean
+exact-head candidate checkout. For inspected work it downloads and verifies the protected media
+qualification. For non-inspected work it downloads the canonical exact-head quality run's browser
+artifact and independently recomputes its digests with trusted `main` policy, without executing
+candidate commands in the owner session. Neither executor bypasses the strict ruleset. The App's short-lived
 token requests the exact read scopes needed for evidence plus commit-status write and the
 contents-write scope required by GitHub's pull-request merge endpoint; it receives no
 administration, environment, deployment, or workflow write scope. The App accepts the seven jobs only

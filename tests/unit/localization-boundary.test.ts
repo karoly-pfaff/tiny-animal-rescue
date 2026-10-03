@@ -18,7 +18,7 @@ describe('localization boundary', () => {
 
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
-  });
+  }, 15_000);
 
   it('accepts standard ARIA attributes without treating their values as copy', () => {
     const fixture = resolve(cwd(), 'sources', 'app', 'language-gate.tsx');

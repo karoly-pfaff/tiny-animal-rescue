@@ -112,15 +112,15 @@ backlog/audit records, check summaries, and the PR conversation. Merge automatio
 unchanged and appends exactly one `Merge-Approval-Comment: #<id>` footer after validating the immutable
 approval record.
 
-After direct owner authorization, the preferred hosted executor is the merge App workflow. If that
-App is unavailable or local operator execution is more appropriate, run `npm run merge:approved` from
-a clean trusted `main` checkout and pass the pull-request, inspection, approval, qualification, and
-candidate-checkout arguments. The candidate checkout must also be clean. The command supports only
-inspected work and downloads and independently verifies its provider qualification; caller-supplied
-evidence JSON is not accepted. Non-inspected work remains hosted-executor-only so candidate build code
-never runs with the owner's GitHub credentials. The command then uses the
-configured owner's GitHub CLI session and constructs the squash payload from validated history. Raw
-`gh pr merge` is forbidden because it can silently omit the approval footer.
+After direct owner authorization, the hosted merge App workflow and `npm run merge:approved` are both
+sanctioned executors. Run the owner-session command from a clean trusted `main` checkout and pass the
+pull-request, inspection, approval, qualification, and candidate-checkout arguments. The candidate
+checkout must also be clean. For inspected work, the command downloads and independently verifies the
+provider qualification. For non-inspected work, it downloads the newest canonical exact-head quality
+run's browser artifact and independently recomputes its artifact and inventory digests with trusted
+`main` policy; it does not execute candidate commands. Caller-supplied evidence JSON is not accepted.
+The command then uses the configured owner's GitHub CLI session and constructs the squash payload from
+validated history. Raw `gh pr merge` is forbidden because it can silently omit the approval footer.
 
 The required `history` job uses trusted provider event data and fails when it cannot query canonical
 PR identity. It resolves epic and declared maintenance branches from backlog metadata and validates
@@ -151,11 +151,12 @@ contract is a one-time bootstrap: before the trusted workflow exists on `main`, 
 gates are presented for explicit user approval and merged under the preceding protection; only then is
 the App/ruleset reconciliation applied. This bootstrap is not reusable for later work items.
 
-The ADR-0016 owner-session executor revalidates the same seven-check trusted run and immutable provider
-records, verifies local `main` equals `origin/main`, authenticates GitHub CLI as the configured owner,
-and publishes the same required authorization status. It has no ruleset bypass. The command verifies
-the returned base parent and candidate tree, and the post-merge `main` history check verifies the exact
-squash body and tree again. This is a normal sanctioned path, not an administrator exception.
+The ADR-0016/ADR-0017 owner-session executor revalidates the same seven-check trusted run and immutable
+provider records, verifies local `main` equals `origin/main`, authenticates GitHub CLI as the
+configured owner, and publishes the same required authorization status. It has no ruleset bypass. The
+command verifies the returned base parent and candidate tree, and the post-merge `main` history check
+verifies the exact squash body and tree again. This is a normal sanctioned path, not an administrator
+exception.
 
 ## Live inspection record
 

@@ -1,43 +1,15 @@
 import { spawn } from 'node:child_process';
 import { npmProcess } from './lib/npm-process.mjs';
-
-const groups = {
-  quick: [
-    'format:check',
-    'lint',
-    'typecheck',
-    'test',
-    'test:content',
-    'test:assets',
-    'test:voice-prompts',
-    'test:a11y',
-    'scan:secrets',
-    'scan:watermarks',
-    'build',
-  ],
-  full: [
-    'validate:quick',
-    'lint:history',
-    'validate:waivers',
-    'audit:dependencies',
-    'audit:licenses',
-    'scan:static',
-    'test:preview',
-    'test:e2e',
-    'test:visual',
-    'test:artifact',
-  ],
-  release: [
-    'validate:full',
-    'test:content:release',
-    'test:assets:materialized',
-    'sbom',
-    'test:artifact',
-  ],
-};
+import { validateValidationGroups, validationGroups } from './lib/validation-groups.mjs';
 
 const groupName = process.argv[2];
-const scripts = groups[groupName];
+const scripts = validationGroups[groupName];
+
+const groupFindings = validateValidationGroups(validationGroups);
+if (groupFindings.length > 0) {
+  console.error(groupFindings.join('\n'));
+  process.exit(1);
+}
 
 if (scripts === undefined) {
   console.error(`Unknown validation group: ${groupName ?? '(missing)'}.`);

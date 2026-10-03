@@ -20,18 +20,22 @@ function validQualityRunIdentity(run, expectation) {
   ].every(Boolean);
 }
 
-export function validateRequiredQualityChecks(checkRuns, expectation, workflowRuns) {
-  const findings = [];
-  const relevant = checkRuns.filter((check) => qualityChecks.includes(check.name));
-  const trustedRuns = workflowRuns
+export function latestTrustedQualityRun(workflowRuns, expectation) {
+  return workflowRuns
     .filter((run) => validQualityRunIdentity(run, expectation))
     .sort(
       (left, right) =>
         left.runNumber - right.runNumber ||
         left.runAttempt - right.runAttempt ||
         left.id - right.id,
-    );
-  const latestRun = trustedRuns.at(-1);
+    )
+    .at(-1);
+}
+
+export function validateRequiredQualityChecks(checkRuns, expectation, workflowRuns) {
+  const findings = [];
+  const relevant = checkRuns.filter((check) => qualityChecks.includes(check.name));
+  const latestRun = latestTrustedQualityRun(workflowRuns, expectation);
   if (
     latestRun === undefined ||
     latestRun.status !== 'completed' ||
@@ -97,6 +101,8 @@ export function validateOwnerEvidenceProvenance({
   source,
   qualificationRunId,
   evidenceQualificationRunId,
+  qualityRunId,
+  evidenceQualityRunId,
 }) {
   if (requiresInspection) {
     return source === 'trusted-qualified-media' &&
@@ -106,7 +112,12 @@ export function validateOwnerEvidenceProvenance({
       ? []
       : ['Owner-session evidence is not a freshly verified provider qualification artifact.'];
   }
-  return ['Owner-session merge is unavailable for non-inspected work.'];
+  return source === 'trusted-quality-artifact' &&
+    Number.isInteger(qualityRunId) &&
+    qualityRunId > 0 &&
+    evidenceQualityRunId === qualityRunId
+    ? []
+    : ['Owner-session evidence is not the exact trusted quality-run artifact.'];
 }
 
 export function validateMergedCommitIdentity({ expectedBaseSha, expectedTreeSha, commit }) {
