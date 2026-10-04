@@ -198,9 +198,21 @@ async function openShelter(
   await page.goto('/');
   await expect(page.locator('main[data-route="start"]')).toBeVisible();
   const localeChoice = page.getByRole('button', { name: locale === 'hu' ? 'Magyar' : 'English' });
+  const readyStart = page.getByRole('button', { name: locale === 'hu' ? 'Játék' : 'Play' });
+  await expect
+    .poll(
+      async () => {
+        const localeChoiceVisible = await localeChoice.isVisible();
+        const startReady = (await readyStart.count()) === 1 && (await readyStart.isEnabled());
+        return localeChoiceVisible || startReady;
+      },
+      { message: 'Wait for locale bootstrap before preparing shelter test state.' },
+    )
+    .toBe(true);
   if (await localeChoice.isVisible()) {
     await localeChoice.click();
     await expect(localeChoice).toBeHidden();
+    await expect(readyStart).toBeEnabled();
   }
   const timestamp = '2026-10-01T00:00:00.000Z';
   await writePrimarySave(page, {
