@@ -12,7 +12,8 @@ story-commit history contract is defined in the
   non-epic patch or contract correction uses `fix/`, `docs/`, `chore/`, `refactor/`, or `test/` and a
   separately scoped backlog item. That item declares its exact branch, target/related version, commit
   type, aggregate gate, release intent, live-inspection requirement, and inspection journeys when
-  applicable so the same history validator can resolve it without an `epic/*` exception. Trusted
+  applicable. A governance PATCH also declares any ADR-0020 workflow policy transition; absence means
+  `none`. The same history validator can then resolve it without an `epic/*` exception. Trusted
   base-branch parser code reads this metadata from the exact read-only candidate checkout; it never
   executes candidate code with authorization credentials.
 - One epic branch owns only that epic. Split independent product, refactor, dependency, and formatting
@@ -87,7 +88,9 @@ only for the latest reviewed commit.
 - There is no generic failed-gate bypass. After two identical failures on one unchanged head, stop
   blind retries and diagnose the gate. A defective enforcement rule is repaired in a separate
   non-player-visible PATCH under ADR-0013; the frozen epic resumes qualification only after that patch
-  lands. Tags are never moved or replaced.
+  lands. An intentional workflow fingerprint change uses ADR-0020's owner-session-only exact
+  transition protocol; it does not waive the old trusted structural validator or any required check.
+  Tags are never moved or replaced.
 
 The checked-in provider configuration and reconciliation procedure are in
 [repository governance](repository-governance.md).

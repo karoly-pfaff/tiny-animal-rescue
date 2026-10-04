@@ -15,7 +15,12 @@ import {
   generateSquashMessage,
   validateHistoryPolicy,
 } from './lib/history-policy.mjs';
-import { tagRevisions, workItemFromBranch } from './lib/history-repository.mjs';
+import {
+  maintenancePolicyTransition,
+  tagRevisions,
+  validateMaintenancePolicyTransitionClass,
+  workItemFromBranch,
+} from './lib/history-repository.mjs';
 import { expectedInspectionBody } from './lib/inspection-policy.mjs';
 import { validateValidationGroups, validationGroups } from './lib/validation-groups.mjs';
 import {
@@ -42,6 +47,13 @@ import {
 } from './lib/repository-policy.mjs';
 import { scanGitHistory } from './lib/secret-policy.mjs';
 import { validateWatermarkRecord } from './lib/watermark-policy.mjs';
+import {
+  policyTransitionDiffArguments,
+  validateWorkflowPolicyTransition,
+  validateWorkflowPolicyTransitionRoute,
+  workflowFingerprintFinding,
+  workflowSemanticFingerprint,
+} from './lib/workflow-policy-transition.mjs';
 
 const readJson = (path) => readFile(path, 'utf8').then(JSON.parse);
 const [
@@ -77,6 +89,7 @@ const [
 ]);
 const clone = (value) => structuredClone(value);
 const failures = [];
+let validatedRecords = 0;
 const approvalTimestamp = '2026-09-22T05:00:00Z';
 
 const fixtureInspectionDetails = {
@@ -383,8 +396,30 @@ function mutateHistory(input, mutation) {
 }
 
 function record(name, valid, findings) {
+  validatedRecords += 1;
   if ((findings.length === 0) !== valid)
     failures.push(`${name}: expected valid=${valid}, got ${findings.join(' | ') || 'valid'}.`);
+}
+
+function maintenanceTransitionClassFindings(fixture) {
+  return validateMaintenancePolicyTransitionClass({
+    id: fixture.id,
+    branch: fixture.branch,
+    aggregateGate: fixture.aggregateGate,
+    publishesRelease: fixture.publishesRelease,
+    requiresInspection: fixture.requiresInspection,
+    policyTransition: fixture.policyTransition,
+  });
+}
+
+function policyTransitionMetadataFindings(content, expected) {
+  try {
+    return maintenancePolicyTransition(content) === expected
+      ? []
+      : [`Policy transition did not resolve to ${expected}.`];
+  } catch (error) {
+    return [error instanceof Error ? error.message : 'Policy transition parsing failed.'];
+  }
 }
 
 function repositoryPolicyCandidate() {
@@ -403,6 +438,80 @@ function repositoryPolicyCandidate() {
     releasePublisher: clone(releasePublisher),
     mediaQualification: clone(mediaQualification),
   };
+}
+
+function workflowPolicySource(workflows, overrides = {}) {
+  const fingerprints = Object.fromEntries(
+    Object.entries(workflows).map(([kind, source]) => [kind, workflowSemanticFingerprint(source)]),
+  );
+  return [
+    'const workflowSemanticFingerprints = {',
+    ...['ci', 'merge', 'publish', 'qualify'].map(
+      (kind) => `  ${kind}: '${overrides[kind] ?? fingerprints[kind]}',`,
+    ),
+    '};',
+  ].join('\n');
+}
+
+function policyTransitionBaseline() {
+  const trustedWorkflows = {
+    ci: workflow,
+    merge: mergeWorkflow,
+    publish: publishWorkflow,
+    qualify: qualifyMediaWorkflow,
+  };
+  const candidateWorkflows = {
+    ...trustedWorkflows,
+    publish: publishWorkflow.replace(
+      'name: publish validated milestone tag',
+      'name: publish reviewed milestone tag',
+    ),
+  };
+  return {
+    transition: 'publish',
+    repositoryFindings: [workflowFingerprintFinding('publish')],
+    changedPaths: [
+      '.github/workflows/publish-tag.yml',
+      'scripts/lib/repository-policy.mjs',
+      'scripts/publish-tag.mjs',
+    ],
+    candidate: {
+      policySource: workflowPolicySource(candidateWorkflows),
+      workflows: candidateWorkflows,
+    },
+    trusted: {
+      policySource: workflowPolicySource(trustedWorkflows),
+      workflows: trustedWorkflows,
+    },
+  };
+}
+
+function mutatePolicyTransition(input, mutation) {
+  const mutations = {
+    none: () => undefined,
+    unsupported: () => (input.transition = 'merge'),
+    'unrelated-finding': () => input.repositoryFindings.push('Repository ruleset drifted.'),
+    'mismatched-fingerprint': () =>
+      (input.candidate.policySource = workflowPolicySource(input.candidate.workflows, {
+        publish: '0'.repeat(64),
+      })),
+    'unchanged-fingerprint': () => {
+      input.candidate.workflows.publish = input.trusted.workflows.publish;
+      input.candidate.policySource = input.trusted.policySource;
+    },
+    'another-workflow': () => input.changedPaths.push('.github/workflows/ci.yml'),
+    'additional-workflow': () => input.changedPaths.push('.github/workflows/extra.yml'),
+    'protected-boundary': () => input.changedPaths.push('scripts/merge-epic.mjs'),
+    'missing-policy-update': () =>
+      (input.changedPaths = input.changedPaths.filter(
+        (path) => path !== 'scripts/lib/repository-policy.mjs',
+      )),
+    'unrelated-fingerprint': () =>
+      (input.candidate.policySource = workflowPolicySource(input.candidate.workflows, {
+        ci: '0'.repeat(64),
+      })),
+  };
+  mutations[mutation]();
 }
 
 async function invalidPolicyMutationFindings() {
@@ -1026,6 +1135,7 @@ for (const fixture of cases.history) {
 for (const branch of [
   'fix/PATCH-001-v0.2.1-asset-evidence-correction',
   'fix/PATCH-002-v0.3.1-release-governance-repair',
+  'fix/PATCH-008-v0.6.2-policy-transition-lane',
 ]) {
   const item = workItemFromBranch(branch);
   for (const mode of ['branch', 'pull-request', 'main']) {
@@ -1037,6 +1147,21 @@ for (const branch of [
     validateHistoryPolicy(maintenanceBaseline(item, 'tag')),
   );
 }
+record(
+  'maintenance/default-policy-transition',
+  true,
+  policyTransitionMetadataFindings('# PATCH fixture', 'none'),
+);
+record(
+  'maintenance/declared-publish-transition',
+  true,
+  policyTransitionMetadataFindings('- Policy transition: `publish`', 'publish'),
+);
+record(
+  'maintenance/unsupported-policy-transition',
+  false,
+  policyTransitionMetadataFindings('- Policy transition: `merge`', 'merge'),
+);
 {
   const baseSha = '1'.repeat(40);
   const headSha = '2'.repeat(40);
@@ -1413,6 +1538,37 @@ for (const fixture of cases.repository) {
     candidate.inspectionPolicy.requiredViewports = ['1024x768'];
   record(`repository/${fixture.name}`, fixture.valid, validateRepositoryPolicy(candidate));
 }
+for (const fixture of cases.policyTransitions) {
+  const input = policyTransitionBaseline();
+  mutatePolicyTransition(input, fixture.mutation);
+  record(
+    `policy-transition/${fixture.name}`,
+    fixture.valid,
+    validateWorkflowPolicyTransition(input),
+  );
+}
+for (const fixture of cases.policyTransitionRoutes) {
+  record(
+    `policy-transition-route/${fixture.name}`,
+    fixture.valid,
+    validateWorkflowPolicyTransitionRoute(fixture),
+  );
+}
+for (const fixture of cases.maintenancePolicyTransitions) {
+  record(
+    `maintenance-policy-transition/${fixture.name}`,
+    fixture.valid,
+    maintenanceTransitionClassFindings(fixture),
+  );
+}
+record(
+  'policy-transition/diff-includes-deletions',
+  true,
+  policyTransitionDiffArguments('a'.repeat(40)).join(' ') ===
+    `diff --name-only ${'a'.repeat(40)}..HEAD`
+    ? []
+    : ['Policy transition diff filters out Git change classes.'],
+);
 record(
   'repository/invalid-policy-causes-zero-provider-mutations',
   true,
@@ -1468,6 +1624,4 @@ if (failures.length > 0) {
   console.error(failures.join('\n'));
   process.exit(1);
 }
-console.log(
-  `Validated ${cases.commitSubjects.length + cases.history.length + cases.watermarks.length + cases.validationGroups.length + cases.repository.length + cases.hostedReleasePublisher.length + cases.deployKeyPagination.length + cases.mainCheckSuites.length + cases.hostedAuthorizationPublisher.length + cases.hostedMediaQualification.length + cases.hostedSecretIsolation.length + cases.adapters.length + 1} governance fixture(s).`,
-);
+console.log(`Validated ${validatedRecords} governance fixture(s).`);

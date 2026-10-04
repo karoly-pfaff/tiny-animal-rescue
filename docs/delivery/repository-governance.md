@@ -158,6 +158,15 @@ command verifies the returned base parent and candidate tree, and the post-merge
 verifies the exact squash body and tree again. This is a normal sanctioned path, not an administrator
 exception.
 
+ADR-0020 provides the narrow repair path for an intentional workflow fingerprint change. A
+non-player-visible maintenance PATCH declares `Policy transition: publish` and must use the
+owner-session executor; the hosted executor remains exact-fingerprint-only. Trusted `main` accepts
+only the declared workflow's fingerprint finding, proves that no other workflow or protected
+merge/credential boundary changed, and recomputes the successor fingerprint from normalized candidate
+YAML without executing candidate code. All ordinary exact-head checks, independent audit, approval,
+strict-base, artifact, squash, and tag rules still apply. This is a bounded successor-policy
+transition, not a reusable failed-gate bypass.
+
 ## Live inspection record
 
 The inspection comment has an exact ordered schema. The merge and tag paths fetch this comment from

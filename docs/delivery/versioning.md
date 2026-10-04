@@ -104,7 +104,8 @@ breaking even when a field becomes "more optional."
 - A non-player-visible governance PATCH explicitly declares that classification in its backlog item.
   It does not fabricate ADR-0012 evidence: merge and tag publication bind clean rebuilt artifact and
   asset-inventory digests instead. Every epic and player-visible patch still requires the retained
-  media qualification and live inspection.
+  media qualification and live inspection. An intentional workflow fingerprint change also declares
+  ADR-0020's exact policy transition and uses its owner-session-only trusted-base validation.
 - Tag preparation consumes the exact retained media-qualified artifact named for the inspected head
   and both digests, proves its trusted workflow/receipt identity, validates the squash message/tree,
   and waits for the newest canonical exact-squash `main` workflow run. Tag-triggered CI downloads and

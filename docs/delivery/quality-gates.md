@@ -373,6 +373,11 @@ A tool/config/schema/CI change that alters what is checked receives the same tes
 audit as production code. It must include a failing fixture or other proof that the gate detects its
 target defect.
 
+An intentional semantic workflow change additionally follows ADR-0020. Trusted `main` must identify
+the exact declared workflow transition, retain every old structural finding as a blocker, freeze the
+merge and credential boundary, and recompute the successor fingerprint from normalized candidate
+YAML. The transition is owner-session-only and never converts a failing quality job into a pass.
+
 Final qualification begins only after the candidate commits, version/release metadata, audit
 dispositions, and deterministic PR crosswalk are complete. Evidence is attached outside the Git tree.
 Two identical failures of an unchanged hosted step end blind retries. If the gate is defective, use

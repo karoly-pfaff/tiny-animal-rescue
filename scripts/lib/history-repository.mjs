@@ -50,6 +50,26 @@ function yesNoMetadata(content, label, name) {
   return value === 'yes';
 }
 
+export function maintenancePolicyTransition(content, name = 'maintenance item') {
+  const value = metadata(content, 'Policy transition') ?? 'none';
+  if (!['none', 'publish'].includes(value)) {
+    throw new Error(`${name}: Policy transition is not supported.`);
+  }
+  return value;
+}
+
+export function validateMaintenancePolicyTransitionClass(input) {
+  if (input.policyTransition === 'none') return [];
+  const valid = [
+    input.id.startsWith('PATCH-'),
+    input.branch.startsWith('fix/'),
+    input.aggregateGate === 'validate:full',
+    input.publishesRelease === true,
+    input.requiresInspection === false,
+  ].every(Boolean);
+  return valid ? [] : ['Workflow policy transition requires a non-player-visible release PATCH.'];
+}
+
 function maintenanceDefaults(id) {
   return id.startsWith('PATCH-')
     ? {
@@ -78,6 +98,7 @@ function maintenanceMetadata(content, name) {
     publishesRelease: yesNoMetadata(content, 'Publishes release', name),
     requiresInspection: yesNoMetadata(content, 'Requires live inspection', name),
     inspectionJourneys: listMetadata(content, 'Inspection journeys'),
+    policyTransition: maintenancePolicyTransition(content, name),
   };
   const complete = [
     values.heading !== undefined,
@@ -100,7 +121,15 @@ function assertMaintenancePolicy(values, branch, name) {
       values.requiresInspection === defaults.requiresInspection,
     values.requiresInspection === values.inspectionJourneys.length > 0,
   ].every(Boolean);
-  if (!valid) {
+  const transitionFindings = validateMaintenancePolicyTransitionClass({
+    id: values.heading.id,
+    branch,
+    aggregateGate: values.aggregateGate,
+    publishesRelease: values.publishesRelease,
+    requiresInspection: values.requiresInspection,
+    policyTransition: values.policyTransition,
+  });
+  if (!valid || transitionFindings.length > 0) {
     throw new Error(
       `${name}: maintenance policy differs from the fail-closed ${values.heading.id} class.`,
     );
@@ -163,6 +192,7 @@ function loadMaintenance(branch, root) {
     publishesRelease: values.publishesRelease,
     requiresInspection: values.requiresInspection,
     inspectionJourneys: values.inspectionJourneys,
+    policyTransition: values.policyTransition,
     stories: [values.heading.id],
   };
 }
