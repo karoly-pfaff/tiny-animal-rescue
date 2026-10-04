@@ -6,6 +6,7 @@ import {
   shelterAreaRecords,
   type ContentRecordKind,
 } from './content-record-kind';
+import { normalizeAnimalShelterSlots } from './content-shelter-slot-normalizer';
 import { orderPacksByDependencies } from './pack-dependency-order';
 import type { PackManifest } from './pack-contract';
 import type {
@@ -13,6 +14,7 @@ import type {
   AssetMetadata,
   LocalizationDocument,
   LocationRecord,
+  NormalizedAnimalRecord,
   ShelterAreaRecord,
 } from './world-content-contracts';
 
@@ -38,7 +40,7 @@ export type ContentPackSource = PackManifest &
 export type ContentRegistry = Readonly<{
   packOrder: readonly string[];
   packs: Readonly<Record<string, ContentPackSource>>;
-  animals: Readonly<Record<string, AnimalRecord>>;
+  animals: Readonly<Record<string, NormalizedAnimalRecord>>;
   assets: Readonly<Record<string, AssetMetadata>>;
   locations: Readonly<Record<string, LocationRecord>>;
   missions: Readonly<Record<string, MissionRecord>>;
@@ -50,21 +52,32 @@ export function assembleContentRegistry(sources: readonly ContentPackSource[]): 
   const orderedSources = orderPacksByDependencies(sources);
   const sourcesById = Object.fromEntries(sources.map((source) => [source.id, source]));
   rejectDuplicateGlobalIds(orderedSources);
+  const recordOwners = {
+    animals: indexOwners(orderedSources, animalRecords),
+    assets: indexOwners(orderedSources, assetRecords),
+    locations: indexOwners(orderedSources, locationRecords),
+    missions: indexOwners(orderedSources, missionRecords),
+    shelterAreas: indexOwners(orderedSources, shelterAreaRecords),
+  };
+  const shelterAreas = indexRecords(orderedSources.flatMap(({ records }) => records.shelterAreas));
+  const animals = normalizeAnimalShelterSlots(
+    orderedSources.flatMap(({ records }) => records.animals),
+    {
+      animalOwners: recordOwners.animals,
+      contentPacks: new Map(Object.entries(sourcesById)),
+      shelterAreaOwners: recordOwners.shelterAreas,
+      shelterAreas,
+    },
+  );
   return freezeClone({
     packOrder: orderedSources.map(({ id }) => id),
     packs: sourcesById,
-    animals: indexRecords(orderedSources.flatMap(({ records }) => records.animals)),
+    animals: indexRecords(animals),
     assets: indexRecords(orderedSources.flatMap(({ records }) => records.assets)),
     locations: indexRecords(orderedSources.flatMap(({ records }) => records.locations)),
     missions: indexRecords(orderedSources.flatMap(({ records }) => records.missions)),
-    recordOwners: {
-      animals: indexOwners(orderedSources, animalRecords),
-      assets: indexOwners(orderedSources, assetRecords),
-      locations: indexOwners(orderedSources, locationRecords),
-      missions: indexOwners(orderedSources, missionRecords),
-      shelterAreas: indexOwners(orderedSources, shelterAreaRecords),
-    },
-    shelterAreas: indexRecords(orderedSources.flatMap(({ records }) => records.shelterAreas)),
+    recordOwners,
+    shelterAreas,
   });
 }
 

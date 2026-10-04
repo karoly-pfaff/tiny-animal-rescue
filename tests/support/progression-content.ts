@@ -89,8 +89,10 @@ function animalFrom(
   source: AnimalRecord,
   identity: Readonly<{ id: string; shelterAreaId: string; species: string }>,
 ): AnimalRecord {
+  const sourceWithoutShelterSlot = { ...source };
+  Reflect.deleteProperty(sourceWithoutShelterSlot, 'shelterSlot');
   return {
-    ...source,
+    ...sourceWithoutShelterSlot,
     ...identity,
     assets: { ...source.assets, portrait: residentSubjectObjectKey },
   };

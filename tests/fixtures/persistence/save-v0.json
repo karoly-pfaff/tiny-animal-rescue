@@ -1,0 +1,7 @@
+{
+  "completedMissionIds": ["garden-kitten-tree"],
+  "locale": "en",
+  "schemaVersion": 0,
+  "unlockedResidentIds": ["mimi-kitten"],
+  "worldFlags": ["mimi-rescued"]
+}

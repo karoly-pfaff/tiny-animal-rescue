@@ -5,7 +5,11 @@ import {
   type ContentPackSource,
 } from '../../sources/content/content-registry';
 import { normalizePackManifest } from '../../sources/content/pack-contract';
-import type { LocationRecord } from '../../sources/content/world-content-contracts';
+import type {
+  AnimalRecord,
+  LocationRecord,
+  ShelterAreaRecord,
+} from '../../sources/content/world-content-contracts';
 
 describe('content registry assembly', () => {
   it('orders packs deterministically after their dependencies', () => {
@@ -33,7 +37,7 @@ describe('content registry assembly', () => {
     ).toThrow(/base pack cannot depend/u);
   });
 
-  it('rejects duplicate pack and global record IDs', () => {
+  it('rejects duplicate pack IDs and global record IDs', () => {
     expect(() => assembleContentRegistry([packSource('base'), packSource('base')])).toThrow(
       /Duplicate pack ID: base/u,
     );
@@ -43,6 +47,21 @@ describe('content registry assembly', () => {
         packSource('winter-rescue', ['base'], 'shared-id'),
       ]),
     ).toThrow(/Duplicate global content ID shared-id/u);
+  });
+
+  it('rejects a record ID reused by another record kind', () => {
+    const base = packSource('base', [], 'garden');
+    expect(() =>
+      assembleContentRegistry([
+        {
+          ...base,
+          records: {
+            ...base.records,
+            shelterAreas: [shelterArea('garden')],
+          },
+        },
+      ]),
+    ).toThrow(/Duplicate global content ID garden/u);
   });
 
   it('accepts prototype-named pack IDs and resolves them as dependencies', () => {
@@ -66,6 +85,34 @@ describe('content registry assembly', () => {
     expect(Object.isFrozen(location?.assets)).toBe(true);
     expect(Reflect.set(location?.assets ?? {}, 'mapBackground', 'changed.png')).toBe(false);
     expect(registry.locations['garden']?.assets.mapBackground).toBe('images/map/garden.png');
+  });
+
+  it('normalizes omitted shelter slots after reserving authored positions', () => {
+    const base = packSource('base');
+    const registry = assembleContentRegistry([
+      {
+        ...base,
+        records: {
+          ...base.records,
+          animals: [
+            animal('resident-zebra'),
+            animal('resident-fixed', 1),
+            animal('resident-alpha'),
+          ],
+          shelterAreas: [shelterArea('indoor-room')],
+        },
+      },
+    ]);
+
+    expect(
+      Object.fromEntries(
+        Object.values(registry.animals).map(({ id, shelterSlot }) => [id, shelterSlot]),
+      ),
+    ).toEqual({
+      'resident-alpha': 2,
+      'resident-fixed': 1,
+      'resident-zebra': 3,
+    });
   });
 });
 
@@ -110,5 +157,34 @@ function location(id: string): LocationRecord {
       mapBackground: `images/map/${id}.png`,
       missionBackground: `images/missions/${id}.png`,
     },
+  };
+}
+
+function shelterArea(id: string): ShelterAreaRecord {
+  return {
+    id,
+    assets: { background: `images/shelter/${id}.png` },
+    capacity: 4,
+    nameKey: `shelter-area.${id}.name`,
+  };
+}
+
+function animal(id: string, shelterSlot?: number): AnimalRecord {
+  return {
+    id,
+    assets: {
+      happy: `images/residents/${id}/happy.png`,
+      idle: `images/residents/${id}/idle.png`,
+      portrait: `images/residents/${id}/portrait.png`,
+    },
+    nameKey: `animal.${id}.name`,
+    shelterAreaId: 'indoor-room',
+    ...(shelterSlot === undefined ? {} : { shelterSlot }),
+    shelterLocalization: {
+      happyKey: `animal.${id}.shelter.happy`,
+      tapLabelKey: `animal.${id}.shelter.tap-label`,
+    },
+    shelterReactions: ['greet'],
+    species: 'fixture-animal',
   };
 }

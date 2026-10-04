@@ -123,11 +123,13 @@ function createReactInteractionBridge<Step extends MissionStep>(
 ): ReactInteractionBridge {
   let connected = true;
   let activeIdentity: symbol | null = null;
+  let nextRevision = 0;
   const mount = (step: MissionStep, emit: (event: MissionInteractionEvent) => void) => {
     const ownedStep = requiredOwnedStep(steps, step.id);
     const identity = Symbol(step.id);
     let paused = false;
-    let revision = 0;
+    let revision = nextRevision;
+    nextRevision += 1;
     let started = false;
     let disposed = false;
     const complete = () => {

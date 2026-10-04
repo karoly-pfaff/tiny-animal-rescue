@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createIndexedDbSaveGameRepository } from '../../sources/persistence/save-game-repository';
+import {
+  createIndexedDbSaveGameRepository,
+  createMemorySaveGameRepository,
+} from '../../sources/persistence/save-game-repository';
 import { createEmptySave } from '../../sources/persistence/save-game-schema';
 import { createIndexedDbHarness } from './support/indexed-db-harness';
 
@@ -18,7 +21,7 @@ describe('IndexedDB save game repository', () => {
       save: { locale: 'en', schemaVersion: 1 },
       status: 'ready',
     });
-    const saved = await repository.update('en', (current) => ({
+    const saved = await repository.transaction('en', (current) => ({
       ...current,
       completedMissionIds: ['garden-kitten-tree'],
       unlockedResidentIds: ['mimi-kitten'],
@@ -42,14 +45,14 @@ describe('IndexedDB save game repository', () => {
     const repository = createIndexedDbSaveGameRepository(harness.factory, () => secondTimestamp);
 
     await expect(repository.load('hu')).resolves.toEqual({ save: initial, status: 'ready' });
-    const saved = await repository.update('en', (current) => current);
+    const saved = await repository.transaction('en', (current) => current);
 
     expect(saved.createdAt).toBe(firstTimestamp);
     expect(saved.updatedAt).toBe(secondTimestamp);
     expect(saved.locale).toBe('en');
   });
 
-  it('quarantines corrupt data atomically on the next successful write', async () => {
+  it('preserves corrupt data until explicit recovery archives it', async () => {
     const corrupt = { damaged: true, schemaVersion: 1 };
     const harness = createIndexedDbHarness({
       records: {
@@ -59,15 +62,96 @@ describe('IndexedDB save game repository', () => {
     });
     const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
 
-    await expect(repository.load('hu')).resolves.toMatchObject({
-      save: { completedMissionIds: [] },
-      status: 'recovered-corrupt',
+    await expect(repository.load('hu')).resolves.toEqual({
+      save: null,
+      status: 'corrupt',
     });
-    const saved = await repository.update('hu', (current) => current);
+    expect(harness.getValue(primaryStoreName, 'primary')).toEqual(corrupt);
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+    await expect(repository.transaction('hu', (current) => current)).rejects.toThrow(
+      'explicit recovery choice',
+    );
+
+    const saved = await repository.recover('hu');
 
     expect(harness.getStoreValues(recoveryStoreName)).toEqual([corrupt]);
     expect(harness.getValue(primaryStoreName, 'primary')).toEqual(saved);
+    expect(saved).toMatchObject({
+      completedMissionIds: [],
+      unlockedResidentIds: [],
+      worldFlags: [],
+    });
   });
+
+  it('treats a present undefined record as corrupt instead of missing', async () => {
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: undefined },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+
+    await expect(repository.load('hu')).resolves.toEqual({ save: null, status: 'corrupt' });
+    expect(harness.getValue(primaryStoreName, 'primary')).toBeUndefined();
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+  });
+
+  it('recovers a structured-clone binary corrupt record without object identity', async () => {
+    const corrupt = new Uint8Array([1, 2, 3]).buffer;
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: corrupt },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+
+    await expect(repository.load('hu')).resolves.toEqual({ save: null, status: 'corrupt' });
+    await expect(repository.recover('hu')).resolves.toMatchObject({ schemaVersion: 1 });
+
+    const archived = harness.getStoreValues(recoveryStoreName);
+    expect(archived).toHaveLength(1);
+    expect(new Uint8Array(archived[0] as ArrayBuffer)).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it('refuses stale recovery after another writer installs a future save', async () => {
+    const corrupt = { damaged: true, schemaVersion: 1 };
+    const future = { schemaVersion: 2 };
+    const harness = createIndexedDbHarness({
+      records: {
+        [primaryStoreName]: { primary: corrupt },
+        [recoveryStoreName]: {},
+      },
+    });
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+    await repository.load('hu');
+    harness.setValue(primaryStoreName, 'primary', future);
+
+    await expect(repository.recover('hu')).rejects.toThrow('changed before recovery');
+    expect(harness.getValue(primaryStoreName, 'primary')).toEqual(future);
+    expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+  });
+
+  it.each(['transaction', 'abort'] as const)(
+    'rolls back corrupt recovery after an IndexedDB %s failure',
+    async (failureMode) => {
+      const corrupt = { damaged: true, schemaVersion: 1 };
+      const harness = createIndexedDbHarness({
+        failureMode,
+        records: {
+          [primaryStoreName]: { primary: corrupt },
+          [recoveryStoreName]: {},
+        },
+      });
+      const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+      await repository.load('hu');
+
+      await expect(repository.recover('hu')).rejects.toBeTruthy();
+      expect(harness.getValue(primaryStoreName, 'primary')).toEqual(corrupt);
+      expect(harness.getStoreValues(recoveryStoreName)).toEqual([]);
+    },
+  );
 
   it('migrates version zero and refuses to overwrite a future version', async () => {
     const versionZero = {
@@ -104,8 +188,17 @@ describe('IndexedDB save game repository', () => {
       save: null,
       status: 'unsupported-version',
     });
-    await expect(futureRepository.update('hu', (current) => current)).rejects.toThrow(
+    await expect(futureRepository.transaction('hu', (current) => current)).rejects.toThrow(
       'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.replace(createEmptySave('hu', firstTimestamp))).rejects.toThrow(
+      'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.reset('hu')).rejects.toThrow(
+      'A newer save version cannot be overwritten.',
+    );
+    await expect(futureRepository.recover('hu')).rejects.toThrow(
+      'No corrupt save is awaiting recovery.',
     );
     expect(futureHarness.getValue(primaryStoreName, 'primary')).toEqual(future);
   });
@@ -114,7 +207,7 @@ describe('IndexedDB save game repository', () => {
     const repository = createIndexedDbSaveGameRepository(undefined, () => firstTimestamp);
 
     await expect(repository.load('hu')).rejects.toThrow('IndexedDB is unavailable.');
-    await expect(repository.update('hu', (current) => current)).rejects.toThrow(
+    await expect(repository.transaction('hu', (current) => current)).rejects.toThrow(
       'IndexedDB is unavailable.',
     );
   });
@@ -131,7 +224,7 @@ describe('IndexedDB save game repository', () => {
     const repository = createIndexedDbSaveGameRepository(harness.factory, () => secondTimestamp);
 
     await expect(repository.load('hu')).rejects.toBeTruthy();
-    await expect(repository.update('hu', (current) => current)).rejects.toThrow(
+    await expect(repository.transaction('hu', (current) => current)).rejects.toThrow(
       'Save data must load successfully before it can be updated.',
     );
     expect(harness.getValue(primaryStoreName, 'primary')).toEqual(initial);
@@ -145,11 +238,117 @@ describe('IndexedDB save game repository', () => {
       const operation =
         failureMode === 'open' || failureMode === 'get'
           ? repository.load('hu')
-          : repository.load('hu').then(() => repository.update('hu', (current) => current));
+          : repository.load('hu').then(() => repository.transaction('hu', (current) => current));
 
       await expect(operation).rejects.toBeTruthy();
       const expectedCloseCount = failureMode === 'open' ? 0 : failureMode === 'get' ? 1 : 2;
       expect(harness.getCloseCount()).toBe(expectedCloseCount);
     },
   );
+});
+
+describe('save game repository contract', () => {
+  it('replaces and resets an IndexedDB save', async () => {
+    const harness = createIndexedDbHarness();
+    const repository = createIndexedDbSaveGameRepository(harness.factory, () => firstTimestamp);
+    await repository.load('hu');
+    const replacement = {
+      ...createEmptySave('en', secondTimestamp),
+      completedMissionIds: ['garden-kitten-tree'],
+    };
+
+    await expect(repository.replace(replacement)).resolves.toEqual(replacement);
+    await expect(repository.reset('hu')).resolves.toEqual(createEmptySave('hu', firstTimestamp));
+    expect(harness.getValue(primaryStoreName, 'primary')).toEqual(
+      createEmptySave('hu', firstTimestamp),
+    );
+  });
+
+  it('provides a deterministic in-memory implementation', async () => {
+    const timestamps = [firstTimestamp, secondTimestamp, secondTimestamp];
+    const repository = createMemorySaveGameRepository(null, () => timestamps.shift() ?? 'late');
+
+    await expect(repository.load('en')).resolves.toEqual({
+      save: createEmptySave('en', firstTimestamp),
+      status: 'ready',
+    });
+    await expect(
+      repository.transaction('en', (save) => ({
+        ...save,
+        completedMissionIds: ['garden-kitten-tree'],
+      })),
+    ).resolves.toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+      updatedAt: secondTimestamp,
+    });
+    await expect(repository.reset('hu')).resolves.toEqual(createEmptySave('hu', secondTimestamp));
+  });
+
+  it.each(['transaction', 'abort'] as const)(
+    'keeps the prior save when full reset is interrupted by an IndexedDB %s',
+    async (failureMode) => {
+      const existing = {
+        ...createEmptySave('en', firstTimestamp),
+        completedMissionIds: ['garden-kitten-tree'],
+      };
+      const harness = createIndexedDbHarness({
+        records: { [primaryStoreName]: { primary: existing } },
+      });
+      const repository = createIndexedDbSaveGameRepository(harness.factory, () => secondTimestamp);
+      await repository.load('en');
+      harness.setFailureMode(failureMode);
+
+      await expect(repository.reset('en')).rejects.toBeTruthy();
+      expect(harness.getValue(primaryStoreName, 'primary')).toEqual(existing);
+    },
+  );
+
+  it('serializes concurrent transactions against the latest snapshot', async () => {
+    const repository = createMemorySaveGameRepository(null, () => firstTimestamp);
+    await repository.load('hu');
+
+    const first = repository.transaction('hu', (save) => ({
+      ...save,
+      completedMissionIds: [...save.completedMissionIds, 'first'],
+    }));
+    const second = repository.transaction('hu', (save) => ({
+      ...save,
+      completedMissionIds: [...save.completedMissionIds, 'second'],
+    }));
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      expect.objectContaining({ completedMissionIds: ['first'] }),
+      expect.objectContaining({ completedMissionIds: ['first', 'second'] }),
+    ]);
+    await expect(repository.load('hu')).resolves.toMatchObject({
+      save: { completedMissionIds: ['first', 'second'] },
+    });
+  });
+
+  it('orders state-mutating loads with transactions', async () => {
+    const repository = createMemorySaveGameRepository(null, () => firstTimestamp);
+    await repository.load('hu');
+
+    const transaction = repository.transaction('hu', (save) => ({
+      ...save,
+      completedMissionIds: ['garden-kitten-tree'],
+    }));
+    const reload = repository.load('hu');
+
+    await expect(transaction).resolves.toMatchObject({
+      completedMissionIds: ['garden-kitten-tree'],
+    });
+    await expect(reload).resolves.toMatchObject({
+      save: { completedMissionIds: ['garden-kitten-tree'] },
+    });
+  });
+
+  it('requires a successful load before any write operation', async () => {
+    const repository = createMemorySaveGameRepository(null, () => firstTimestamp);
+    const replacement = createEmptySave('hu', firstTimestamp);
+
+    await expect(repository.replace(replacement)).rejects.toThrow('must load successfully');
+    await expect(repository.recover('hu')).rejects.toThrow('No corrupt save');
+    await expect(repository.reset('hu')).rejects.toThrow('must load successfully');
+  });
 });

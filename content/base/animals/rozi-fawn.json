@@ -1,0 +1,17 @@
+{
+  "id": "rozi-fawn",
+  "species": "fawn",
+  "nameKey": "animal.rozi-fawn.name",
+  "shelterAreaId": "shelter-garden",
+  "shelterSlot": 4,
+  "shelterLocalization": {
+    "happyKey": "animal.rozi-fawn.shelter.happy",
+    "tapLabelKey": "animal.rozi-fawn.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/rozi/canonical.png",
+    "idle": "images/residents/rozi/shelter-idle.png",
+    "happy": "images/residents/rozi/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

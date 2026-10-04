@@ -1,10 +1,11 @@
-type ShelterReactionId = 'greet' | 'pet' | 'feed' | 'play';
+export type ShelterReactionId = 'greet' | 'pet' | 'feed' | 'play';
 
 export type AnimalRecord = Readonly<{
   id: string;
   species: string;
   nameKey: string;
   shelterAreaId: string;
+  shelterSlot?: number;
   shelterLocalization: Readonly<{
     happyKey: string;
     tapLabelKey: string;
@@ -18,6 +19,9 @@ export type AnimalRecord = Readonly<{
   }>;
   shelterReactions: readonly ShelterReactionId[];
 }>;
+
+export type NormalizedAnimalRecord = Omit<AnimalRecord, 'shelterSlot'> &
+  Readonly<{ shelterSlot: number }>;
 
 export type LocationRecord = Readonly<{
   id: string;
@@ -52,6 +56,7 @@ export type ShelterAreaRecord = Readonly<{
   id: string;
   nameKey: string;
   capacity: number;
+  navigationOrder?: number;
   mapLabelKey?: string;
   mapPresentation?: MapLandmarkPresentation;
   assets: Readonly<{

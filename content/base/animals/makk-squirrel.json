@@ -1,0 +1,17 @@
+{
+  "id": "makk-squirrel",
+  "species": "squirrel",
+  "nameKey": "animal.makk-squirrel.name",
+  "shelterAreaId": "shelter-garden",
+  "shelterSlot": 2,
+  "shelterLocalization": {
+    "happyKey": "animal.makk-squirrel.shelter.happy",
+    "tapLabelKey": "animal.makk-squirrel.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/makk/canonical.png",
+    "idle": "images/residents/makk/shelter-idle.png",
+    "happy": "images/residents/makk/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

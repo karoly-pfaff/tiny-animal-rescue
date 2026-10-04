@@ -7,22 +7,35 @@ import { testFirstRescueContent } from '../support/first-rescue-content';
 
 function renderMission(
   overrides: {
+    initialCompletedStepIds?: readonly string[];
     locale?: 'en' | 'hu';
     onCelebrate?: () => void;
     onCommitReward?: () => Promise<void>;
+    onCommitStep?: (stepId: string) => Promise<void>;
     onExit?: () => void;
   } = {},
 ) {
   const props = {
     content: testFirstRescueContent,
     effectService: { play: vi.fn() },
+    initialCompletedStepIds: overrides.initialCompletedStepIds ?? [],
     locale: overrides.locale ?? ('en' as const),
     narrationService: { speak: vi.fn(), stop: vi.fn() },
     onCelebrate: overrides.onCelebrate ?? vi.fn(),
     onCommitReward: overrides.onCommitReward ?? vi.fn(() => Promise.resolve()),
+    onCommitStep: overrides.onCommitStep ?? vi.fn(() => Promise.resolve()),
     onExit: overrides.onExit ?? vi.fn(),
   };
   return { ...render(<FirstMissionScreen {...props} />), props };
+}
+
+async function completeLadder(): Promise<void> {
+  fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
+    detail: 0,
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
 }
 
 afterEach(() => {
@@ -102,6 +115,76 @@ describe('FirstMissionScreen protected exit', () => {
 });
 
 describe('FirstMissionScreen rescue completion', () => {
+  it('resumes at the first incomplete step without replaying the checkpointed ladder', () => {
+    renderMission({ initialCompletedStepIds: ['place-ladder'] });
+
+    expect(screen.queryByRole('button', { name: 'Move the ladder to the tree!' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
+    expect(document.querySelector('.drag-interaction')).toHaveAttribute('data-phase', 'placed');
+  });
+
+  it('remounts the ladder and advances when checkpoint persistence succeeds on retry', async () => {
+    const onCommitStep = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('write failed'))
+      .mockResolvedValueOnce();
+    renderMission({ onCommitStep });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
+      detail: 0,
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const retry = screen.getByRole('button', { name: 'Move the ladder to the tree!' });
+    expect(onCommitStep).toHaveBeenCalledOnce();
+    expect(retry).toBeEnabled();
+    expect(retry).toHaveAttribute('data-phase', 'idle');
+    expect(screen.getByRole('alert')).toHaveTextContent('The rescue could not be saved yet');
+    expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).toBeNull();
+
+    fireEvent.click(retry, { detail: 0 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(onCommitStep).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
+  });
+
+  it('applies a checkpoint that resolves while hidden after the mission resumes', async () => {
+    let hidden = false;
+    let finishCommit: () => void = () => undefined;
+    vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const onCommitStep = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishCommit = resolve;
+        }),
+    );
+    renderMission({ onCommitStep });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
+      detail: 0,
+    });
+    hidden = true;
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    finishCommit();
+    await act(async () => Promise.resolve());
+
+    expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).toBeNull();
+    hidden = false;
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('button', { name: 'Tap Mimi!' })).toBeEnabled();
+  });
+
   it('narrates the first required action without overlap and stops narration on exit', () => {
     const { props, unmount } = renderMission({ locale: 'hu' });
 
@@ -167,9 +250,7 @@ describe('FirstMissionScreen rescue completion', () => {
     const { props } = renderMission({ onCelebrate, onCommitReward });
 
     expect(screen.queryByRole('button', { name: 'Tap Mimi!' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
-      detail: 0,
-    });
+    await completeLadder();
     expect(
       screen.queryByRole('button', { name: 'Move the ladder to the tree!' }),
     ).not.toBeInTheDocument();
@@ -209,6 +290,46 @@ describe('FirstMissionScreen rescue completion', () => {
     expect(onCelebrate).toHaveBeenCalledOnce();
   });
 
+  it('finishes a reward that resolves while hidden after the mission resumes', async () => {
+    vi.useFakeTimers();
+    let hidden = false;
+    let finishCommit: () => void = () => undefined;
+    vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const onCommitReward = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishCommit = resolve;
+        }),
+    );
+    const onCelebrate = vi.fn();
+    renderMission({ onCelebrate, onCommitReward });
+
+    await completeLadder();
+    fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
+    hidden = true;
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    finishCommit();
+    await act(async () => {
+      vi.advanceTimersByTime(650);
+      await Promise.resolve();
+    });
+
+    expect(onCelebrate).not.toHaveBeenCalled();
+    expect(document.querySelector('.mission-kitten-rescue')).toHaveAttribute(
+      'data-phase',
+      'saving',
+    );
+    hidden = false;
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    expect(onCelebrate).toHaveBeenCalledOnce();
+  });
+
   it('does not navigate or update state after unmount during reward persistence', async () => {
     vi.useFakeTimers();
     let finishCommit: () => void = () => undefined;
@@ -221,9 +342,7 @@ describe('FirstMissionScreen rescue completion', () => {
     const onCelebrate = vi.fn();
     const { unmount } = renderMission({ onCelebrate, onCommitReward });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
-      detail: 0,
-    });
+    await completeLadder();
     fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     unmount();
     finishCommit();
@@ -243,18 +362,18 @@ describe('FirstMissionScreen rescue completion', () => {
         <FirstMissionScreen
           content={testFirstRescueContent}
           effectService={{ play: vi.fn() }}
+          initialCompletedStepIds={[]}
           locale="en"
           narrationService={{ speak: vi.fn(), stop: vi.fn() }}
           onCelebrate={onCelebrate}
           onCommitReward={() => Promise.resolve()}
+          onCommitStep={() => Promise.resolve()}
           onExit={vi.fn()}
         />
       </StrictMode>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
-      detail: 0,
-    });
+    await completeLadder();
     fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     await act(async () => {
       vi.advanceTimersByTime(650);
@@ -270,9 +389,7 @@ describe('FirstMissionScreen rescue completion', () => {
     const onCelebrate = vi.fn();
     renderMission({ onCelebrate, onCommitReward });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move the ladder to the tree!' }), {
-      detail: 0,
-    });
+    await completeLadder();
     fireEvent.click(screen.getByRole('button', { name: 'Tap Mimi!' }));
     await act(async () => {
       await Promise.resolve();

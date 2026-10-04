@@ -1,0 +1,17 @@
+{
+  "id": "csipi-bird",
+  "species": "small-bird",
+  "nameKey": "animal.csipi-bird.name",
+  "shelterAreaId": "indoor-room",
+  "shelterSlot": 4,
+  "shelterLocalization": {
+    "happyKey": "animal.csipi-bird.shelter.happy",
+    "tapLabelKey": "animal.csipi-bird.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/csipi/canonical.png",
+    "idle": "images/residents/csipi/shelter-idle.png",
+    "happy": "images/residents/csipi/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "pet", "play"]
+}

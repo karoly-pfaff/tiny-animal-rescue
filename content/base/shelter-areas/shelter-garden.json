@@ -1,0 +1,9 @@
+{
+  "id": "shelter-garden",
+  "nameKey": "shelter-area.garden.name",
+  "capacity": 4,
+  "navigationOrder": 1,
+  "assets": {
+    "background": "images/shelter/garden.png"
+  }
+}

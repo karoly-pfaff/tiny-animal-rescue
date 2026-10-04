@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 describe('content-driven first Rescue runtime', () => {
-  it('uses declared step order, prompts, identifiers, cues, hint delay, and snap tolerance', () => {
+  it('uses declared step order, prompts, identifiers, cues, hint delay, and snap tolerance', async () => {
     vi.useFakeTimers();
     const content = customizedContent();
     const play = vi.fn();
@@ -34,10 +34,12 @@ describe('content-driven first Rescue runtime', () => {
       <FirstMissionScreen
         content={content}
         effectService={{ play }}
+        initialCompletedStepIds={[]}
         locale="en"
         narrationService={{ speak, stop: vi.fn() }}
         onCelebrate={vi.fn()}
         onCommitReward={() => Promise.resolve()}
+        onCommitStep={() => Promise.resolve()}
         onExit={vi.fn()}
       />,
     );
@@ -68,6 +70,9 @@ describe('content-driven first Rescue runtime', () => {
     expect(interaction).toHaveAttribute('data-guidance', 'true');
 
     fireEvent.click(ladder, { detail: 0 });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(play).toHaveBeenCalledWith('effects.progress.step-complete');
     const subject = screen.getByRole('button', { name: 'Tap the fixture subject!' });
     expect(subject).toHaveAttribute('data-step-id', 'fixture-tap');
@@ -98,17 +103,19 @@ describe('content-driven first Rescue runtime', () => {
     expect(play).toHaveBeenCalledTimes(2);
   });
 
-  it('retains escalated tolerance for an active attempt and treats movement as activity', () => {
+  it('retains escalated tolerance for an active attempt and treats movement as activity', async () => {
     vi.useFakeTimers();
     const content = customizedContent();
     render(
       <FirstMissionScreen
         content={content}
         effectService={{ play: vi.fn() }}
+        initialCompletedStepIds={[]}
         locale="en"
         narrationService={{ speak: vi.fn(), stop: vi.fn() }}
         onCelebrate={vi.fn()}
         onCommitReward={() => Promise.resolve()}
+        onCommitStep={() => Promise.resolve()}
         onExit={vi.fn()}
       />,
     );
@@ -152,6 +159,9 @@ describe('content-driven first Rescue runtime', () => {
     });
     expect(interaction).toHaveAttribute('data-guidance-stage', 'idle');
     fireEvent.pointerUp(ladder, { clientX: 215, clientY: 363, pointerId: 2 });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(ladder).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tap the fixture subject!' })).toBeEnabled();
@@ -219,14 +229,27 @@ describe('content-driven first Rescue runtime', () => {
       unlockedResidentIds: [content.animal.id],
       worldFlags: [],
     };
+    const narrationService = { speak: vi.fn(), stop: vi.fn() };
     const shelter = render(
-      <ShelterScreen content={content} locale="en" onMap={vi.fn()} progress={progress} />,
+      <ShelterScreen
+        content={content}
+        locale="en"
+        narrationService={narrationService}
+        onMap={vi.fn()}
+        progress={progress}
+      />,
     );
     const englishResident = screen.getByRole('button', { name: 'Give Poppy a gentle pat' });
     fireEvent.click(englishResident);
     expect(screen.getByText('Poppy purrs happily.')).toBeVisible();
     shelter.rerender(
-      <ShelterScreen content={content} locale="hu" onMap={vi.fn()} progress={progress} />,
+      <ShelterScreen
+        content={content}
+        locale="hu"
+        narrationService={narrationService}
+        onMap={vi.fn()}
+        progress={progress}
+      />,
     );
     const hungarianResident = screen.getByRole('button', { name: 'Simogasd meg Poppyt' });
     fireEvent.click(hungarianResident);

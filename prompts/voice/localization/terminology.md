@@ -11,7 +11,7 @@
 | farm           | Farm                      | Farm                    |
 | pond           | Tó                        | Pond                    |
 | indoor room    | Belső szoba               | Indoor Room             |
-| shelter garden | Menhelykert               | Shelter Garden          |
+| shelter garden | Kert                      | Garden                  |
 | pondside       | Tópart                    | Pondside                |
 | tap            | koppints                  | tap                     |
 | drag           | húzd                      | drag                    |

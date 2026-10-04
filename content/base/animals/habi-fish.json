@@ -1,0 +1,17 @@
+{
+  "id": "habi-fish",
+  "species": "fish",
+  "nameKey": "animal.habi-fish.name",
+  "shelterAreaId": "pondside",
+  "shelterSlot": 4,
+  "shelterLocalization": {
+    "happyKey": "animal.habi-fish.shelter.happy",
+    "tapLabelKey": "animal.habi-fish.shelter.tap-label"
+  },
+  "assets": {
+    "portrait": "images/residents/habi/canonical.png",
+    "idle": "images/residents/habi/shelter-idle.png",
+    "happy": "images/residents/habi/shelter-happy.png"
+  },
+  "shelterReactions": ["greet", "feed", "play"]
+}

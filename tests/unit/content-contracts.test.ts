@@ -58,6 +58,7 @@ const expectedAnimal = {
   species: 'kitten',
   nameKey: 'animal.mimi-kitten.name',
   shelterAreaId: 'indoor-room',
+  shelterSlot: 1,
   shelterLocalization: {
     happyKey: 'animal.mimi-kitten.shelter.happy',
     tapLabelKey: 'animal.mimi-kitten.shelter.tap-label',
@@ -268,6 +269,22 @@ describe('content contracts', () => {
     for (const [schema, invalid] of cases) {
       expect(validate(schema, invalid)).toBe(false);
     }
+  });
+
+  it('allows expansion capacity and requires a non-negative navigation order', () => {
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, capacity: 5 })).toBe(true);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, capacity: 13 })).toBe(false);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, navigationOrder: -1 })).toBe(false);
+    expect(validate(shelterAreaSchema, { ...shelterAreaExample, navigationOrder: 0 })).toBe(true);
+  });
+
+  it('accepts an omitted compatibility slot and structurally validates positive authored slots', () => {
+    const withoutSlot = { ...animalExample };
+    Reflect.deleteProperty(withoutSlot, 'shelterSlot');
+    expect(validate(animalSchema, withoutSlot)).toBe(true);
+    expect(validate(animalSchema, { ...animalExample, shelterSlot: 0 })).toBe(false);
+    expect(validate(animalSchema, { ...animalExample, shelterSlot: 1 })).toBe(true);
+    expect(validate(animalSchema, { ...animalExample, shelterSlot: 13 })).toBe(true);
   });
 
   it('rejects invalid values from every enum family', () => {

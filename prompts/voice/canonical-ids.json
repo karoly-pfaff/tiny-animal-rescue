@@ -15,7 +15,7 @@
     "lets-go"
   ],
   "locations": ["garden", "forest", "farm", "pond"],
-  "shelterAreas": ["indoor-room", "garden", "pondside"],
+  "shelterAreas": ["indoor-room", "shelter-garden", "pondside"],
   "hints": [
     { "interaction": "tap", "levels": ["primary", "stronger"] },
     { "interaction": "drag", "levels": ["primary", "stronger"] },
