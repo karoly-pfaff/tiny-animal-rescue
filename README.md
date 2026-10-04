@@ -85,10 +85,10 @@ Implement one end-to-end vertical slice before generalizing. The first slice is 
 ## Status
 
 - Specification baseline: **v0.1.0** (document revision, not a shipped product version)
-- Latest tag at the PATCH-006 candidate freeze: **v0.5.0** (EPIC-004 / M4)
+- Latest published tag: **v0.5.0** (EPIC-004 / M4)
 - Awaiting authorized publication in order: **v0.6.0** (EPIC-005 / M5), **v0.6.1**
-  (PATCH-006), then **v0.6.2** (PATCH-008)
-- Current unpublished candidate version: **v0.6.2** (PATCH-008)
+  (PATCH-006), **v0.6.2** (PATCH-008), then **v0.6.3** (PATCH-007)
+- Current unpublished candidate version: **v0.6.3** (PATCH-007)
 - Next milestone release: **v0.7.0** (EPIC-006 / M6)
 - Target product release: **v1.0.0**
 

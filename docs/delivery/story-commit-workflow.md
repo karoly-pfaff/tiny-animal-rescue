@@ -204,8 +204,11 @@ none` and binds a clean rebuilt artifact instead;
     digests, materialize a distinct tag-approval record tied to the squash SHA and both digests when
     the direct owner instruction covers publication, then use
     the protected tag-publication workflow's environment-scoped deploy key to re-download and
-    independently verify the exact retained qualified artifact, or rebuild and compare the artifact
-    for a non-inspected PATCH, then create the tag. Verify its remote
+    independently verify the exact retained qualified artifact, or consume and compare the exact
+    target artifact rebuilt in a separate credential-free job for a non-inspected PATCH. Current
+    trusted policy may target an older merged
+    squash only under ADR-0019's ancestry, exact-checkout, and release-order rules. Then create the
+    tag and verify its remote
     identity and tag-triggered checks before deleting the epic branch.
 
 Interactive merge-message editing is forbidden. Repository settings allow squash merge only; merge

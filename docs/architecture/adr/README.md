@@ -22,6 +22,7 @@ ADRs are binding unless superseded. Implementation tasks must cite relevant ADRs
 | [ADR-0016](ADR-0016-owner-session-merge-execution.md)              | Support exact owner-session merge execution              | Accepted   |
 | [ADR-0017](ADR-0017-non-inspected-owner-session-merge.md)          | Support non-inspected owner-session merge                | Accepted   |
 | [ADR-0018](ADR-0018-single-pass-browser-performance-gate.md)       | Use a single-pass repeatable browser performance gate    | Accepted   |
+| [ADR-0019](ADR-0019-historical-release-tag-publication.md)         | Publish historical release tags from current policy      | Accepted   |
 | [ADR-0020](ADR-0020-reviewed-workflow-policy-transitions.md)       | Admit reviewed workflow policy transitions               | Accepted   |
 
 ## ADR format

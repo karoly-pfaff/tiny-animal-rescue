@@ -356,13 +356,15 @@ status or conclusion; that newest run itself must be completed and successful, a
 check must be tied to its check-suite ID. A newer pending or failed canonical run therefore blocks an
 older success, and same-name jobs from another candidate workflow do not count. Thus the seven quality
 jobs alone cannot permit a merge through either sanctioned executor.
-Protected `v*` tags reject
-direct creation, update, and deletion. Only creation has the
-dedicated release-deploy-key bypass; update and deletion have no bypass. The tag workflow exposes the
-key only in a second environment-scoped job after unprivileged validation binds the squash SHA,
-artifact
-digest, and asset-inventory digest. Governance fixtures reject absent, stale,
-wrong-user, wrong-head, wrong-PR, failed, incomplete, and unbound inspection or approval evidence.
+Protected `v*` tags reject direct creation, update, and deletion. Only creation has the dedicated
+release-deploy-key bypass; update and deletion have no bypass. The tag workflow exposes the key only
+in a second environment-scoped job after unprivileged current-`main` policy validates and binds the
+exact target squash SHA, artifact digest, and asset-inventory digest. ADR-0019 permits a historical
+ancestor squash only through a separate exact target checkout, a credential-free candidate build,
+and ordering in which the target parent version is the latest stable tag; the release-key job runs no
+candidate repository script. Governance fixtures reject
+absent, stale, wrong-user, wrong-head, wrong-PR, non-ancestor, out-of-order, failed, incomplete, and
+unbound inspection or approval evidence.
 
 CI retains machine-readable test and coverage reports plus failure artifacts. An epic release records
 the successful run URL or equivalent local evidence from a clean checkout.

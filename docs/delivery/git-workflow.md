@@ -125,14 +125,15 @@ runs only from protected `main` and must:
    `vX.Y.Z` tag does not already exist;
 7. prove the exact squash has the approved candidate tree, verify either the immutable
    media-qualified build/receipt or the non-inspected PATCH rebuild as applicable, and wait for the
-   complete canonical exact-squash `main` workflow run
-   before creating a tag specification;
+   complete canonical exact-squash `main` workflow run; when publishing a missed historical tag,
+   additionally prove the target is an exact ancestor checkout of live protected `main` and that the
+   target parent version's tag is the latest stable release before creating a tag specification;
 8. generate and lint release notes and the proposed annotated-tag message including the inspection
    identity or explicit `none`, artifact digest, and asset-inventory digest, then materialize a
    distinct exact-target tag-approval record when the owner's direct instruction covers publication;
 9. after that authorization record exists, dispatch the protected tag-publication workflow; its
-   unprivileged job validates the exact squash and qualified artifact before the environment-scoped
-   publishing job can obtain the sole write
+   credential-free build job and separate trusted validation job qualify the exact squash and
+   artifact before the environment-scoped publishing job can obtain the sole write
    deploy key, which may create but cannot update or delete `v*` tags; then verify the remote annotated
    tag identity and tag-triggered checks, including independent revalidation of the retained
    qualification artifact or rebuilt non-inspected artifact evidence.

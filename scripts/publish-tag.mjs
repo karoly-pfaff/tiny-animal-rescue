@@ -1,7 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { approvalRecordFromGithub } from './lib/approval-policy.mjs';
 import { createGithubHistoryClient, deriveMainEvidence } from './lib/github-history.mjs';
-import { commitsBetween, git } from './lib/history-repository.mjs';
+import { commitsBetween, git, isAncestor } from './lib/history-repository.mjs';
 import { mergeApprovalCommentIdFromBody, validateHistoryPolicy } from './lib/history-policy.mjs';
 import { inspectionRecordFromGithub } from './lib/inspection-policy.mjs';
 import {
@@ -10,6 +11,15 @@ import {
   verifyQualifiedMedia,
 } from './lib/media-qualification.mjs';
 import { validateRequiredQualityChecks } from './lib/merge-policy.mjs';
+import {
+  releasePredecessorTag,
+  remoteTagHistoryDigest,
+  remoteTagNames,
+  validatePolicyAuthority,
+  validateTagSequence,
+  validateTagTargetAncestry,
+  validateTagTargetCheckout,
+} from './lib/tag-publication-policy.mjs';
 import { requiredEnvironment, requiredWorkflowArguments } from './lib/workflow-input.mjs';
 
 function releaseMessage(input, tag) {
@@ -39,10 +49,10 @@ function optionalArgument(name) {
   return value === undefined || value.length === 0 ? undefined : value;
 }
 
-async function releaseFiles() {
+async function releaseFiles(candidate) {
   const [product, pack, approvalPolicy, inspectionPolicy] = await Promise.all([
-    readFile('package.json', 'utf8').then(JSON.parse),
-    readFile('content/base/pack.json', 'utf8').then(JSON.parse),
+    readFile(path.join(candidate, 'package.json'), 'utf8').then(JSON.parse),
+    readFile(path.join(candidate, 'content/base/pack.json'), 'utf8').then(JSON.parse),
     readFile('deploy/github/approval-policy.json', 'utf8').then(JSON.parse),
     readFile('deploy/github/inspection-policy.json', 'utf8').then(JSON.parse),
   ]);
@@ -54,10 +64,15 @@ async function releaseFiles() {
   };
 }
 
-async function qualifiedReleaseMetadata(qualification, expectedHeadSha, expectedPolicySha) {
-  const files = await releaseFiles();
+async function qualifiedReleaseMetadata(
+  candidate,
+  qualification,
+  expectedHeadSha,
+  expectedPolicySha,
+) {
+  const files = await releaseFiles(candidate);
   const evidence = await verifyQualifiedMedia({
-    source: '.',
+    source: candidate,
     qualification,
     expectedHeadSha,
     expectedPolicySha,
@@ -66,12 +81,12 @@ async function qualifiedReleaseMetadata(qualification, expectedHeadSha, expected
   return { ...files, ...evidence };
 }
 
-async function rebuiltReleaseMetadata(evidencePath, expectedHeadSha) {
+async function rebuiltReleaseMetadata(candidate, evidencePath, expectedHeadSha) {
   const [files, evidence, version, inventoryDigest] = await Promise.all([
-    releaseFiles(),
+    releaseFiles(candidate),
     readFile(evidencePath, 'utf8').then(JSON.parse),
-    candidateVersion('.'),
-    assetInventoryDigest('.'),
+    candidateVersion(candidate),
+    assetInventoryDigest(candidate),
   ]);
   if (
     evidence.headSha !== expectedHeadSha ||
@@ -90,18 +105,40 @@ const { pullNumber, inspectionCommentId, approvalCommentId } = requiredWorkflowA
 );
 const repository = requiredEnvironment('GITHUB_REPOSITORY');
 const token = requiredEnvironment('GITHUB_TOKEN');
+const workflowRef = requiredEnvironment('GITHUB_REF');
+const workflowSha = requiredEnvironment('GITHUB_SHA');
+const candidate = requiredArgument('--candidate');
 const qualification = optionalArgument('--qualification');
 const evidencePath = requiredArgument('--evidence');
 const qualificationRun = Number(optionalArgument('--qualification-run'));
 const { github, pullRequestInput, trustedQualityChecksForCommit } = createGithubHistoryClient(
   repository,
   token,
+  { workItemRoot: candidate },
 );
-const pullRequest = await github(`/pulls/${pullNumber}`);
+const [pullRequest, mainReference] = await Promise.all([
+  github(`/pulls/${pullNumber}`),
+  github('/git/ref/heads/main'),
+]);
 if (pullRequest.merged !== true || pullRequest.merge_commit_sha === null)
   throw new Error('Tag publication accepts only a merged canonical pull request.');
-if (git(['rev-parse', 'HEAD']) !== pullRequest.merge_commit_sha)
-  throw new Error('Workflow checkout does not match the merged squash SHA.');
+const policySha = git(['rev-parse', 'HEAD']);
+const candidateSha = git(['-C', candidate, 'rev-parse', 'HEAD']);
+const targetFindings = [
+  ...validatePolicyAuthority({
+    workflowRef,
+    workflowSha,
+    policySha,
+    protectedMainSha: mainReference.object.sha,
+  }),
+  ...validateTagTargetAncestry({
+    targetSha: pullRequest.merge_commit_sha,
+    policySha,
+    targetIsAncestor: isAncestor(pullRequest.merge_commit_sha, policySha),
+  }),
+  ...validateTagTargetCheckout({ targetSha: pullRequest.merge_commit_sha, candidateSha }),
+];
+if (targetFindings.length > 0) throw new Error(targetFindings.join('\n'));
 const qualificationPolicySha = git(['rev-parse', `${pullRequest.merge_commit_sha}^`]);
 const input = await pullRequestInput(pullRequest, 'tag');
 const requiresInspection = input.item.requiresInspection;
@@ -120,8 +157,13 @@ const [approval, inspection, metadata] = await Promise.all([
         inspectionRecordFromGithub(comment, { github, repository }),
       ),
   requiresInspection
-    ? qualifiedReleaseMetadata(qualification, pullRequest.head.sha, qualificationPolicySha)
-    : rebuiltReleaseMetadata(evidencePath, pullRequest.merge_commit_sha),
+    ? qualifiedReleaseMetadata(
+        candidate,
+        qualification,
+        pullRequest.head.sha,
+        qualificationPolicySha,
+      )
+    : rebuiltReleaseMetadata(candidate, evidencePath, pullRequest.merge_commit_sha),
 ]);
 if (
   requiresInspection &&
@@ -166,6 +208,10 @@ mainFindings.push(
 if (mainFindings.length > 0) throw new Error(mainFindings.join('\n'));
 
 const tagName = `v${metadata.version}`;
+const parentVersion = JSON.parse(
+  git(['show', `${pullRequest.merge_commit_sha}^:package.json`]),
+).version;
+const predecessorTag = releasePredecessorTag({ tagName, parentVersion });
 input.tag = {
   annotated: true,
   name: tagName,
@@ -197,12 +243,21 @@ input.tag.message = releaseMessage(input, input.tag);
 const findings = validateHistoryPolicy(input);
 if (findings.length > 0) throw new Error(findings.join('\n'));
 
-const remoteReference = git(['ls-remote', '--tags', 'origin', `refs/tags/${tagName}`]);
-if (remoteReference.length > 0) throw new Error(`Release tag ${tagName} already exists.`);
+const remoteTagOutput = git(['ls-remote', '--refs', '--tags', 'origin', 'refs/tags/v*']);
+const remoteTags = remoteTagNames(remoteTagOutput);
+const sequenceFindings = validateTagSequence({ tagName, predecessorTag, existingTags: remoteTags });
+if (sequenceFindings.length > 0) throw new Error(sequenceFindings.join('\n'));
+if (predecessorTag === undefined) throw new Error('Release tag has no supported predecessor.');
 await mkdir('build/release-tag', { recursive: true });
 await Promise.all([
   writeFile('build/release-tag/tag-name.txt', `${tagName}\n`),
   writeFile('build/release-tag/tag-sha.txt', `${input.tag.squashSha}\n`),
+  writeFile('build/release-tag/policy-sha.txt', `${policySha}\n`),
+  writeFile('build/release-tag/predecessor-tag.txt', `${predecessorTag ?? 'none'}\n`),
+  writeFile(
+    'build/release-tag/tag-history-digest.txt',
+    `${remoteTagHistoryDigest(remoteTagOutput)}\n`,
+  ),
   writeFile('build/release-tag/tag-message.txt', `${input.tag.message}\n`),
 ]);
 console.log(`Prepared approved annotated tag ${tagName} at ${input.tag.squashSha}.`);
