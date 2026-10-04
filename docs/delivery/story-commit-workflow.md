@@ -256,7 +256,7 @@ EPIC-000 adds one validator with explicit, fixture-tested modes; no mode silentl
 
 - `branch` mode is offline, takes an explicit base ref, resolves the epic or maintenance item from its
   declared branch, and validates the local commit range, story/maintenance coverage, closure count,
-  Conventional Commits, and textual watermark patterns;
+  Conventional Commits, policy-transition metadata, and textual watermark patterns;
 - `pull-request` mode receives trusted provider event data, title/body, base/head SHAs, and PR identity;
   it performs branch checks, validates the deterministic squash inputs and story map, and queries PR
   history to require one canonical PR per exact work-item branch while allowing that same PR to be

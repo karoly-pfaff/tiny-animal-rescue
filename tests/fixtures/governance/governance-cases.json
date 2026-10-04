@@ -319,6 +319,100 @@
       "valid": false
     }
   ],
+  "policyTransitions": [
+    { "name": "exact reviewed publish transition", "mutation": "none", "valid": true },
+    { "name": "unsupported transition kind", "mutation": "unsupported", "valid": false },
+    { "name": "unrelated trusted finding", "mutation": "unrelated-finding", "valid": false },
+    {
+      "name": "candidate fingerprint mismatch",
+      "mutation": "mismatched-fingerprint",
+      "valid": false
+    },
+    { "name": "workflow did not transition", "mutation": "unchanged-fingerprint", "valid": false },
+    {
+      "name": "another protected workflow changed",
+      "mutation": "another-workflow",
+      "valid": false
+    },
+    { "name": "additional workflow added", "mutation": "additional-workflow", "valid": false },
+    { "name": "merge boundary drifted", "mutation": "protected-boundary", "valid": false },
+    { "name": "deleted unrelated workflow", "mutation": "another-workflow", "valid": false },
+    { "name": "deleted protected boundary", "mutation": "protected-boundary", "valid": false },
+    {
+      "name": "fingerprint definition was not updated",
+      "mutation": "missing-policy-update",
+      "valid": false
+    },
+    { "name": "unrelated fingerprint changed", "mutation": "unrelated-fingerprint", "valid": false }
+  ],
+  "policyTransitionRoutes": [
+    {
+      "name": "ordinary hosted candidate",
+      "ownerSession": false,
+      "transition": "none",
+      "valid": true
+    },
+    {
+      "name": "ordinary owner candidate",
+      "ownerSession": true,
+      "transition": "none",
+      "valid": true
+    },
+    {
+      "name": "transition owner candidate",
+      "ownerSession": true,
+      "transition": "publish",
+      "valid": true
+    },
+    {
+      "name": "transition hosted candidate",
+      "ownerSession": false,
+      "transition": "publish",
+      "valid": false
+    }
+  ],
+  "maintenancePolicyTransitions": [
+    {
+      "name": "non-player-visible release patch",
+      "id": "PATCH-042",
+      "branch": "fix/PATCH-042-policy-transition",
+      "aggregateGate": "validate:full",
+      "publishesRelease": true,
+      "requiresInspection": false,
+      "policyTransition": "publish",
+      "valid": true
+    },
+    {
+      "name": "documentation item",
+      "id": "DOC-042",
+      "branch": "docs/DOC-042-policy-transition",
+      "aggregateGate": "validate:quick",
+      "publishesRelease": false,
+      "requiresInspection": false,
+      "policyTransition": "publish",
+      "valid": false
+    },
+    {
+      "name": "player-visible patch",
+      "id": "PATCH-042",
+      "branch": "fix/PATCH-042-policy-transition",
+      "aggregateGate": "validate:full",
+      "publishesRelease": true,
+      "requiresInspection": true,
+      "policyTransition": "publish",
+      "valid": false
+    },
+    {
+      "name": "non-release patch",
+      "id": "PATCH-042",
+      "branch": "fix/PATCH-042-policy-transition",
+      "aggregateGate": "validate:full",
+      "publishesRelease": false,
+      "requiresInspection": false,
+      "policyTransition": "publish",
+      "valid": false
+    }
+  ],
   "hostedReleasePublisher": [
     { "name": "dedicated hosted release identity", "mutation": "none", "valid": true },
     { "name": "second write deploy key", "mutation": "extra-key", "valid": false },

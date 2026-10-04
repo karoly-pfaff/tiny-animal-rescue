@@ -19,6 +19,7 @@ import {
   validateRequiredQualityChecks,
 } from './lib/merge-policy.mjs';
 import { requiredEnvironment, requiredWorkflowArguments } from './lib/workflow-input.mjs';
+import { validateWorkflowPolicyTransitionRoute } from './lib/workflow-policy-transition.mjs';
 
 function requiredArgument(name) {
   const index = process.argv.indexOf(name);
@@ -46,12 +47,12 @@ function checkedCommand(command, arguments_, cwd) {
   }
 }
 
-function validateOwnerCandidatePolicy(candidateRoot, trustedRoot) {
-  checkedCommand(
-    process.execPath,
-    [resolve(trustedRoot, 'scripts/validate-repository-policy.mjs')],
-    candidateRoot,
-  );
+function validateOwnerCandidatePolicy(candidateRoot, trustedRoot, policyTransition) {
+  const arguments_ = [resolve(trustedRoot, 'scripts/validate-repository-policy.mjs')];
+  if (policyTransition !== 'none') {
+    arguments_.push('--policy-transition', policyTransition, '--trusted-root', trustedRoot);
+  }
+  checkedCommand(process.execPath, arguments_, candidateRoot);
 }
 
 function prepareQualifiedOwnerEvidence({
@@ -248,8 +249,16 @@ try {
   const candidateSha = git(['-C', candidateRoot, 'rev-parse', 'HEAD']);
   const candidateStatus = git(['-C', candidateRoot, 'status', '--porcelain']);
   if (candidateStatus !== '') throw new Error('Candidate checkout contains uncommitted changes.');
-  if (ownerSession) validateOwnerCandidatePolicy(candidateRoot, process.cwd());
   const currentHistory = await pullRequestInput(pullRequest, 'pull-request');
+  const policyTransition = currentHistory.item.policyTransition ?? 'none';
+  const transitionRouteFindings = validateWorkflowPolicyTransitionRoute({
+    ownerSession,
+    transition: policyTransition,
+  });
+  if (transitionRouteFindings.length > 0) throw new Error(transitionRouteFindings.join('\n'));
+  if (ownerSession) {
+    validateOwnerCandidatePolicy(candidateRoot, process.cwd(), policyTransition);
+  }
   if (currentHistory.headSha !== currentHistory.pullRequest.headSha)
     throw new Error('Canonical pull-request head identity is inconsistent.');
   if (git(['rev-parse', 'HEAD']) !== git(['rev-parse', 'origin/main']))
