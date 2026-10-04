@@ -88,4 +88,5 @@ Post-release corrections use separately scoped records rather than being hidden 
 - [PATCH-004: Support non-inspected owner-session merge](maintenance/PATCH-004-v0.4.1-owner-session-non-inspected.md)
 - [PATCH-005: Stabilize trace canvas rendering performance](maintenance/PATCH-005-v0.4.3-trace-canvas-performance.md)
 - [PATCH-006: Stabilize release qualification](maintenance/PATCH-006-v0.6.1-release-qualification-stability.md)
+- [PATCH-007: Support historical release tag publication](maintenance/PATCH-007-v0.6.2-historical-tag-publication.md)
 - [PATCH-008: Admit reviewed workflow policy transitions](maintenance/PATCH-008-v0.6.2-policy-transition-lane.md)

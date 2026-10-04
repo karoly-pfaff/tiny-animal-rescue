@@ -46,6 +46,14 @@ import {
   validateRepositoryPolicy,
 } from './lib/repository-policy.mjs';
 import { scanGitHistory } from './lib/secret-policy.mjs';
+import {
+  releasePredecessorTag,
+  remoteTagHistoryDigest,
+  validatePolicyAuthority,
+  validateTagSequence,
+  validateTagTargetAncestry,
+  validateTagTargetCheckout,
+} from './lib/tag-publication-policy.mjs';
 import { validateWatermarkRecord } from './lib/watermark-policy.mjs';
 import {
   policyTransitionDiffArguments,
@@ -1534,6 +1542,38 @@ for (const fixture of cases.repository) {
       '      - run: >-\n          node scripts/publish-tag.mjs',
       `      - uses: actions/checkout@v7\n        with:\n          ssh-key: \${{ secrets.${releasePublisher.secretName} }}\n      - run: >-\n          node scripts/publish-tag.mjs`,
     );
+  if (fixture.mutation === 'missing-tag-target-resolver')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      'node scripts/resolve-tag-target.mjs',
+      'node scripts/resolve-release.mjs',
+    );
+  if (fixture.mutation === 'wrong-tag-target-checkout')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      'ref: ${{ needs.resolve.outputs.squash_sha }}',
+      'ref: refs/heads/main',
+    );
+  if (fixture.mutation === 'candidate-command-in-tag-validation')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      '      - name: verify trusted checkouts remained clean',
+      '      - run: npm run build\n        working-directory: candidate\n      - name: verify trusted checkouts remained clean',
+    );
+  if (fixture.mutation === 'tag-publication-cancels-pending')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      'cancel-in-progress: false',
+      'cancel-in-progress: true',
+    );
+  if (fixture.mutation === 'tag-publication-single-pending')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace('  queue: max\n', '');
+  if (fixture.mutation === 'missing-tag-history-recheck')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      '          test "$current_tag_history_digest" = "$tag_history_digest"\n',
+      '',
+    );
+  if (fixture.mutation === 'candidate-command-in-release-key-job')
+    candidate.publishWorkflow = candidate.publishWorkflow.replace(
+      '      - name: publish immutable annotated tag',
+      '      - run: npm run build\n      - name: publish immutable annotated tag',
+    );
   if (fixture.mutation === 'incomplete-inspection-viewports')
     candidate.inspectionPolicy.requiredViewports = ['1024x768'];
   record(`repository/${fixture.name}`, fixture.valid, validateRepositoryPolicy(candidate));
@@ -1616,6 +1656,38 @@ for (const fixture of cases.hostedSecretIsolation) {
     await hostedSecretIsolationFindings(fixture),
   );
 }
+for (const fixture of cases.tagPublicationTargets) {
+  record(`tag-publication-target/${fixture.name}`, fixture.valid, [
+    ...validatePolicyAuthority(fixture),
+    ...validateTagTargetAncestry(fixture),
+    ...validateTagTargetCheckout(fixture),
+  ]);
+}
+for (const fixture of cases.tagSequences) {
+  record(
+    `tag-sequence/${fixture.name}`,
+    fixture.valid,
+    validateTagSequence({
+      ...fixture,
+      predecessorTag: releasePredecessorTag(fixture),
+    }),
+  );
+}
+record(
+  'tag-history/digest-normalizes-order',
+  true,
+  remoteTagHistoryDigest('b refs/tags/v0.2.0\na refs/tags/v0.1.0') ===
+    remoteTagHistoryDigest('a refs/tags/v0.1.0\nb refs/tags/v0.2.0')
+    ? []
+    : ['Tag-history digest depends on provider response order.'],
+);
+record(
+  'tag-history/digest-detects-ref-change',
+  false,
+  remoteTagHistoryDigest('a refs/tags/v0.1.0') === remoteTagHistoryDigest('b refs/tags/v0.1.0')
+    ? []
+    : ['Tag-history digest detects a changed immutable ref.'],
+);
 for (const fixture of cases.adapters) {
   record(`adapter/${fixture.name}`, fixture.valid, await adapterFindings(fixture));
 }

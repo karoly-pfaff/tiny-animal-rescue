@@ -14,7 +14,7 @@ const requiredChecks = [...qualityChecks, 'authorization'];
 const workflowSemanticFingerprints = {
   ci: 'c81c8694a0cd34bcd5e2dcb176bc6759e545a868a158638687097e4bd5bf655d',
   merge: '555acbd0057d23f5b7f7b71f6633d0fee03cd6c49bd6060bfd8afc24c8e098e8',
-  publish: '71c83b2e98b41819123b84088091e1de2fefa044f3cbe165a738993430334398',
+  publish: '5ffe18c3f43ecb0a71e13617ac0a8e73f2850ba27ee604a718c173b27cd2023f',
   qualify: 'd6c977bab240d9c7a62871d881eef5c54194436ba3669ee47a60a8cf8411bc95',
 };
 
@@ -371,8 +371,8 @@ function validateReleasePublisherPolicy(policy) {
   return findings;
 }
 
-function validatePublishWorkflow(workflow, releasePublisher) {
-  const findings = validateWorkflowSemantics(workflow, 'publish');
+function validateTagWorkflowInputs(workflow) {
+  const findings = [];
   for (const input of [
     'pull_request:',
     'inspection_comment:',
@@ -384,6 +384,11 @@ function validatePublishWorkflow(workflow, releasePublisher) {
   }
   if (!workflow.includes('node scripts/publish-tag.mjs'))
     findings.push('Tag workflow must publish through the repository approval policy.');
+  return findings;
+}
+
+function validateTagWorkflowPermissions(workflow, releasePublisher) {
+  const findings = [];
   const hasReadPermissions = [
     /^\s{2}contents: read$/mu.test(workflow),
     /^\s{2}issues: read$/mu.test(workflow),
@@ -398,15 +403,123 @@ function validatePublishWorkflow(workflow, releasePublisher) {
     findings.push('Tag workflow must use the protected release publication environment.');
   if (!workflow.includes(`ssh-key: \${{ secrets.${releasePublisher.secretName} }}`))
     findings.push('Tag workflow must use the environment-scoped release deploy key.');
-  const validationEnd = workflow.indexOf('  publish:');
+  return findings;
+}
+
+function missingWorkflowRequirements(section, requirements, label) {
+  return requirements
+    .filter((requirement) => !section.includes(requirement))
+    .map((requirement) => `${label}: ${requirement}.`);
+}
+
+function validateHistoricalTagCheckout(resolveSection, buildSection, validationSection) {
+  const findings = [];
+  findings.push(
+    ...missingWorkflowRequirements(
+      resolveSection,
+      [
+        'path: policy',
+        'ref: ${{ github.sha }}',
+        'node scripts/resolve-tag-target.mjs',
+        'squash_sha: ${{ steps.target.outputs.squash_sha }}',
+      ],
+      'Tag workflow is missing current-policy resolver boundary',
+    ),
+  );
+  findings.push(
+    ...missingWorkflowRequirements(
+      buildSection,
+      [
+        'needs: resolve',
+        'path: candidate',
+        'ref: ${{ needs.resolve.outputs.squash_sha }}',
+        'working-directory: candidate',
+        'npm run build',
+        'npm run test:artifact',
+        'name: tag-candidate-product-${{ github.run_id }}',
+        'path: candidate/build/app',
+      ],
+      'Tag workflow is missing isolated candidate-build boundary',
+    ),
+  );
+  const validationRequirements = [
+    'path: policy',
+    'ref: ${{ github.sha }}',
+    'path: candidate',
+    'ref: ${{ needs.resolve.outputs.squash_sha }}',
+    'needs: [resolve, build]',
+    'name: tag-candidate-product-${{ github.run_id }}',
+    'path: candidate-product/build/app',
+    '--candidate ../candidate',
+    '--artifact ../candidate-product',
+    'git -C policy diff --quiet',
+    'git -C policy diff --cached --quiet',
+    'git -C candidate diff --quiet',
+    'git -C candidate diff --cached --quiet',
+  ];
+  findings.push(
+    ...missingWorkflowRequirements(
+      validationSection,
+      validationRequirements,
+      'Tag workflow is missing trusted validation boundary',
+    ),
+  );
+  if ((resolveSection.match(/persist-credentials: false/gu) ?? []).length !== 1) {
+    findings.push('Tag resolver checkout must not persist repository credentials.');
+  }
+  if ((buildSection.match(/persist-credentials: false/gu) ?? []).length !== 1) {
+    findings.push('Tag build checkout must not persist repository credentials.');
+  }
+  if ((validationSection.match(/persist-credentials: false/gu) ?? []).length !== 2) {
+    findings.push('Tag validation checkouts must not persist repository credentials.');
+  }
+  if (/working-directory: candidate|npm run/u.test(validationSection)) {
+    findings.push('Trusted tag validation may not execute candidate package commands.');
+  }
+  if (/secrets\./u.test(resolveSection + buildSection + validationSection)) {
+    findings.push('Tag resolution, candidate build, and validation must not receive secrets.');
+  }
+  return findings;
+}
+
+function validateReleaseKeyJob(publicationSection) {
+  const publicationTargetRequirements = [
+    'path: ${{ runner.temp }}/release-tag',
+    'ref: ${{ steps.target.outputs.sha }}',
+    'policy-sha.txt',
+    'predecessor-tag.txt',
+    'tag-history-digest.txt',
+    'test "$(git rev-parse HEAD)" = "$tag_sha"',
+    'test "$remote_main_sha" = "$policy_sha"',
+    'test "$current_tag_history_digest" = "$tag_history_digest"',
+    'test -n "$(git ls-remote --refs --tags origin "refs/tags/$predecessor_tag")"',
+    '--force-with-lease="refs/tags/$tag_name:"',
+  ];
+  const findings = missingWorkflowRequirements(
+    publicationSection,
+    publicationTargetRequirements,
+    'Tag publisher is missing exact-target step',
+  );
+  if (/node scripts\/|npm (?:ci|run)/u.test(publicationSection)) {
+    findings.push('Release-key job may not execute repository scripts or package commands.');
+  }
+  return findings;
+}
+
+function validateReleaseKeyBoundary(
+  workflow,
+  publicationStart,
+  validationSection,
+  releasePublisher,
+) {
+  const findings = [];
   const secretPosition = workflow.indexOf(
     `ssh-key: \${{ secrets.${releasePublisher.secretName} }}`,
   );
-  const validationSection = workflow.slice(0, validationEnd);
   const keyFollowsValidation = [
     workflow.includes('    needs: validate'),
-    validationEnd !== -1,
-    secretPosition >= validationEnd,
+    publicationStart !== -1,
+    secretPosition >= publicationStart,
     validationSection.includes('pattern: media-qualified-*'),
     validationSection.includes('run-id: ${{ inputs.qualification_run }}'),
     validationSection.includes('--qualification qualified-media'),
@@ -419,6 +532,43 @@ function validatePublishWorkflow(workflow, releasePublisher) {
     findings.push('Release deploy key must remain unavailable until validation artifact succeeds.');
   }
   return findings;
+}
+
+function validatePublishWorkflow(workflow, releasePublisher) {
+  const resolveStart = workflow.indexOf('  resolve:');
+  const buildStart = workflow.indexOf('  build:');
+  const validationStart = workflow.indexOf('  validate:');
+  const publicationStart = workflow.indexOf('  publish:');
+  const resolveSection = workflow.slice(resolveStart, buildStart);
+  const buildSection = workflow.slice(buildStart, validationStart);
+  const validationSection = workflow.slice(validationStart, publicationStart);
+  const publicationSection = workflow.slice(publicationStart);
+  const findings = [];
+  if (
+    resolveStart === -1 ||
+    buildStart <= resolveStart ||
+    validationStart <= buildStart ||
+    publicationStart <= validationStart
+  ) {
+    findings.push('Tag publication must split resolve, build, validation, and publication jobs.');
+  }
+  for (const requirement of [
+    'group: release-tag-publication',
+    'cancel-in-progress: false',
+    'queue: max',
+  ]) {
+    if (!workflow.includes(requirement))
+      findings.push(`Tag workflow is missing serial publication policy: ${requirement}.`);
+  }
+  return [
+    ...findings,
+    ...validateWorkflowSemantics(workflow, 'publish'),
+    ...validateTagWorkflowInputs(workflow),
+    ...validateTagWorkflowPermissions(workflow, releasePublisher),
+    ...validateHistoricalTagCheckout(resolveSection, buildSection, validationSection),
+    ...validateReleaseKeyJob(publicationSection),
+    ...validateReleaseKeyBoundary(workflow, publicationStart, validationSection, releasePublisher),
+  ];
 }
 
 function validateMediaQualificationPolicy(policy, approvalPolicy, inspectionPolicy) {

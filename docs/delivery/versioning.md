@@ -108,9 +108,18 @@ breaking even when a field becomes "more optional."
   ADR-0020's exact policy transition and uses its owner-session-only trusted-base validation.
 - Tag preparation consumes the exact retained media-qualified artifact named for the inspected head
   and both digests, proves its trusted workflow/receipt identity, validates the squash message/tree,
-  and waits for the newest canonical exact-squash `main` workflow run. Tag-triggered CI downloads and
-  independently verifies the same retained qualification artifact; it never substitutes a clean
-  source-only fallback build. It is confirmation, never the first enforcement of those conditions.
+  and waits for the newest canonical exact-squash `main` workflow run. Current protected-`main`
+  policy may publish a missing historical release tag only under ADR-0019: the target must be an
+  exact separately checked-out ancestor squash, its deterministic predecessor tag must exist, and no
+  equal or newer product tag may exist. The target squash's parent version names that predecessor, so
+  a new minor follows any patches on the previous minor. Supported `alpha.N`, `beta.N`, and `rc.N`
+  prereleases form one deterministic chain: a phase starts at `.1`, increments by one, a later phase
+  restarts at `.1`, and the stable release may follow any prerelease of the same core version.
+  Publication uses a maximum non-cancelling queue and repeats the current-policy, complete tag-ref
+  history, predecessor-ref, and absent-target checks at the write boundary. Tag-triggered CI
+  downloads and independently verifies the
+  same retained qualification artifact; it never substitutes a clean source-only fallback build. It
+  is confirmation, never the first enforcement of those conditions.
 - Passing checks and inspection qualify a candidate but do not authorize publication. The user must
   explicitly approve the merge and immutable tag before either action occurs; one unambiguous direct
   instruction may approve both, while their provider records and workflow runs remain distinct.

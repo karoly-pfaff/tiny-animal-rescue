@@ -314,6 +314,41 @@
       "valid": false
     },
     {
+      "name": "tag workflow omits historical target resolver",
+      "mutation": "missing-tag-target-resolver",
+      "valid": false
+    },
+    {
+      "name": "tag workflow checks out current main instead of target",
+      "mutation": "wrong-tag-target-checkout",
+      "valid": false
+    },
+    {
+      "name": "candidate package command runs in trusted tag validation",
+      "mutation": "candidate-command-in-tag-validation",
+      "valid": false
+    },
+    {
+      "name": "tag publication cancels an older pending publisher",
+      "mutation": "tag-publication-cancels-pending",
+      "valid": false
+    },
+    {
+      "name": "tag publication retains only one pending publisher",
+      "mutation": "tag-publication-single-pending",
+      "valid": false
+    },
+    {
+      "name": "release-key job omits the complete tag-history recheck",
+      "mutation": "missing-tag-history-recheck",
+      "valid": false
+    },
+    {
+      "name": "release-key job executes candidate package command",
+      "mutation": "candidate-command-in-release-key-job",
+      "valid": false
+    },
+    {
       "name": "inspection omits supported viewports",
       "mutation": "incomplete-inspection-viewports",
       "valid": false
@@ -488,6 +523,167 @@
     {
       "name": "protected secret is duplicated at repository level",
       "mutation": "duplicate-protected",
+      "valid": false
+    }
+  ],
+  "tagPublicationTargets": [
+    {
+      "name": "historical merged squash under current main policy",
+      "workflowRef": "refs/heads/main",
+      "workflowSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidateSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "targetIsAncestor": true,
+      "valid": true
+    },
+    {
+      "name": "stale policy checkout",
+      "workflowRef": "refs/heads/main",
+      "workflowSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "cccccccccccccccccccccccccccccccccccccccc",
+      "targetSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidateSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "targetIsAncestor": true,
+      "valid": false
+    },
+    {
+      "name": "main advances after workflow dispatch",
+      "workflowRef": "refs/heads/main",
+      "workflowSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetSha": "9999999999999999999999999999999999999999",
+      "candidateSha": "9999999999999999999999999999999999999999",
+      "targetIsAncestor": true,
+      "valid": false
+    },
+    {
+      "name": "release target differs from candidate checkout",
+      "workflowRef": "refs/heads/main",
+      "workflowSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidateSha": "cccccccccccccccccccccccccccccccccccccccc",
+      "targetIsAncestor": true,
+      "valid": false
+    },
+    {
+      "name": "release target is outside current main history",
+      "workflowRef": "refs/heads/main",
+      "workflowSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidateSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "targetIsAncestor": false,
+      "valid": false
+    },
+    {
+      "name": "policy workflow dispatched from another ref",
+      "workflowRef": "refs/heads/fix/release",
+      "workflowSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policySha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "protectedMainSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidateSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "targetIsAncestor": true,
+      "valid": false
+    }
+  ],
+  "tagSequences": [
+    {
+      "name": "EPIC-005 follows the previous milestone",
+      "tagName": "v0.6.0",
+      "parentVersion": "0.5.0",
+      "existingTags": ["v0.1.0", "v0.2.0", "v0.3.0", "v0.4.0", "v0.5.0"],
+      "valid": true
+    },
+    {
+      "name": "PATCH-006 waits for EPIC-005",
+      "tagName": "v0.6.1",
+      "parentVersion": "0.6.0",
+      "existingTags": ["v0.5.0"],
+      "valid": false
+    },
+    {
+      "name": "PATCH-006 follows EPIC-005",
+      "tagName": "v0.6.1",
+      "parentVersion": "0.6.0",
+      "existingTags": ["v0.5.0", "v0.6.0"],
+      "valid": true
+    },
+    {
+      "name": "PATCH-008 follows PATCH-006",
+      "tagName": "v0.6.2",
+      "parentVersion": "0.6.1",
+      "existingTags": ["v0.5.0", "v0.6.0", "v0.6.1"],
+      "valid": true
+    },
+    {
+      "name": "PATCH-007 follows PATCH-008",
+      "tagName": "v0.6.3",
+      "parentVersion": "0.6.2",
+      "existingTags": ["v0.5.0", "v0.6.0", "v0.6.1", "v0.6.2"],
+      "valid": true
+    },
+    {
+      "name": "older release cannot publish after a newer tag",
+      "tagName": "v0.6.2",
+      "parentVersion": "0.6.1",
+      "existingTags": ["v0.6.0", "v0.6.1", "v0.7.0"],
+      "valid": false
+    },
+    {
+      "name": "next minor follows the latest patch release",
+      "tagName": "v0.7.0",
+      "parentVersion": "0.6.3",
+      "existingTags": ["v0.5.0", "v0.6.0", "v0.6.1", "v0.6.2", "v0.6.3"],
+      "valid": true
+    },
+    {
+      "name": "first prerelease follows the latest stable release",
+      "tagName": "v0.7.0-alpha.1",
+      "parentVersion": "0.6.3",
+      "existingTags": ["v0.6.2", "v0.6.3"],
+      "valid": true
+    },
+    {
+      "name": "prerelease revision follows its previous revision",
+      "tagName": "v0.7.0-alpha.2",
+      "parentVersion": "0.7.0-alpha.1",
+      "existingTags": ["v0.6.3", "v0.7.0-alpha.1"],
+      "valid": true
+    },
+    {
+      "name": "later prerelease phase restarts at one",
+      "tagName": "v0.7.0-beta.1",
+      "parentVersion": "0.7.0-alpha.2",
+      "existingTags": ["v0.6.3", "v0.7.0-alpha.1", "v0.7.0-alpha.2"],
+      "valid": true
+    },
+    {
+      "name": "stable release follows its prerelease",
+      "tagName": "v0.7.0",
+      "parentVersion": "0.7.0-rc.1",
+      "existingTags": ["v0.6.3", "v0.7.0-rc.1"],
+      "valid": true
+    },
+    {
+      "name": "prerelease revision cannot skip its predecessor",
+      "tagName": "v0.7.0-alpha.3",
+      "parentVersion": "0.7.0-alpha.1",
+      "existingTags": ["v0.6.3", "v0.7.0-alpha.1"],
+      "valid": false
+    },
+    {
+      "name": "unsupported prerelease channel is rejected",
+      "tagName": "v0.7.0-preview.1",
+      "parentVersion": "0.6.3",
+      "existingTags": ["v0.6.3"],
       "valid": false
     }
   ],

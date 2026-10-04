@@ -39,10 +39,13 @@ history contracts into reproducible provider settings rather than relying on rem
   a third candidate-free finalizer to remeasure and watermark-scan original and packaged bytes,
   require pack-local runtime references, reject remote media URLs, bind product/base-pack version, and
   retain the receipt-bound build/visual artifact;
-- [tag publication](../../.github/workflows/publish-tag.yml) consumes that exact qualified artifact,
-  validates the actual squash subject/body/tree, waits for every exact-SHA trusted `main` check,
-  validates inspection and separate tag approval against both digests, uploads a tag specification,
-  and only then lets a second environment-scoped job obtain the dedicated deploy key.
+- [tag publication](../../.github/workflows/publish-tag.yml) pins policy to the workflow dispatch SHA
+  and live protected `main`, isolates candidate execution in a credential-free build job,
+  checks out the requested merged squash separately, consumes that target's exact qualified artifact
+  or rebuilt non-inspected evidence, validates its subject/body/tree and exact-SHA trusted `main`
+  checks, validates inspection and separate tag approval against both digests, uploads a tag
+  specification, and only then lets a second environment-scoped job obtain the dedicated deploy key
+  and check out the specification's exact target.
 
 `npm run validate:repository` parses every required workflow as YAML and rejects any semantic drift
 from its exact reviewed definition, including extra commands/actions and `continue-on-error`.
@@ -135,10 +138,18 @@ single non-merge squash and tree identity. The
 annotated milestone tag adds the squash SHA, artifact digest, and asset-inventory digest to the same
 crosswalk before publication. Tag preparation also validates the actual squash subject/body/tree and
 requires exactly one successful instance of all seven checks in the newest canonical exact-squash
-workflow run. For inspected releases, tag-triggered history resolves the retained qualification from
-the recorded inspection, downloads it by exact run/name, and independently verifies it. For a
-non-player-visible PATCH, it instead rebuilds the exact squash and compares its artifact and
-asset-inventory digests; it never invents an inspection record.
+workflow run. Under ADR-0019, current protected-`main` policy may prepare a tag for an older merged
+squash only when that target is an ancestor of the live policy head, a separate checkout equals the
+exact squash, the deterministic predecessor tag exists, and no equal or newer product tag exists.
+The publisher serializes all release-tag writes in a maximum pending queue without cancellation. The
+target squash's parent product version identifies the predecessor, so a new minor follows the latest
+patch; the publisher repeats that latest-predecessor check plus the absent-target and live-policy
+checks immediately before an atomic absence-lease push.
+Release metadata comes from that target checkout; enforcement policy remains current. For inspected
+releases, tag-triggered history resolves the retained qualification from the recorded inspection,
+downloads it by exact run/name, and independently verifies it. For a non-player-visible PATCH, it
+instead rebuilds the exact target squash and compares its artifact and asset-inventory digests; it
+never invents an inspection record.
 
 Each sanctioned executor posts `pending` before validation and replaces it with `success` only for the
 exact validated head immediately before requesting the squash. Because main has no bypass actor, the
@@ -250,8 +261,9 @@ Raw provider merge, local tag push, auto-merge, and hand-edited release tags are
 an administrator. The App workflow and `npm run merge:approved` are the only sanctioned merge
 executors. The publication workflow's SSH push is the sole allowed tag write. Its private
 deploy key becomes available only after the validation job succeeds, without a duplicate manual
-environment review. That key can
-create a new approved tag but cannot update or delete an existing `v*` tag.
+environment review. The release-key job consumes only the validated tag specification, checks out
+that exact target SHA, and runs no candidate repository script or package command. The key can create
+a new approved tag but cannot update or delete an existing `v*` tag.
 
 ## Watermark evidence boundary
 
