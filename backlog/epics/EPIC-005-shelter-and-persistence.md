@@ -1,6 +1,6 @@
 # EPIC-005: Shelter and persistence
 
-- Status: In progress
+- Status: Done
 - Milestone: M5
 - Target version: `0.6.0`
 - Inspection journeys: `shelter,persistence,reload`

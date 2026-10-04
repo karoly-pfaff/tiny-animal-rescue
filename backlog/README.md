@@ -20,7 +20,7 @@ Status values:
 | [EPIC-002](epics/EPIC-002-content-platform.md)                       |        M2 |        `0.3.0` | Validated declarative content packs                  | 001        | Done        |
 | [EPIC-003](epics/EPIC-003-interaction-and-guidance-engine.md)        |        M3 |        `0.4.0` | All five reusable interactions and hinting           | 001, 002   | In progress |
 | [EPIC-004](epics/EPIC-004-map-and-progression.md)                    |        M4 |        `0.5.0` | Full map, unlock rules, replay                       | 002, 003   | In progress |
-| [EPIC-005](epics/EPIC-005-shelter-and-persistence.md)                |        M5 |        `0.6.0` | Three-area living shelter and robust saves           | 002, 004   | In progress |
+| [EPIC-005](epics/EPIC-005-shelter-and-persistence.md)                |        M5 |        `0.6.0` | Three-area living shelter and robust saves           | 002, 004   | Done        |
 | [EPIC-006](epics/EPIC-006-localization-audio-and-parent-settings.md) |        M6 |        `0.7.0` | Production HU/EN audio-first experience              | 001, 002   | Planned     |
 | [EPIC-007](epics/EPIC-007-v1-content-production.md)                  |        M7 |        `0.8.0` | All 16 missions and 12 residents                     | 003–006    | Planned     |
 | [EPIC-008](epics/EPIC-008-quality-accessibility-and-polish.md)       |        M8 |        `0.9.0` | Child-ready quality and supported viewports          | 003–007    | Planned     |
@@ -87,3 +87,4 @@ Post-release corrections use separately scoped records rather than being hidden 
 - [PATCH-003: Accept declared pending media during qualification](maintenance/PATCH-003-v0.4.1-pending-media-qualification.md)
 - [PATCH-004: Support non-inspected owner-session merge](maintenance/PATCH-004-v0.4.1-owner-session-non-inspected.md)
 - [PATCH-005: Stabilize trace canvas rendering performance](maintenance/PATCH-005-v0.4.3-trace-canvas-performance.md)
+- [PATCH-006: Stabilize release qualification](maintenance/PATCH-006-v0.6.1-release-qualification-stability.md)

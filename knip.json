@@ -1,7 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "entry": ["markdownlint.config.mjs", "tests/e2e/fixture-app/main.tsx"],
-  "project": ["sources/**/*.{ts,tsx}", "scripts/**/*.mjs", "tests/**/*.{ts,tsx}", "*.{ts,js,mjs}"],
+  "project": [
+    "sources/**/*.{ts,tsx}",
+    "scripts/**/*.mjs",
+    "tests/**/*.{ts,tsx}",
+    "*.{ts,js,mjs,cjs}"
+  ],
   "rules": {
     "binaries": "error",
     "catalog": "error",

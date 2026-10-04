@@ -1,4 +1,5 @@
 import { workItemFromBranch } from './history-repository.mjs';
+import { latestTrustedQualityRun } from './merge-policy.mjs';
 
 function messageParts(message) {
   const [subject = '', ...body] = message.split('\n');
@@ -127,6 +128,19 @@ async function fetchAllWorkflowRuns({ github, workflowId, commitSha, event }) {
   }
 }
 
+async function fetchAllWorkflowAttemptJobs({ github, runId, runAttempt }) {
+  const jobs = [];
+  let page = 1;
+  while (true) {
+    const response = await github(
+      `/actions/runs/${String(runId)}/attempts/${String(runAttempt)}/jobs?per_page=100&page=${String(page)}`,
+    );
+    jobs.push(...response.jobs);
+    if (response.jobs.length < 100) return jobs;
+    page += 1;
+  }
+}
+
 function normalizeQualityRun(run, workflow) {
   return {
     id: run.id,
@@ -159,24 +173,37 @@ export async function fetchTrustedQualityChecks({
     fetchAllCheckRuns({ github, commitSha }),
     fetchAllWorkflowRuns({ github, workflowId: workflow.id, commitSha, event }),
   ]);
-  const runsBySuite = new Map(
-    runs.map((run) => [run.check_suite_id, normalizeQualityRun(run, workflow)]),
-  );
+  const expectation = {
+    commitSha,
+    event,
+    headBranch,
+    workflowId: workflow.id,
+    workflowPath,
+    workflowRef,
+  };
   const workflowRuns = runs.map((run) => normalizeQualityRun(run, workflow));
+  const latestWorkflowRun = latestTrustedQualityRun(workflowRuns, expectation);
+  const attemptJobs =
+    latestWorkflowRun === undefined ||
+    !Number.isInteger(latestWorkflowRun.id) ||
+    !Number.isInteger(latestWorkflowRun.runAttempt)
+      ? []
+      : await fetchAllWorkflowAttemptJobs({
+          github,
+          runId: latestWorkflowRun.id,
+          runAttempt: latestWorkflowRun.runAttempt,
+        });
+  const attemptJobIds = new Set(attemptJobs.map((job) => job.id));
   return {
     checkRuns: checkRuns.map((check) => ({
       ...check,
-      workflowRun: runsBySuite.get(check.check_suite?.id),
+      workflowRun:
+        check.check_suite?.id === latestWorkflowRun?.checkSuiteId && attemptJobIds.has(check.id)
+          ? latestWorkflowRun
+          : undefined,
     })),
     workflowRuns,
-    expectation: {
-      commitSha,
-      event,
-      headBranch,
-      workflowId: workflow.id,
-      workflowPath,
-      workflowRef,
-    },
+    expectation,
   };
 }
 

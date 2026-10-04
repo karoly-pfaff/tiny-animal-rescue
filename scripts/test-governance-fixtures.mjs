@@ -750,11 +750,17 @@ async function checkRunAdapterFindings() {
 async function trustedCheckAdapterFindings() {
   const input = historyBaseline('pull-request');
   const expectation = fixtureQualityExpectation(input);
-  const rawChecks = fixtureCheckRuns('none', expectation).map((check) => {
-    const raw = { ...check };
+  const latestChecks = fixtureCheckRuns('none', expectation).map((check, index) => {
+    const raw = { ...check, id: 300 + index };
     delete raw.workflowRun;
     return raw;
   });
+  const previousChecks = latestChecks.map((check, index) => ({
+    ...check,
+    conclusion: check.name === 'visual' ? 'failure' : 'success',
+    id: 200 + index,
+  }));
+  const rawChecks = [...latestChecks, ...previousChecks];
   const requests = [];
   const result = await fetchTrustedQualityChecks({
     commitSha: expectation.commitSha,
@@ -766,8 +772,24 @@ async function trustedCheckAdapterFindings() {
         return { id: expectation.workflowId, path: expectation.workflowPath, state: 'active' };
       }
       if (pathname.startsWith('/commits/')) return { check_runs: rawChecks };
+      if (pathname.startsWith('/actions/runs/20/attempts/2/jobs')) {
+        return { jobs: latestChecks.map(({ id, name }) => ({ id, name })) };
+      }
       return {
         workflow_runs: [
+          {
+            id: 21,
+            workflow_id: expectation.workflowId,
+            check_suite_id: 21,
+            head_sha: expectation.commitSha,
+            head_branch: 'untrusted-branch',
+            path: expectation.workflowPath,
+            event: expectation.event,
+            status: 'completed',
+            conclusion: 'success',
+            run_number: 21,
+            run_attempt: 1,
+          },
           {
             id: 20,
             workflow_id: expectation.workflowId,
@@ -779,7 +801,7 @@ async function trustedCheckAdapterFindings() {
             status: 'completed',
             conclusion: 'success',
             run_number: 20,
-            run_attempt: 1,
+            run_attempt: 2,
           },
         ],
       };
@@ -790,7 +812,10 @@ async function trustedCheckAdapterFindings() {
     result.expectation,
     result.workflowRuns,
   );
-  return requests.length === 3 ? findings : ['trusted-check adapter request set is incomplete'];
+  const expectedAttemptRequest = '/actions/runs/20/attempts/2/jobs?per_page=100&page=1';
+  return requests.length === 4 && requests.includes(expectedAttemptRequest)
+    ? findings
+    : ['trusted-check adapter request set is incomplete'];
 }
 
 function tagRevisionAdapterFindings() {
